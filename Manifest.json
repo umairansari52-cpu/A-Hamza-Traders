@@ -1,0 +1,8 @@
+{
+  "name": "A.Hamza Traders",
+  "short_name": "A.Hamza",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1565c0"
+}
