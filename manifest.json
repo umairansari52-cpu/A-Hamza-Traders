@@ -1,12 +1,19 @@
 {
   "name": "A.Hamza Traders",
   "short_name": "A.Hamza",
-  "description": "Medicine Wholesale Management Software - A.Hamza Traders",
+  "description": "Medicine Wholesale Management Software",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#1565c0",
-  "icons": []
+  "icons": [
+    {
+      "src": "./launchericon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
 }
