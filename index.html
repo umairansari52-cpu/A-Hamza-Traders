@@ -34,7 +34,16 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:9px 6px;b
 #loginScreen{position:fixed;inset:0;background:#f3f6f9;z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}#loginScreen .card{width:100%;max-width:360px;padding:22px}body:not(.authenticated)>header,body:not(.authenticated)>nav,body:not(.authenticated)>main{display:none!important}
 @media print{header,nav,.no-print,#loginScreen{display:none!important}body{background:#fff}.tab{display:none!important}body.print-ledger #ledger.tab.active,body.print-customers #customers.tab.active{display:block!important}.card{box-shadow:none;border:0}}
 </style></head>
-<body>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js')
+      .catch(function(error) {
+        console.log('Offline setup error:', error);
+      });
+  });
+}
+</script><body>
 <div id="loginScreen"><div class="card"><h2> A.Hamza Traders Login</h2><p class="muted">Please sign in to continue.</p><label>Username</label><input id="loginUser" autocomplete="username" placeholder="Username"><br><br><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" placeholder="Password"><div class="actions"><button class="primary" style="width:100%" onclick="loginApp()">Login</button></div><p id="loginError" class="bad small"></p></div></div>
 <header><h1>Welcome to A.Hamza Traders</h1><small>Proprietor: M. Umair</small><br><small>Medicine Wholesale Management • Sales • Purchase • Stock • Ledgers • Profit</small></header>
 <nav id="nav">
