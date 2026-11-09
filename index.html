@@ -346,7 +346,7 @@ if(p)p.innerHTML=(db.purchases||[]).map((x,i)=>`<tr><td>${esc(x.no||'')}</td><td
   }
   function renderAll(){
 renderLists();
-renderProducts();
+function renderProducts(){document.getElementById('productRows').innerHTML=db.products.map((p,i)=>`<tr><td>${esc(p.name)}</td><td>${esc(p.unit||'Unit')}</td><td>${money(p.stock)}</td><td>${money(p.price)}</td><td><button onclick="editOpeningStock(${i})">Edit Opening</button></td></tr>`).join('')}
 renderLedgerOptions();
 renderSupplierOptions();
 renderReports();
