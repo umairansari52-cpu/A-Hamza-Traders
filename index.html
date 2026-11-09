@@ -337,4 +337,11 @@ function restorePasted(){let raw=prompt('Paste your A.Hamza Traders backup JSON 
 function clearAll(){if(confirm('Permanently delete all customers, products, invoices and records from this browser?')){db=blank();save();newSale();newPurchase()}}
 fillDates();newSale();newPurchase();renderAll();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(e=>console.log('Offline cache registration failed',e)));}
+  function renderLists(){
+let s=document.getElementById('salesList');
+let p=document.getElementById('purchaseList');
+if(s)s.innerHTML=(db.sales||[]).map((x,i)=>`<tr><td>${esc(x.no||'')}</td><td>${esc(x.date||'')}</td><td>${esc(x.customer||'')}</td><td>${money(x.total||0)}</td><td><button data-i="${i}" data-a="sv">View</button> <button data-i="${i}" data-a="se">Edit</button></td></tr>`).join('')||'<tr><td colspan="5">No invoice</td></tr>';
+if(p)p.innerHTML=(db.purchases||[]).map((x,i)=>`<tr><td>${esc(x.no||'')}</td><td>${esc(x.date||'')}</td><td>${esc(x.supplier||'')}</td><td>${money(x.total||0)}</td><td><button data-i="${i}" data-a="pv">View</button> <button data-i="${i}" data-a="pe">Edit</button></td></tr>`).join('')||'<tr><td colspan="5">No purchase</td></tr>';
+[s,p].forEach(el=>{if(el)el.querySelectorAll('button').forEach(b=>b.onclick=()=>{let x=(el===s?db.sales:db.purchases)[+b.dataset.i];if(b.dataset.a==='sv')reprint(x.no);if(b.dataset.a==='se')editSale(x.no);if(b.dataset.a==='pv')reprintPurchase(x.no);if(b.dataset.a==='pe')editPurchase(x.no)})});
+  }
 </script></body></html>
