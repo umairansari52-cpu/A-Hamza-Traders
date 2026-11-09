@@ -344,4 +344,14 @@ if(s)s.innerHTML=(db.sales||[]).map((x,i)=>`<tr><td>${esc(x.no||'')}</td><td>${e
 if(p)p.innerHTML=(db.purchases||[]).map((x,i)=>`<tr><td>${esc(x.no||'')}</td><td>${esc(x.date||'')}</td><td>${esc(x.supplier||'')}</td><td>${money(x.total||0)}</td><td><button data-i="${i}" data-a="pv">View</button> <button data-i="${i}" data-a="pe">Edit</button></td></tr>`).join('')||'<tr><td colspan="5">No purchase</td></tr>';
 [s,p].forEach(el=>{if(el)el.querySelectorAll('button').forEach(b=>b.onclick=()=>{let x=(el===s?db.sales:db.purchases)[+b.dataset.i];if(b.dataset.a==='sv')reprint(x.no);if(b.dataset.a==='se')editSale(x.no);if(b.dataset.a==='pv')reprintPurchase(x.no);if(b.dataset.a==='pe')editPurchase(x.no)})});
   }
+  function renderAll(){
+renderLists();
+renderProducts();
+renderLedgerOptions();
+renderSupplierOptions();
+renderReports();
+renderDetailReports();
+fillDatalists();
+renderDashboard();
+  }
 </script></body></html>
