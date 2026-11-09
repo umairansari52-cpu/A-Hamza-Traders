@@ -48,7 +48,7 @@ if ('serviceWorker' in navigator) {
 <div id="loginScreen"><div class="card"><h2> A.Hamza Traders Login</h2><p class="muted">Please sign in to continue.</p><label>Username</label><input id="loginUser" autocomplete="username" placeholder="Username"><br><br><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" placeholder="Password"><div class="actions"><button class="primary" style="width:100%" onclick="loginApp()">Login</button></div><p id="loginError" class="bad small"></p></div></div>
 <header><h1>Welcome to A.Hamza Traders</h1><small>Proprietor: M. Umair</small><br><small>Medicine Wholesale Management • Sales • Purchase • Stock • Ledgers • Profit</small></header>
 <nav id="nav">
-<button class="active" data-tab="dashboard">Dashboard</button><button data-tab="sales">Sales Invoice</button><button data-tab="purchase">Purchase</button><button data-tab="expenses">Expenses</button><button data-tab="customers">Customers</button><button data-tab="products">Products & Stock</button><button data-tab="ledger">Customer Ledger</button><button data-tab="supplierLedger">Supplier Ledger</button><button data-tab="reports">Profit Reports</button><button data-tab="detailReports">Date-wise Reports</button> <button data-tab="backup">Backup</button>
+<button class="active" data-tab="dashboard">Dashboard</button><button data-tab="sales">Sales Invoice</button><button data-tab="purchase">Purchase</button><button data-tab="expenses">Expenses</button><button data-tab="customers">Customers</button><button data-tab="products">Products & Stock</button><button data-tab="ledger">Customer Ledger</button><button data-tab="supplierLedger">Supplier Ledger</button><button data-tab="reports">Profit Reports</button><button data-tab="detailReports">Date-wise Reports</button> <button data-tab="productsLedger">Products Ledger</button><button data-tab="backup">Backup</button>
 </nav>
 <main>
 <section id="dashboard" class="tab active">
@@ -126,7 +126,7 @@ if ('serviceWorker' in navigator) {
 
 <section id="reports" class="tab"><div class="card"><h2>Profit Summary</h2><div class="grid"><div><label>From</label><input type="date" id="rFrom" onchange="renderReports()"></div><div><label>To</label><input type="date" id="rTo" onchange="renderReports()"></div></div><div class="grid" style="margin-top:12px"><div class="card"><div class="muted">Sales (after discount)</div><div class="metric" id="rSales">Rs 0</div></div><div class="card"><div class="muted">Discount Amount</div><div class="metric" id="rDiscount">Rs 0</div></div><div class="card"><div class="muted">Cost of Goods Sold</div><div class="metric" id="rCost">Rs 0</div></div><div class="card"><div class="muted">Profit (before expenses)</div><div class="metric good" id="rProfit">Rs 0</div></div><div class="card"><div class="muted">Total Expenses</div><div class="metric bad" id="rExpenses">Rs 0</div></div><div class="card"><div class="muted">Net Profit</div><div class="metric good" id="rNetProfit">Rs 0</div></div><div class="card"><div class="muted">Purchase Total</div><div class="metric" id="rPurchases">Rs 0</div></div></div><p class="muted">Discount and Profit are shown in separate columns. Expenses are recorded separately and deducted from total profit in the summary.</p><div class="card"><h3>Invoice-wise Profit Details</h3><div class="tablewrap"><table><thead><tr><th>Date</th><th>Invoice</th><th>Customer</th><th>Sales (Net)</th><th>Discount Amount</th><th>Purchase Cost</th><th>Profit</th></tr></thead><tbody id="profitInvoiceRows"></tbody><tfoot><tr><th colspan="3">Total</th><th id="prSalesTotal">0.00</th><th id="prDiscountTotal">0.00</th><th id="prCostTotal">0.00</th><th id="prGrossTotal">0.00</th></tr></tfoot></table></div></div></div></section>
 
-<section id="detailReports" <button data-tab="productsLedger">Products Ledger</button>class="tab">
+<section id="detailReports" class="tab">
 <div class="card"><h2>Date-wise Reports</h2>
 <div class="grid">
 <div><label>From Date</label><input type="date" id="drFrom" onchange="renderDetailReports()"></div>
@@ -140,6 +140,7 @@ if ('serviceWorker' in navigator) {
 <div class="card"><h3>Item-wise Purchase Report</h3><div class="tablewrap"><table><thead><tr><th>Item</th><th>Quantity</th><th>Purchase Amount</th></tr></thead><tbody id="drPurchaseItems"></tbody></table></div></div>
 <div class="card"><h3>Customer-wise Sales Report</h3><div class="tablewrap"><table><thead><tr><th>Customer</th><th>Invoices</th><th>Sales Amount</th></tr></thead><tbody id="drCustomers"></tbody></table></div></div>
 <div class="card"><h3>Supplier-wise Purchase Report</h3><div class="tablewrap"><table><thead><tr><th>Supplier</th><th>Purchases</th><th>Purchase Amount</th></tr></thead><tbody id="drSuppliers"></tbody></table></div></div>
+</section>
   <section id="productsLedger" class="tab">
 <div class="card">
 <h2>Products Ledger</h2>
