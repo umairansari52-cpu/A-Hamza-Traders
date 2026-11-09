@@ -126,7 +126,7 @@ if ('serviceWorker' in navigator) {
 
 <section id="reports" class="tab"><div class="card"><h2>Profit Summary</h2><div class="grid"><div><label>From</label><input type="date" id="rFrom" onchange="renderReports()"></div><div><label>To</label><input type="date" id="rTo" onchange="renderReports()"></div></div><div class="grid" style="margin-top:12px"><div class="card"><div class="muted">Sales (after discount)</div><div class="metric" id="rSales">Rs 0</div></div><div class="card"><div class="muted">Discount Amount</div><div class="metric" id="rDiscount">Rs 0</div></div><div class="card"><div class="muted">Cost of Goods Sold</div><div class="metric" id="rCost">Rs 0</div></div><div class="card"><div class="muted">Profit (before expenses)</div><div class="metric good" id="rProfit">Rs 0</div></div><div class="card"><div class="muted">Total Expenses</div><div class="metric bad" id="rExpenses">Rs 0</div></div><div class="card"><div class="muted">Net Profit</div><div class="metric good" id="rNetProfit">Rs 0</div></div><div class="card"><div class="muted">Purchase Total</div><div class="metric" id="rPurchases">Rs 0</div></div></div><p class="muted">Discount and Profit are shown in separate columns. Expenses are recorded separately and deducted from total profit in the summary.</p><div class="card"><h3>Invoice-wise Profit Details</h3><div class="tablewrap"><table><thead><tr><th>Date</th><th>Invoice</th><th>Customer</th><th>Sales (Net)</th><th>Discount Amount</th><th>Purchase Cost</th><th>Profit</th></tr></thead><tbody id="profitInvoiceRows"></tbody><tfoot><tr><th colspan="3">Total</th><th id="prSalesTotal">0.00</th><th id="prDiscountTotal">0.00</th><th id="prCostTotal">0.00</th><th id="prGrossTotal">0.00</th></tr></tfoot></table></div></div></div></section>
 
-<section id="detailReports" class="tab">
+<section id="detailReports" <button data-tab="productsLedger">Products Ledger</button>class="tab">
 <div class="card"><h2>Date-wise Reports</h2>
 <div class="grid">
 <div><label>From Date</label><input type="date" id="drFrom" onchange="renderDetailReports()"></div>
@@ -140,6 +140,33 @@ if ('serviceWorker' in navigator) {
 <div class="card"><h3>Item-wise Purchase Report</h3><div class="tablewrap"><table><thead><tr><th>Item</th><th>Quantity</th><th>Purchase Amount</th></tr></thead><tbody id="drPurchaseItems"></tbody></table></div></div>
 <div class="card"><h3>Customer-wise Sales Report</h3><div class="tablewrap"><table><thead><tr><th>Customer</th><th>Invoices</th><th>Sales Amount</th></tr></thead><tbody id="drCustomers"></tbody></table></div></div>
 <div class="card"><h3>Supplier-wise Purchase Report</h3><div class="tablewrap"><table><thead><tr><th>Supplier</th><th>Purchases</th><th>Purchase Amount</th></tr></thead><tbody id="drSuppliers"></tbody></table></div></div>
+  <section id="productsLedger" class="tab">
+<div class="card">
+<h2>Products Ledger</h2>
+<div class="grid">
+<div><label>From Date</label><input type="date" id="plFrom"></div>
+<div><label>To Date</label><input type="date" id="plTo"></div>
+</div>
+<div class="actions">
+<button class="primary" onclick="renderProductsLedger()">Show Ledger</button>
+<button class="secondary" onclick="printProductsLedger()">Print Preview / PDF</button>
+</div>
+</div>
+<div class="card">
+<div class="tablewrap">
+<table>
+<thead><tr>
+<th>Product</th>
+<th>Open Stock</th>
+<th>Purchase Stock</th>
+<th>Sale</th>
+<th>Close Stock</th>
+</tr></thead>
+<tbody id="plRows"></tbody>
+</table>
+</div>
+</div>
+  </section>
                                </section><section id="backup" class="tab"><div class="card"><h2>Backup & Restore</h2><p>Export your records as a JSON backup file. Keep a copy somewhere safe.</p><div class="actions"><button class="primary" onclick="backup()">Download Backup</button><button class="secondary" onclick="showBackupText(JSON.stringify(db,null,2))">Show Backup Text</button><label class="secondary" style="display:inline-block">Restore Backup <input type="file" accept=".json,application/json" onchange="restore(event)" style="display:none"></label><button class="secondary" onclick="restorePasted()">Restore from copied text</button></div><div class="notice" style="margin-top:12px">This app stores data only in this browser on this device. It does not sync automatically to another phone.</div><div class="actions"><button class="danger" onclick="clearAll()">Delete all app data</button></div></div></section>
 </main>
 <script>
@@ -147,6 +174,26 @@ const KEY='medicine_wholesale_v1';
 let db=load();
 function blank(){return {customers:[],products:[],sales:[],purchases:[],payments:[],suppliers:[],supplierPayments:[],expenses:[]}}
 function load(){try{let d=JSON.parse(localStorage.getItem(KEY))||blank();d.suppliers ||= [];d.supplierPayments ||= [];d.payments ||= [];d.expenses ||= [];return d}catch(e){return blank()}}
+  function renderProductsLedger(){
+let from=document.getElementById('plFrom').value||'0000-01-01';
+let to=document.getElementById('plTo').value||'9999-12-31';
+let rows=db.products.map(p=>{
+let n=p.name.toLowerCase();
+let moves=(arr,start,end)=>arr.filter(x=>x.date>=start&&x.date<=end).reduce((a,x)=>a+(x.items||[]).filter(i=>(i.name||'').toLowerCase()===n).reduce((q,i)=>q+(+i.qty||0),0),0);
+let purchase=moves(db.purchases,from,to);
+let sale=moves(db.sales,from,to);
+let opening=(+p.stock||0)-moves(db.purchases,from,'9999-12-31')+moves(db.sales,from,'9999-12-31');
+let closing=opening+purchase-sale;
+return '<tr><td>'+esc(p.name)+'</td><td>'+money(opening)+'</td><td>'+money(purchase)+'</td><td>'+money(sale)+'</td><td>'+money(closing)+'</td></tr>';
+}).join('')||'<tr><td colspan="5">No products</td></tr>';
+document.getElementById('plRows').innerHTML=rows;
+}
+function printProductsLedger(){
+renderProductsLedger();
+let rows=document.getElementById('plRows').innerHTML;
+let content='<table><tr><th>Product</th><th>Open Stock</th><th>Purchase Stock</th><th>Sale</th><th>Close Stock</th></tr>'+rows+'</table>';
+openPrintPage('Products Ledger',content);
+  }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db));renderAll();return true}catch(e){alert('Save failed: device storage may be full or unavailable. Export a backup and free storage.');return false}}
 function money(n){return (Number(n)||0).toLocaleString('en-PK',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function today(){let d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
