@@ -195,6 +195,21 @@ let rows=document.getElementById('plRows').innerHTML;
 let content='<table><tr><th>Product</th><th>Open Stock</th><th>Purchase Stock</th><th>Sale</th><th>Close Stock</th></tr>'+rows+'</table>';
 openPrintPage('Products Ledger',content);
   }
+  function editOpeningStock(i){
+let p=db.products[i];
+if(!p)return;
+let name=p.name.toLowerCase();
+let purchases=db.purchases.reduce((a,x)=>a+(x.items||[]).filter(it=>(it.name||'').toLowerCase()===name).reduce((b,it)=>b+(+it.qty||0),0),0);
+let sales=db.sales.reduce((a,x)=>a+(x.items||[]).filter(it=>(it.name||'').toLowerCase()===name).reduce((b,it)=>b+(+it.qty||0),0),0);
+let oldOpening=(+p.stock||0)-purchases+sales;
+let value=prompt('New Opening Stock for '+p.name,oldOpening);
+if(value===null)return;
+let n=Number(value);
+if(!Number.isFinite(n)||n<0){alert('Enter a valid stock quantity');return}
+p.stock=n-oldOpening+(+p.stock||0);
+save();
+alert('Opening Stock updated');
+  }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db));renderAll();return true}catch(e){alert('Save failed: device storage may be full or unavailable. Export a backup and free storage.');return false}}
 function money(n){return (Number(n)||0).toLocaleString('en-PK',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function today(){let d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -295,7 +310,7 @@ function doPrint(x){
  <div class="hint">If Download PDF does not start, use Print and select Save as PDF.</div>
  <h1>A.HAMZA TRADERS</h1><h2>MEDICINE WHOLESALE</h2><h2>${isPurchase?'PURCHASE INVOICE':'SALES INVOICE'}</h2>
  <div class="meta"><div><b>${isPurchase?'Supplier':'Customer'}:</b> ${esc(x.customer)}<br><b>Date:</b> ${esc(x.date)}</div><div><b>${isPurchase?'Purchase':'Invoice'} No.:</b> ${esc(x.no)}</div></div>
- <table><thead><tr><th>Product</th><th>Qty</th><th>T.P Amount (Rs)</th><th>T.P Total Amount (Rs)</th><th>Discount %</th><th>Net Amount (Rs)</th></tr></thead><tbody>
+ <table><thead><tr><th>Product</th><th>Qty</th><th>T.P Amount (Rs)</th><th>T.P Total Amount (Rs)</th><th>Action</th><th>Discount %</th><th>Net Amount (Rs)</th></tr></thead><tbody>
  ${x.items.map(i=>`<tr><td>${esc(i.name)}</td><td>${money(i.qty)}</td><td>${money(i.rate)}</td><td>${money(i.qty*i.rate)}</td><td>${money(i.discount)}%</td><td>${money(i.net)}</td></tr>`).join('')}
  </tbody></table>
  <div class="totals"><div class="grand">Net Amount: Rs ${money(x.total)}</div><div>Amount in words: ${amountWords(x.total)}</div><div>Paid: Rs ${money(x.paid)}</div><div>Balance: Rs ${money(x.due)}</div></div>
@@ -346,6 +361,7 @@ if(p)p.innerHTML=(db.purchases||[]).map((x,i)=>`<tr><td>${esc(x.no||'')}</td><td
   }
   function renderAll(){
 renderLists();
+renderProducts();
 function renderProducts(){document.getElementById('productRows').innerHTML=db.products.map((p,i)=>`<tr><td>${esc(p.name)}</td><td>${esc(p.unit||'Unit')}</td><td>${money(p.stock)}</td><td>${money(p.price)}</td><td><button onclick="editOpeningStock(${i})">Edit Opening</button></td></tr>`).join('')}
 renderLedgerOptions();
 renderSupplierOptions();
