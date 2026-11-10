@@ -360,9 +360,59 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.
   function renderLists(){
 let s=document.getElementById('salesList');
 let p=document.getElementById('purchaseList');
-if(s)s.innerHTML=(db.sales||[]).map((x,i)=>`<tr><td>${esc(x.no||'')}</td><td>${esc(x.date||'')}</td><td>${esc(x.customer||'')}</td><td>${money(x.total||0)}</td><td><button data-i="${i}" data-a="sv">View</button> <button data-i="${i}" data-a="se">Edit</button></td></tr>`).join('')||'<tr><td colspan="5">No invoice</td></tr>';
-if(p)p.innerHTML=(db.purchases||[]).map((x,i)=>`<tr><td>${esc(x.no||'')}</td><td>${esc(x.date||'')}</td><td>${esc(x.supplier||'')}</td><td>${money(x.total||0)}</td><td><button data-i="${i}" data-a="pv">View</button> <button data-i="${i}" data-a="pe">Edit</button></td></tr>`).join('')||'<tr><td colspan="5">No purchase</td></tr>';
-[s,p].forEach(el=>{if(el)el.querySelectorAll('button').forEach(b=>b.onclick=()=>{let x=(el===s?db.sales:db.purchases)[+b.dataset.i];if(b.dataset.a==='sv')reprint(x.no);if(b.dataset.a==='se')editSale(x.no);if(b.dataset.a==='pv')reprintPurchase(x.no);if(b.dataset.a==='pe')editPurchase(x.no)})});
+
+let sales=(db.sales||[]).map((x,i)=>({x,i})).sort((a,b)=>(b.x.date||'').localeCompare(a.x.date||'')||b.i-a.i);
+let purchases=(db.purchases||[]).map((x,i)=>({x,i})).sort((a,b)=>(b.x.date||'').localeCompare(a.x.date||'')||b.i-a.i);
+
+if(s)s.innerHTML=sales.map(({x,i})=>`<tr><td>${esc(x.no||'')}</td><td>${esc(x.date||'')}</td><td>${esc(x.customer||'')}</td><td>${money(x.total||0)}</td><td><button data-i="${i}" data-a="sv">View</button> <button data-i="${i}" data-a="se">Edit</button> <button data-i="${i}" data-a="sd">Delete</button></td></tr>`).join('')||'<tr><td colspan="5">No invoice</td></tr>';
+
+if(p)p.innerHTML=purchases.map(({x,i})=>`<tr><td>${esc(x.no||'')}</td><td>${esc(x.date||'')}</td><td>${esc(x.supplier||'')}</td><td>${money(x.total||0)}</td><td><button data-i="${i}" data-a="pv">View</button> <button data-i="${i}" data-a="pe">Edit</button> <button data-i="${i}" data-a="pd">Delete</button></td></tr>`).join('')||'<tr><td colspan="5">No purchase</td></tr>';
+
+[s,p].forEach(el=>{if(el)el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+let i=+b.dataset.i;
+let x=(el===s?db.sales:db.purchases)[i];
+if(!x)return;
+if(b.dataset.a==='sv')reprint(x.no);
+if(b.dataset.a==='se')editSale(x.no);
+if(b.dataset.a==='pv')reprintPurchase(x.no);
+if(b.dataset.a==='pe')editPurchase(x.no);
+if(b.dataset.a==='sd')deleteSale(i);
+if(b.dataset.a==='pd')deletePurchase(i);
+})});
+}
+  function deleteSale(i){
+let x=db.sales[i];
+if(!x)return;
+if(!confirm('Delete this sales invoice? Stock will be returned.'))return;
+(x.items||[]).forEach(it=>{
+let pr=db.products.find(p=>p.name.toLowerCase()===it.name.toLowerCase());
+if(pr)pr.stock=(+pr.stock||0)+(+it.qty||0);
+});
+db.sales.splice(i,1);
+save();
+renderAll();
+alert('Sales invoice deleted. Stock returned.');
+}
+
+function deletePurchase(i){
+let x=db.purchases[i];
+if(!x)return;
+for(let it of (x.items||[])){
+let pr=db.products.find(p=>p.name.toLowerCase()===it.name.toLowerCase());
+if(!pr||(+pr.stock||0)<(+it.qty||0)){
+alert(it.name+': Stock kam hai. Purchase delete nahi ho sakti.');
+return;
+}
+}
+if(!confirm('Delete this purchase? Stock will be reduced.'))return;
+(x.items||[]).forEach(it=>{
+let pr=db.products.find(p=>p.name.toLowerCase()===it.name.toLowerCase());
+pr.stock=(+pr.stock||0)-(+it.qty||0);
+});
+db.purchases.splice(i,1);
+save();
+renderAll();
+alert('Purchase deleted. Stock reduced.');
   }
   function renderAll(){
 renderLists();
