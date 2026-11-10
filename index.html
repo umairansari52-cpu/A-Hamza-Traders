@@ -315,7 +315,7 @@ function doPrint(x){
  <div class="hint">If Download PDF does not start, use Print and select Save as PDF.</div>
  <h1>A.HAMZA TRADERS</h1><h2>MEDICINE WHOLESALE</h2><h2>${isPurchase?'PURCHASE INVOICE':'SALES INVOICE'}</h2>
  <div class="meta"><div><b>${isPurchase?'Supplier':'Customer'}:</b> ${esc(x.customer)}<br><b>Date:</b> ${esc(x.date)}</div><div><b>${isPurchase?'Purchase':'Invoice'} No.:</b> ${esc(x.no)}</div></div>
- <table><thead><tr><th>Product</th><th>Qty</th><th>T.P Amount (Rs)</th><th>T.P Total Amount (Rs)</th><th></th><th>Discount %</th><th>Net Amount (Rs)</th></tr></thead><tbody>
+ <table><thead><tr><th>Product</th><th>Qty</th><th>T.P Amount (Rs)T.P Total Amount (Rs)</th><th></th><th>Discount %</th><th>Net Amount (Rs)</th></tr></thead><tbody>
  ${x.items.map(i=>`<tr><td>${esc(i.name)}</td><td>${money(i.qty)}</td><td>${money(i.rate)}</td><td>${money(i.qty*i.rate)}</td><td>${money(i.discount)}%</td><td>${money(i.net)}</td></tr>`).join('')}
  </tbody></table>
  <div class="totals"><div class="grand">Net Amount: Rs ${money(x.total)}</div><div>Amount in words: ${amountWords(x.total)}</div><div>Paid: Rs ${money(x.paid)}</div><div>Balance: Rs ${money(x.due)}</div></div>
