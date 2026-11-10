@@ -65,6 +65,11 @@ nav>details[open]>div{display:flex!important;flex-wrap:wrap!important}
 #dashboard .grid .card:nth-child(2){background:linear-gradient(135deg,#e2ffed,#d3f7e2);border:2px solid #a8e8c3}
 #dashboard .grid .card:nth-child(3){background:linear-gradient(135deg,#f0e8ff,#e4d9ff);border:2px solid #cbb8f5}
 #dashboard .grid .card:nth-child(4){background:linear-gradient(135deg,#fff0df,#ffe2c4);border:2px solid #f3c89e}
+  #dashboard>.card:first-child{position:relative;overflow:hidden}
+#dashboard>.card:first-child:after{content:"💊  🧴  ✚";position:absolute;right:12px;bottom:12px;font-size:35px;opacity:.85}
+#dashboard>.card:last-child{background:linear-gradient(135deg,#073b78,#0756a5);border:0;border-radius:15px}
+#dashboard>.card:last-child h3{color:white;font-size:20px}
+#dashboard>.card:last-child .secondary{background:#e1edff;color:#0756a5}
 </style></head>
 <script>
 if ('serviceWorker' in navigator) {
