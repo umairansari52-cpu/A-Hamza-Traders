@@ -41,6 +41,18 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:9px 6px;b
 .small{font-size:12px}.hide{display:none!important}
 #loginScreen{position:fixed;inset:0;background:#f3f6f9;z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}#loginScreen .card{width:100%;max-width:360px;padding:22px}body:not(.authenticated)>header,body:not(.authenticated)>nav,body:not(.authenticated)>main{display:none!important}
 @media print{header,nav,.no-print,#loginScreen{display:none!important}body{background:#fff}.tab{display:none!important}body.print-ledger #ledger.tab.active,body.print-customers #customers.tab.active{display:block!important}.card{box-shadow:none;border:0}}
+  nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;overflow:visible;position:relative;top:auto;padding:12px}
+nav>button{white-space:normal;min-height:62px;border-radius:12px;font-size:14px}
+nav>button:nth-child(1){background:#0756a5;color:white}
+nav>button:nth-child(2){background:#087f45;color:white}
+nav>button:nth-child(3){background:#7138c8;color:white}
+nav>button:nth-child(4){background:#e68a00;color:white}
+nav>button:nth-child(5){background:#245080;color:white}
+nav>button:nth-child(6){background:#087f9b;color:white}
+nav>details{grid-column:1/-1}
+nav>details>div{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
+nav>details button{white-space:normal;background:#e1edff;color:#0756a5;border-radius:10px;padding:12px 6px}
+@media(min-width:700px){nav{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style></head>
 <script>
 if ('serviceWorker' in navigator) {
