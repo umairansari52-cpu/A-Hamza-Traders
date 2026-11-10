@@ -314,7 +314,7 @@ function doPrint(x){
  <div class="actions"><button onclick="if(window.opener&&window.opener.downloadInvoicePDF){window.opener.downloadInvoicePDF(JSON.parse(decodeURIComponent('${payload}')))}else{window.print()}" >Download PDF</button><button onclick="window.print()">Print</button><button onclick="window.close()">Close Preview</button></div>
  <div class="hint">If Download PDF does not start, use Print and select Save as PDF.</div>
  <h1>A.HAMZA TRADERS</h1><h2>MEDICINE WHOLESALE</h2><h2>${isPurchase?'PURCHASE INVOICE':'SALES INVOICE'}</h2>
- <div class="meta"><div><b>${isPurchase?'Supplier':'Customer'}:</b> ${esc(x.customer)}<br><b>Date:</b> ${esc(x.date)}</div><div><b>${isPurchase?'Purchase':'Invoice'} No.:</b> ${esc(x.no)}</div></div>
+ <div class="meta"><div><b>${isPurchase?'Supplier':'Customer'}:</b> <span style="font-size:20px;font-weight:bold">${esc(x.customer)}</span<br><b>Date:</b> ${esc(x.date)}</div><div><b>${isPurchase?'Purchase':'Invoice'} No.:</b> ${esc(x.no)}</div></div>
  <table><thead><tr><th>Product</th><th>Qty</th><th>T.P Amount (Rs)</th><th>T.P Total Amount (Rs)</th><th>Discount %</th><th>Net Amount (Rs)</th></tr></thead><tbody>
  ${x.items.map(i=>`<tr><td>${esc(i.name)}</td><td>${money(i.qty)}</td><td>${money(i.rate)}</td><td>${money(i.qty*i.rate)}</td><td>${money(i.discount)}%</td><td>${money(i.net)}</td></tr>`).join('')}
  </tbody></table>
