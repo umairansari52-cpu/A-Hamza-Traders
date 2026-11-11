@@ -394,7 +394,17 @@ if ('serviceWorker' in navigator) {
 <div><label>Paid Amount (Rs)</label><input id="sPaid" type="number" min="0" step=".01" value="0" oninput="calcInvoice('sale')"></div>
 <div><label>Payment note</label><input id="sNote" placeholder="Cash / bank / credit"></div>
 </div>
-<div class="total"><span id="sDiscAmt" hidden>0.00</span><strong>Net Amount: Rs <span id="sGrand">0.00</span></strong><br>Balance Due: Rs <span id="sDue">0.00</span></div>
+<div class="card" id="quickActionsBox">
+<details>
+<summary style="background:linear-gradient(135deg,#073b78,#168bd2);color:white;padding:16px;border-radius:12px;font-size:18px;font-weight:900;cursor:pointer">⚡ Quick Actions ▼</summary>
+<div class="actions">
+<button class="primary" onclick="gotoTab('sales')">🧾 New Sales Invoice</button>
+<button class="secondary" onclick="gotoTab('purchase')">🛒 New Purchase</button>
+<button class="secondary" onclick="gotoTab('products')">💊 Add / View Products</button>
+<button class="secondary" onclick="gotoTab('backup')">💾 Backup & Restore</button>
+</div>
+</details>
+</div>
 <div class="actions no-print"><button class="primary" onclick="saveSale()">Save Invoice</button><button class="secondary" onclick="printInvoice()">Preview / Save Invoice PDF</button><button class="secondary" onclick="newSale()">New Invoice</button></div>
 </div>
 <div class="card"><h3>Saved Invoices</h3><div class="tablewrap"><table><thead><tr><th>No.</th><th>Date</th><th>Customer</th><th>Total</th><th></th></tr></thead><tbody id="salesList"></tbody></table></div></div>
