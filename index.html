@@ -106,6 +106,21 @@ box-shadow:0 3px 9px #123b5d18;
 #dashboard .grid .card:nth-child(2):after{content:"📈"}
 #dashboard .grid .card:nth-child(3):after{content:"👥"}
 #dashboard .grid .card:nth-child(4):after{content:"📦"}
+  #dashboard>.card:last-child .actions{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+#dashboard>.card:last-child .actions button{
+min-height:58px;
+border-radius:12px;
+font-size:14px;
+font-weight:800;
+box-shadow:0 3px 8px #0002;
+}
+#dashboard>.card:last-child .actions button:active{
+transform:scale(.97);
+  }
 </style></head>
 <script>
 if ('serviceWorker' in navigator) {
