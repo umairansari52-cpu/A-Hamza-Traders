@@ -490,6 +490,40 @@ function renderLedgerOptions(){let opts='<option value="">Choose customer</optio
 function fillDatalists(){document.getElementById('customerList').innerHTML=db.customers.map(c=>`<option value="${esc(c.name)}">`).join('');document.getElementById('productList').innerHTML=db.products.map(p=>`<option value="${esc(p.name)}">`).join('')}
 function renderReports(){let from=document.getElementById('rFrom').value||'0000',to=document.getElementById('rTo').value||'9999',s=db.sales.filter(x=>x.date>=from&&x.date<=to),p=db.purchases.filter(x=>x.date>=from&&x.date<=to),e=db.expenses.filter(x=>x.date>=from&&x.date<=to),sales=s.reduce((a,x)=>a+(+x.total||0),0),cost=s.reduce((a,x)=>a+(+x.cost||0),0),discount=s.reduce((a,x)=>a+(+x.discount||0),0),invoiceExpenses=e.filter(x=>x.saleNo).reduce((a,x)=>a+(+x.amount||0),0),otherExpenses=e.filter(x=>!x.saleNo).reduce((a,x)=>a+(+x.amount||0),0),gross=sales-cost,totalExpenses=invoiceExpenses+otherExpenses,net=gross-totalExpenses;document.getElementById('rSales').textContent='Rs '+money(sales);document.getElementById('rDiscount').textContent='Rs '+money(discount);document.getElementById('rCost').textContent='Rs '+money(cost);document.getElementById('rProfit').textContent='Rs '+money(gross);document.getElementById('rExpenses').textContent='Rs '+money(totalExpenses);document.getElementById('rNetProfit').textContent='Rs '+money(net);document.getElementById('rPurchases').textContent='Rs '+money(p.reduce((a,x)=>a+(+x.total||0),0));document.getElementById('profitInvoiceRows').innerHTML=s.slice().reverse().map(x=>{let gp=(+x.total||0)-(+x.cost||0),ex=e.filter(y=>y.saleNo===x.no).reduce((a,y)=>a+(+y.amount||0),0);return `<tr><td>${esc(x.date)}</td><td>${esc(x.no)}</td><td>${esc(x.customer)}</td><td>${money(x.total)}</td><td>${money(x.discount||0)}</td><td>${money(x.cost||0)}</td><td>${money(gp-ex)}</td></tr>`}).join('');let t={sales,discount,cost,gross};document.getElementById('prSalesTotal').textContent=money(t.sales);document.getElementById('prDiscountTotal').textContent=money(t.discount);document.getElementById('prCostTotal').textContent=money(t.cost);document.getElementById('prGrossTotal').textContent=money(t.gross);document.getElementById('expenseRows').innerHTML=e.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.category)}</td><td>${esc(x.description||'')}${x.saleNo?' (Invoice: '+esc(x.saleNo)+')':''}</td><td>${money(x.amount)}</td><td><button class="danger" onclick="deleteExpense(${x.id})">Delete</button></td></tr>`).join('');document.getElementById('expenseListTotal').textContent=money(totalExpenses);renderExpenseInvoices()}
 function addExpense(){let date=document.getElementById('eDate').value||today(),category=document.getElementById('eCategory').value.trim(),description=document.getElementById('eDescription').value.trim(),amount=+document.getElementById('eAmount').value,saleNo=document.getElementById('eInvoice').value||'';if(!category||amount<=0){alert('Expense category and valid amount are required.');return}db.expenses.push({id:Date.now()+Math.random(),date,category,description,amount,saleNo});document.getElementById('eCategory').value='';document.getElementById('eDescription').value='';document.getElementById('eAmount').value='';document.getElementById('eInvoice').value='';save();alert('Expense saved.')}
+  function renderExpenseReport(){
+let from=document.getElementById('exFrom').value||'0000';
+let to=document.getElementById('exTo').value||'9999';
+let rows=db.expenses.filter(x=>x.date>=from&&x.date<=to);
+let groups={};
+rows.forEach(x=>{
+let sale=db.sales.find(s=>s.no===x.saleNo);
+let customer=sale?sale.customer:'General Expense';
+(groups[customer]||(groups[customer]=[])).push(x);
+});
+let total=0,html='';
+Object.keys(groups).sort().forEach(customer=>{
+let subtotal=0;
+html+=`<h3>${esc(customer)}</h3><div class="tablewrap"><table><thead><tr><th>Date</th><th>Invoice No</th><th>Expense Details</th><th>Amount (Rs)</th></tr></thead><tbody>`;
+groups[customer].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>{
+let sale=db.sales.find(s=>s.no===x.saleNo);
+let amount=+x.amount||0;
+subtotal+=amount;
+html+=`<tr><td>${esc(x.date)}</td><td>${esc(x.saleNo||'—')}</td><td>${esc(x.category)} - ${esc(x.description||'')}</td><td>${money(amount)}</td></tr>`;
+});
+total+=subtotal;
+html+=`</tbody><tfoot><tr><th colspan="3">Customer Total</th><th>${money(subtotal)}</th></tr></tfoot></table></div>`;
+});
+html+=`<h3>Grand Total Expenses: Rs ${money(total)}</h3>`;
+document.getElementById('expenseReport').innerHTML=html;
+}
+
+function printExpenseReport(){
+renderExpenseReport();
+let from=document.getElementById('exFrom').value||'All';
+let to=document.getElementById('exTo').value||'All';
+let content=`<p>Date From: ${esc(from)} &nbsp; Date To: ${esc(to)}</p>`+document.getElementById('expenseReport').innerHTML;
+openPrintPage('Customer-wise Expense Report',content);
+  }
 function deleteExpense(id){if(confirm('Delete this expense record?')){db.expenses=db.expenses.filter(x=>x.id!==id);save()}}
 let printTarget=null;
 function printInvoice(){
