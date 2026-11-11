@@ -376,6 +376,17 @@ if ('serviceWorker' in navigator) {
 <div class="card"><div class="muted">Total Customers</div><div class="metric" id="dashCustomers">0</div></div>
 <div class="card"><div class="muted">Products in Stock</div><div class="metric" id="dashProducts">0</div></div>
 </div>
+<div class="card" id="quickActionsBox">
+<details>
+<summary style="background:linear-gradient(135deg,#073b78,#168bd2);color:white;padding:16px;border-radius:12px;font-size:18px;font-weight:900;cursor:pointer">⚡ Quick Actions ▼</summary>
+<div class="actions">
+<button class="primary" onclick="gotoTab('sales')">🧾 New Sales Invoice</button>
+<button class="secondary" onclick="gotoTab('purchase')">🛒 New Purchase</button>
+<button class="secondary" onclick="gotoTab('products')">💊 Add / View Products</button>
+<button class="secondary" onclick="gotoTab('backup')">💾 Backup & Restore</button>
+</div>
+</details>
+</div>
 <div class="card"><h3>Quick Actions</h3><div class="actions"><button class="primary" onclick="gotoTab('sales')">New Sales Invoice</button><button class="secondary" onclick="gotoTab('purchase')">New Purchase</button><button class="secondary" onclick="gotoTab('products')">Add / View Products</button><button class="secondary" onclick="gotoTab('backup')">Backup & Restore</button></div></div>
 </section>
 <section id="sales" class="tab">
