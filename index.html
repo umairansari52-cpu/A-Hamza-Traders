@@ -417,6 +417,21 @@ justify-content:space-between!important;
 padding:0 16px!important;
 font-size:16px!important;
 border-radius:12px!important;
+  }#nav>div:first-child{
+grid-template-columns:repeat(5,minmax(0,1fr))!important;
+gap:5px!important;
+}
+#nav>div:first-child>button,
+#nav>div:first-child>details>summary{
+height:75px!important;
+min-height:75px!important;
+width:100%!important;
+min-width:0!important;
+font-size:10px!important;
+padding:5px 2px!important;
+line-height:1.2!important;
+text-align:center!important;
+white-space:normal!important;
   }</style></head>
 <script>
 if ('serviceWorker' in navigator) {
