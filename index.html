@@ -230,7 +230,69 @@ margin:auto!important;
 transform:none!important;
 background:#ffffffed!important;
 }
-#loginScreen .card:before{content:"";display:block!important;width:100%;height:90px;background:url('./welcome-banner.webp') center/contain no-repeat;margin-bottom:12px}</style></head>
+#loginScreen .card:before{content:"";display:block!important;width:100%;height:90px;background:url('./welcome-banner.webp') center/contain no-repeat;margin-bottom:12px}/* Modern equal-size menu buttons */
+nav{
+display:grid!important;
+grid-template-columns:repeat(5,minmax(0,1fr))!important;
+gap:8px!important;
+padding:10px!important;
+overflow:visible!important;
+background:#fff!important;
+}
+nav>button,
+nav>details>summary{
+width:100%!important;
+min-width:0!important;
+min-height:72px!important;
+height:72px!important;
+padding:6px 3px!important;
+border:0!important;
+border-radius:13px!important;
+color:white!important;
+font-size:12px!important;
+font-weight:800!important;
+white-space:normal!important;
+text-align:center!important;
+display:flex!important;
+align-items:center!important;
+justify-content:center!important;
+box-shadow:0 3px 8px #123b5d30!important;
+}
+nav>button:nth-child(1){background:#0756a5!important}
+nav>button:nth-child(2){background:#08a957!important}
+nav>button:nth-child(3){background:#7138c8!important}
+nav>button:nth-child(4){background:#ed9200!important}
+nav>button:nth-child(5){background:#245080!important}
+nav>button:nth-child(6){background:#087f9b!important}
+nav>button:last-child{background:#0756a5!important}
+nav>details{
+grid-column:1/-1!important;
+width:100%!important;
+}
+nav>details>summary{
+background:#123b70!important;
+cursor:pointer;
+}
+nav>details>div{
+display:grid!important;
+grid-template-columns:repeat(4,minmax(0,1fr))!important;
+gap:7px!important;
+margin-top:8px!important;
+}
+nav>details button{
+min-width:0!important;
+min-height:58px!important;
+height:58px!important;
+padding:5px 2px!important;
+border:0!important;
+border-radius:11px!important;
+background:#dcecff!important;
+color:#0756a5!important;
+font-size:11px!important;
+font-weight:800!important;
+white-space:normal!important;
+}
+nav button:active{transform:scale(.96)}</style></head>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
