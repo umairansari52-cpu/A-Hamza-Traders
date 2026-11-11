@@ -465,7 +465,18 @@ max-height:42px!important;
 font-size:11px!important;
 padding:4px!important;
 border-radius:9px!important;
-  }</style></head>
+  }#dashboard>.grid>.card:nth-child(1),
+#dashboard>.grid>.card:nth-child(2){
+height:75px!important;
+min-height:75px!important;
+max-height:75px!important;
+padding:7px!important;
+}
+#dashboard>.grid>.card:nth-child(1) .metric,
+#dashboard>.grid>.card:nth-child(2) .metric{
+font-size:16px!important;
+margin-top:2px!important;
+                                      }</style></head>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
