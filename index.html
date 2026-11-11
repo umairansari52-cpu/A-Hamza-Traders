@@ -49,6 +49,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:9px 6px;b
 #loginScreen .card{width:100%;max-width:320px;max-height:90vh;overflow-y:auto;padding:14px;margin:auto;background-size:100% 100%;background-repeat:no-repeat}
   #loginScreen .card{transform:scale(.85);transform-origin:center center}
 #loginScreen{align-items:center;justify-content:center}
+  #loginScreen .card{background-image:none!important;transform:none!important;max-height:calc(100vh - 20px);overflow-y:auto}
+#loginScreen .card:before{content:"";display:block;width:100%;height:75px;background:url('./welcome-banner.webp') center/contain no-repeat;margin-bottom:12px}
 @media print{header,nav,.no-print,#loginScreen{display:none!important}body{background:#fff}.tab{display:none!important}body.print-ledger #ledger.tab.active,body.print-customers #customers.tab.active{display:block!important}.card{box-shadow:none;border:0}}
   nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;overflow:visible;position:relative;top:auto;padding:12px}
 nav>button{white-space:normal;min-height:62px;border-radius:12px;font-size:14px}
