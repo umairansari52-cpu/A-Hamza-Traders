@@ -206,7 +206,28 @@ display:none!important;
 #dashboard>.card:first-child:after{
 content:none!important;
   }
-</style></head>
+#loginScreen{
+position:fixed!important;
+top:0!important;left:0!important;
+width:100%!important;height:100vh!important;
+min-height:0!important;
+padding:8px!important;
+overflow:auto!important;
+background-image:url('./welcome-banner.webp')!important;
+background-size:100% 100%!important;
+background-position:center!important;
+background-repeat:no-repeat!important;
+}
+#loginScreen .card{
+width:100%!important;
+max-width:300px!important;
+max-height:85vh!important;
+overflow:auto!important;
+margin:auto!important;
+transform:none!important;
+background:#ffffffed!important;
+}
+#loginScreen .card:before{display:none!important}</style></head>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
