@@ -321,7 +321,37 @@ nav>details button:nth-child(1):before{content:"👤 "}
 nav>details button:nth-child(2):before{content:"🏭 "}
 nav>details button:nth-child(3):before{content:"📈 "}
 nav>details button:nth-child(4):before{content:"📅 "}
-nav>details button:nth-child(5):before{content:"📦 "}</style></head>
+nav>details button:nth-child(5):before{content:"📦 "}/* Quick Actions - Reference Design */
+#dashboard>.card:last-child{
+background:linear-gradient(135deg,#073b78,#168bd2)!important;
+border-radius:16px!important;
+padding:16px!important;
+}
+#dashboard>.card:last-child h3{
+color:white!important;
+font-size:18px!important;
+font-weight:900!important;
+margin-bottom:14px!important;
+}
+#dashboard>.card:last-child .actions{
+display:grid!important;
+grid-template-columns:1fr 1fr!important;
+gap:12px!important;
+}
+#dashboard>.card:last-child .actions button{
+min-height:65px!important;
+border-radius:14px!important;
+background:#eaf4ff!important;
+color:#0756a5!important;
+font-size:14px!important;
+font-weight:900!important;
+border:1px solid #c5e0fa!important;
+box-shadow:0 3px 8px #002b5030!important;
+}
+#dashboard>.card:last-child .actions button:nth-child(1):before{content:"🧾 "}
+#dashboard>.card:last-child .actions button:nth-child(2):before{content:"🛒 "}
+#dashboard>.card:last-child .actions button:nth-child(3):before{content:"💊 "}
+#dashboard>.card:last-child .actions button:nth-child(4):before{content:"💾 "}</style></head>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
