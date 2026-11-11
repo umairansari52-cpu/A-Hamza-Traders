@@ -292,7 +292,36 @@ font-size:11px!important;
 font-weight:800!important;
 white-space:normal!important;
 }
-nav button:active{transform:scale(.96)}</style></head>
+nav button:active{transform:scale(.96)}/* Button icons */
+nav>button{
+display:flex!important;
+flex-direction:column!important;
+align-items:center!important;
+justify-content:center!important;
+gap:5px!important;
+}
+nav>button:nth-child(1):before{content:"🏠"}
+nav>button:nth-child(2):before{content:"🧾"}
+nav>button:nth-child(3):before{content:"🛒"}
+nav>button:nth-child(4):before{content:"💰"}
+nav>button:nth-child(5):before{content:"👥"}
+nav>button:nth-child(6):before{content:"💊"}
+nav>button:last-child:before{content:"💾"}
+nav>button:before{font-size:23px!important}
+nav>details>summary{
+display:flex!important;
+flex-direction:column!important;
+gap:5px!important;
+}
+nav>details>summary:before{
+content:"📊";
+font-size:23px;
+}
+nav>details button:nth-child(1):before{content:"👤 "}
+nav>details button:nth-child(2):before{content:"🏭 "}
+nav>details button:nth-child(3):before{content:"📈 "}
+nav>details button:nth-child(4):before{content:"📅 "}
+nav>details button:nth-child(5):before{content:"📦 "}</style></head>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
