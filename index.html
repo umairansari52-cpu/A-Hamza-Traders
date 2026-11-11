@@ -364,9 +364,13 @@ if ('serviceWorker' in navigator) {
 </script><body>
 <div id="loginScreen"><div class="card"><h2> A.Hamza Traders Login</h2><p class="muted">Please sign in to continue.</p><label>Username</label><input id="loginUser" autocomplete="username" placeholder="Username"><br><br><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" placeholder="Password"><div class="actions"><button class="primary" style="width:100%" onclick="loginApp()">Login</button></div><p id="loginError" class="bad small"></p></div></div>
  <header><div class="brand"><div class="brand-mark">✚</div><div><h1>A.Hamza Traders</h1><small>Medicine Wholesaler & Retailers</small></div><div class="owner"><small>Proprietor:</small><strong>M. Umair</strong></div></div></header> 
-<nav id="nav">
-<button class="active" data-tab="dashboard">🏠 Dashboard</button><button data-tab="sales">🧾 Sales Invoice</button><button data-tab="purchase">🛒 Purchase</button><button data-tab="expenses">💰 Expenses</button><button data-tab="backup">💾 Backup</button><details style="position:relative;flex:0 0 auto"><summary>Products &amp; Ledger ▼</summary><div style="display:flex;gap:6px;flex-wrap:wrap"><button data-tab="products">Products & Stock</button><button data-tab="customers">Customers</button><button data-tab="ledger">Customer Ledger</button><button data-tab="supplierLedger">Supplier Ledger</button><button data-tab="reports">Profit Reports</button><button data-tab="detailReports">Date-wise Reports</button><button data-tab="productsLedger">Products Ledger</button></div></details>
-</nav>
+<nav id="nav" style="display:block">
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:8px">
+<button data-tab="sales" style="background:#0756a5;color:white">🧾 Sales Invoice</button>
+<button data-tab="purchase" style="background:#08a45a;color:white">🛒 New Purchase</button>
+<button data-tab="products" style="background:#7138c8;color:white">💊 Add / View Products</button>
+<button data-tab="backup" style="background:#e68a00;color:white">💾 Backup & Restore</button>
+<details><summary>📊
 <main>
 <section id="dashboard" class="tab active">
 <div class="card"><h2>Welcome to A.Hamza Traders</h2><div class="muted">Proprietor: M. Umair</div><p>Medicine Wholesaler & Retailers</p></div>
