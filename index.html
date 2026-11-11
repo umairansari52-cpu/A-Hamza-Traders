@@ -394,8 +394,6 @@ if ('serviceWorker' in navigator) {
 <div><label>Paid Amount (Rs)</label><input id="sPaid" type="number" min="0" step=".01" value="0" oninput="calcInvoice('sale')"></div>
 <div><label>Payment note</label><input id="sNote" placeholder="Cash / bank / credit"></div>
 </div>
-<div class="card" id="quickActionsBox">
-<
 <div class="actions no-print"><button class="primary" onclick="saveSale()">Save Invoice</button><button class="secondary" onclick="printInvoice()">Preview / Save Invoice PDF</button><button class="secondary" onclick="newSale()">New Invoice</button></div>
 </div>
 <div class="card"><h3>Saved Invoices</h3><div class="tablewrap"><table><thead><tr><th>No.</th><th>Date</th><th>Customer</th><th>Total</th><th></th></tr></thead><tbody id="salesList"></tbody></table></div></div>
