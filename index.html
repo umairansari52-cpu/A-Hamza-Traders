@@ -370,7 +370,15 @@ if ('serviceWorker' in navigator) {
 <button data-tab="purchase" style="background:#08a45a;color:white">🛒 New Purchase</button>
 <button data-tab="products" style="background:#7138c8;color:white">💊 Add / View Products</button>
 <button data-tab="backup" style="background:#e68a00;color:white">💾 Backup & Restore</button>
-<details><summary>📊
+<details><summary>📊 Reports & Ledgers ▼</summary><div style="display:flex;gap:6px;flex-wrap:wrap"><button data-tab="dashboard">Dashboard</button><button data-tab="customers">Customers</button><button data-tab="reports">Profit Reports</button><button data-tab="detailReports">Date-wise Reports</button><button data-tab="productsLedger">Products Ledger</button></div></details>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px">
+<button data-tab="ledger">👤 Customer Ledger</button>
+<button data-tab="supplierLedger">🚚 Supplier Ledger</button>
+<button data-tab="detailReports">📊 Date-wise Reports</button>
+<button data-tab="productsLedger">📦 Products Ledger</button>
+</div>
+</nav>
 <main>
 <section id="dashboard" class="tab active">
 <div class="card"><h2>Welcome to A.Hamza Traders</h2><div class="muted">Proprietor: M. Umair</div><p>Medicine Wholesaler & Retailers</p></div>
