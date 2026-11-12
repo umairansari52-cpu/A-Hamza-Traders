@@ -933,7 +933,7 @@ let total=items.reduce((a,x)=>a+x.amount,0);
 let discount=items.reduce((a,x)=>a+x.discount,0);
 let net=total-discount;
 let received=+document.getElementById('adjReceived').value||0;
-if(received<0||received>net){alert('Received payment cannot exceed net amount');return}
+if(received<0||received>discount){alert('Received payment cannot exceed discount amount');return}
 let index=(db.adjustments||[]).findIndex(x=>String(x.id)===String(window.editingAdjustmentId));
 let record={
 date:document.getElementById('adjDate').value||today(),
