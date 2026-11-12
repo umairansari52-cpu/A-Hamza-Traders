@@ -1089,7 +1089,6 @@ discount+=+x.discount||0;
 received+=paid;
 let payments=(x.payments||[]).map(p=>`<tr><td>${esc(p.date)}</td><td>Payment</td><td>${money(p.amount)}</td></tr>`).join('');
 return `<h3>${esc(x.customer)} — ${esc(x.date)}</h3>
-<p>Total Amount: Rs ${money(x.total)} | Discount: Rs ${money(x.discount)}</p>
 ${payments}`;
 }).join('');
 let content=`${html}<hr>
