@@ -923,11 +923,8 @@ document.getElementById('adjRemaining').textContent=money(discount-received);
 function saveAdjustment(){
 let customer=document.getElementById('adjCustomer').value.trim();
 let rows=[...document.querySelectorAll('.adjustment-row')];
-let items=rows.map(row=>({
-name:row.querySelector('.adj-product').value.trim(),
-amount:+row.querySelector('.adj-amount').value||0,
-discount:+row.querySelector('.adj-discount').value||0
-}));
+let percent=+row.querySelector('.adj-discount-percent').value||0;
+row.querySelector('.adj-discount').value=(qty*rate*percent/100).toFixed(2);
 if(!customer){alert('Customer name is required');return}
 if(!items.length||items.some(x=>!x.name||x.amount<=0||x.discount>x.amount)){
 alert('Enter valid product, amount and discount');return;
