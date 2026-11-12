@@ -937,7 +937,7 @@ if(received<0||received>discount){alert('Received payment cannot exceed discount
 let index=(db.adjustments||[]).findIndex(x=>String(x.id)===String(window.editingAdjustmentId));
 let record={
 date:document.getElementById('adjDate').value||today(),
-customer,items,total,discount,net,received,remaining:net-received
+customer,items,total,discount,net,received,remaining:discount-received
 };
 if(index>=0){
 let old=db.adjustments[index];
