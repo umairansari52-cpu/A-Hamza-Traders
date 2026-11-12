@@ -982,6 +982,7 @@ let content=`<p><b>Date:</b> ${esc(date)} &nbsp; <b>Customer:</b> ${esc(customer
 <p>Received Payment: Rs ${money(received)}</p>
 <p><b>Remaining Payment: Rs ${money(remaining)}</b></p>`;
 openPrintPage('Adjustment',content);
+}
 function renderExpenseReport(){
 let from=document.getElementById('exFrom').value||'0000';
 let to=document.getElementById('exTo').value||'9999';
