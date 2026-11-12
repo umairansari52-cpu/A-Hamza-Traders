@@ -962,6 +962,11 @@ calcAdjustment();
 let rows=[...document.querySelectorAll('.adjustment-row')];
 let customer=document.getElementById('adjCustomer').value.trim();
 let date=document.getElementById('adjDate').value||today();  
+  let items=rows.map(r=>({
+name:r.querySelector('.adj-product').value.trim(),
+amount:+r.querySelector('.adj-amount').value||0,
+discount:+r.querySelector('.adj-discount').value||0
+})).filter(x=>x.name);
 function renderExpenseReport(){
 let from=document.getElementById('exFrom').value||'0000';
 let to=document.getElementById('exTo').value||'9999';
