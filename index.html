@@ -907,17 +907,17 @@ row.querySelector('.adj-amount').value=(qty*rate).toFixed(2);
 calcAdjustment();
   }
 function calcAdjustment(){
+function calcAdjustment(){
 let total=0,discount=0;
 document.querySelectorAll('.adjustment-row').forEach(row=>{
 total+=Math.max(0,+row.querySelector('.adj-amount').value||0);
 discount+=Math.max(0,+row.querySelector('.adj-discount').value||0);
 });
-let net=total-discount;
 let received=Math.max(0,+document.getElementById('adjReceived').value||0);
 document.getElementById('adjTotal').textContent=money(total);
 document.getElementById('adjDiscount').textContent=money(discount);
-document.getElementById('adjRemaining').textContent=money(net-received);
-  }
+document.getElementById('adjRemaining').textContent=money(discount-received);
+}
 function saveAdjustment(){
 let customer=document.getElementById('adjCustomer').value.trim();
 let rows=[...document.querySelectorAll('.adjustment-row')];
