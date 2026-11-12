@@ -777,7 +777,7 @@ if ('serviceWorker' in navigator) {
 <script>
 const KEY='medicine_wholesale_v1';
 let db=load();
-function blank(){return {customers:[],products:[],sales:[],purchases:[],payments:[],suppliers:[],supplierPayments:[],expenses:[]}}
+function blank(){return {customers:[],products:[],sales:[],purchases:[],payments:[],suppliers:[],supplierPayments:[],expenses:[],adjustments:[]}}
 function load(){try{let d=JSON.parse(localStorage.getItem(KEY))||blank();d.suppliers ||= [];d.supplierPayments ||= [];d.payments ||= [];d.expenses ||= [];return d}catch(e){return blank()}}
   function renderProductsLedger(){
 let from=document.getElementById('plFrom').value||'0000-01-01';
