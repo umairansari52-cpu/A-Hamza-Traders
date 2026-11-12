@@ -1023,8 +1023,12 @@ x.remaining=(+x.discount||0)-x.received;
 if(save()){
 renderAdjustmentHistory();
 alert('Payment successfully saved');
-}
-  }
+let items=rows.map(row=>({
+name:row.querySelector('.adj-product').value.trim(),
+amount:+row.querySelector('.adj-amount').value||0,
+discountPercent:+row.querySelector('.adj-discount-percent').value||0,
+discount:+row.querySelector('.adj-discount').value||0
+}));
   function editAdjustment(id){
 let x=(db.adjustments||[]).find(a=>String(a.id)===String(id));
 if(!x)return;
