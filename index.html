@@ -973,6 +973,13 @@ let net=total-discount;
 let received=+document.getElementById('adjReceived').value||0;
 let remaining=net-received;  
 let trs=items.map(x=>`<tr><td>${esc(x.name)}</td><td>${money(x.amount)}</td><td>${money(x.discount)}</td><td>${money(x.amount-x.discount)}</td></tr>`).join('');
+let content=`<p><b>Date:</b> ${esc(date)} &nbsp; <b>Customer:</b> ${esc(customer)}</p>
+<table><thead><tr><th>Product</th><th>Amount</th><th>Discount</th><th>Net</th></tr></thead><tbody>${trs}</tbody></table>
+<p>Total Amount: Rs ${money(total)}</p>
+<p>Total Discount: Rs ${money(discount)}</p>
+<p><b>Net Amount: Rs ${money(net)}</b></p>
+<p>Received Payment: Rs ${money(received)}</p>
+<p><b>Remaining Payment: Rs ${money(remaining)}</b></p>`;
 function renderExpenseReport(){
 let from=document.getElementById('exFrom').value||'0000';
 let to=document.getElementById('exTo').value||'9999';
