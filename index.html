@@ -958,7 +958,7 @@ renderAdjustmentHistory();
 alert('Adjustment saved successfully');
 }
   }
-  function renderAdjustmentHistory(){
+function renderAdjustmentHistory(){
 let rows=(db.adjustments||[]).slice().reverse();
 document.getElementById('adjustmentHistory').innerHTML=rows.map(x=>`
 <div class="card">
@@ -969,6 +969,8 @@ document.getElementById('adjustmentHistory').innerHTML=rows.map(x=>`
 <p>Discount: Rs ${money(x.discount)}</p>
 <p>Received: Rs ${money(x.received)}</p>
 <strong>Remaining: Rs ${money(x.remaining)}</strong>
+<br><br>
+<button class="secondary" onclick="editAdjustment('${x.id}')">Edit</button>
 </div>`).join('')||'<p>No Adjustment Records</p>';
   }
 function printAdjustment(){
