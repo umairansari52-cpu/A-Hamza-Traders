@@ -935,16 +935,26 @@ let discount=items.reduce((a,x)=>a+x.discount,0);
 let net=total-discount;
 let received=+document.getElementById('adjReceived').value||0;
 if(received<0||received>net){alert('Received payment cannot exceed net amount');return}
-db.adjustments.push({
-id:Date.now(),date:document.getElementById('adjDate').value||today(),
+let index=(db.adjustments||[]).findIndex(x=>String(x.id)===String(window.editingAdjustmentId));
+let record={
+date:document.getElementById('adjDate').value||today(),
 customer,items,total,discount,net,received,remaining:net-received
-});
+};
+if(index>=0){
+record.id=db.adjustments[index].id;
+db.adjustments[index]=record;
+}else{
+record.id=Date.now();
+db.adjustments.push(record);
+}
 if(save()){
+window.editingAdjustmentId=null;
 document.getElementById('adjCustomer').value='';
 document.getElementById('adjReceived').value=0;
 document.getElementById('adjustmentRows').innerHTML='';
 addAdjustmentRow();
-calcAdjustment(); 
+calcAdjustment();
+renderAdjustmentHistory();
 alert('Adjustment saved successfully');
 }
   }
