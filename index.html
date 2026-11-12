@@ -958,6 +958,10 @@ document.getElementById('adjustmentHistory').innerHTML=rows.map(x=>`
 </div>`).join('')||'<p>No Adjustment Records</p>';
   }
 function printAdjustment(){
+calcAdjustment();
+let rows=[...document.querySelectorAll('.adjustment-row')];
+let customer=document.getElementById('adjCustomer').value.trim();
+let date=document.getElementById('adjDate').value||today();  
 function renderExpenseReport(){
 let from=document.getElementById('exFrom').value||'0000';
 let to=document.getElementById('exTo').value||'9999';
