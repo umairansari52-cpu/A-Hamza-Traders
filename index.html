@@ -870,6 +870,57 @@ if(!Number.isFinite(v)||v<0){alert('Opening Balance enter karein.');return}
 db.debitCreditOpening=v;
 if(save()){document.getElementById('dcOpening').readOnly=true;alert('Opening Balance saved successfully.');}
   }
+let dcEditingId=null;
+
+function saveDebitCredit(){
+let date=document.getElementById('dcDate').value;
+let description=document.getElementById('dcDescription').value.trim();
+let credit=Number(document.getElementById('dcCredit').value)||0;
+let debit=Number(document.getElementById('dcDebit').value)||0;
+
+if(!date||!description){alert('Date aur Description enter karein.');return}
+if(credit<0||debit<0||(credit===0&&debit===0)||(credit>0&&debit>0)){alert('Credit ya Debit mein se sirf ek amount enter karein.');return}
+
+let entry={id:dcEditingId||Date.now(),date,description,credit,debit};
+if(dcEditingId){
+let i=db.debitCredit.findIndex(x=>x.id===dcEditingId);
+if(i>=0)db.debitCredit[i]=entry;
+}else db.debitCredit.push(entry);
+
+dcEditingId=null;
+if(save()){
+document.getElementById('dcDate').value=today();
+document.getElementById('dcDescription').value='';
+document.getElementById('dcCredit').value=0;
+document.getElementById('dcDebit').value=0;
+renderDebitCredit();
+}
+}
+
+function renderDebitCredit(){
+let balance=Number(db.debitCreditOpening)||0;
+let rows=[...db.debitCredit].sort((a,b)=>a.date.localeCompare(b.date));
+document.getElementById('dcRows').innerHTML=rows.map(x=>{
+balance+=Number(x.credit||0)-Number(x.debit||0);
+return `<tr><td>${esc(x.date)}</td><td>${esc(x.description)}</td><td>${money(x.credit)}</td><td>${money(x.debit)}</td><td>${money(balance)}</td><td><button onclick="editDebitCredit(${x.id})">Edit</button></td></tr>`;
+}).join('');
+document.getElementById('dcClosing').textContent=money(balance);
+}
+
+function editDebitCredit(id){
+let x=db.debitCredit.find(a=>a.id===id);
+if(!x)return;
+dcEditingId=id;
+document.getElementById('dcDate').value=x.date;
+document.getElementById('dcDescription').value=x.description;
+document.getElementById('dcCredit').value=x.credit;
+document.getElementById('dcDebit').value=x.debit;
+}
+
+function printDebitCredit(){
+renderDebitCredit();
+let rows=document.getElementById('dcRows').innerHTML;
+let content=`<p><b>Opening Balance:</b> Rs ${money(db.debitCreditOpening)}</p><table><thead><tr><th>Date</th><th>Description</th><th>Credit</th><th>Debit</th><th>Balance</th></tr></thead><tbody>${rows.replace(/<td><button.*?<\/button><\/td>/g,'')}</tbody></
 function printCustomerLedger(){let id=+document.getElementById('ledgerCustomer').value,c=db.customers.find(x=>x.id===id);if(!c){alert('Please select a customer first.');return}let rows=document.getElementById('ledgerRows').innerHTML;let content=`<p><b>Customer:</b> ${esc(c.name)} &nbsp; <b>Phone:</b> ${esc(c.phone||'')}</p><p><b>Outstanding Balance:</b> Rs ${money(balance(c))}</p><table><thead><tr><th>Date</th><th>Details</th><th>Debit / Sale</th><th>Credit / Paid</th><th>Balance</th></tr></thead><tbody>${rows}</tbody></table>`;openPrintPage('Customer Ledger',content)}
 function printAllCustomerLedger(){let rows=db.customers.map(c=>{let debit=db.sales.filter(x=>x.customerId===c.id).reduce((a,x)=>a+(+x.total||0),0),credit=db.sales.filter(x=>x.customerId===c.id).reduce((a,x)=>a+(+x.paid||0),0)+db.payments.filter(x=>x.customerId===c.id).reduce((a,x)=>a+(+x.amount||0),0);return `<tr><td>${esc(c.name)}</td><td>${esc(c.phone||'')}</td><td>${money(debit)}</td><td>${money(credit)}</td><td>${money(debit-credit)}</td></tr>`}).join('');let d=db.customers.reduce((a,c)=>a+db.sales.filter(x=>x.customerId===c.id).reduce((s,x)=>s+(+x.total||0),0),0),cr=db.customers.reduce((a,c)=>a+db.sales.filter(x=>x.customerId===c.id).reduce((s,x)=>s+(+x.paid||0),0)+db.payments.filter(x=>x.customerId===c.id).reduce((s,x)=>s+(+x.amount||0),0),0);let content=`<table><thead><tr><th>Customer</th><th>Phone</th><th>Total Debit</th><th>Total Credit</th><th>Balance</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><th colspan="2">Grand Total</th><th>${money(d)}</th><th>${money(cr)}</th><th>${money(d-cr)}</th></tr></tfoot></table>`;openPrintPage('Total Customer Ledger',content)}
 function fillDates(){['sDate','pDate','payDate','spDate','eDate','adjDate'].forEach(id=>document.getElementById(id).value=today());document.getElementById('rFrom').value=today().slice(0,8)+'01';document.getElementById('rTo').value=today()}
