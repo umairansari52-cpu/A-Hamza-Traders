@@ -860,7 +860,7 @@ function nextNo(prefix,arr){return prefix+'-'+String(arr.length+1).padStart(5,'0
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(b.dataset.tab).classList.add('active');renderAll()});
 function gotoTab(id){document.querySelector(`nav button[data-tab="${id}"]`).click()}
 
-function loginApp(){let u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value;if(u==='umair'&&p==='hamza'){document.body.classList.add('authenticated');document.getElementById('loginScreen').style.display='none';sessionStorage.setItem('aht_logged_in','1');}else{document.getElementById('loginError').textContent='Incorrect username or password.'}}
+function loginApp(){let u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value;if(u==='umair'&&p==='hamzaa'){document.body.classList.add('authenticated');document.getElementById('loginScreen').style.display='none';sessionStorage.setItem('aht_logged_in','1');}else{document.getElementById('loginError').textContent='Incorrect username or password.'}}
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')loginApp()});
 // Exit confirmation
 history.pushState({ahtExitGuard:true},'',location.href);
