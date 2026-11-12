@@ -582,6 +582,50 @@ if ('serviceWorker' in navigator) {
   <button data-tab="adjustment">🧮 Adjustment</button>
 </div></details>
 </div>
+<section id="adjustment" class="tab">
+<div class="card">
+<h2>Adjustment Entry</h2>
+
+<div class="grid">
+<div>
+<label>Date</label>
+<input type="date" id="adjDate">
+</div>
+<div>
+<label>Customer Name</label>
+<input id="adjCustomer" placeholder="Enter customer name">
+</div>
+</div>
+
+<h3>Products</h3>
+<div id="adjustmentRows"></div>
+
+<div class="actions no-print">
+<button class="secondary" onclick="addAdjustmentRow()">+ Add Product</button>
+</div>
+
+<div class="card">
+<p>Total Amount: Rs <strong id="adjTotal">0.00</strong></p>
+<p>Total Discount: Rs <strong id="adjDiscount">0.00</strong></p>
+<p>Net Amount: Rs <strong id="adjNet">0.00</strong></p>
+
+<label>Received Payment (Rs)</label>
+<input type="number" id="adjReceived" value="0" oninput="calcAdjustment()">
+
+<p>Remaining Payment: Rs <strong id="adjRemaining">0.00</strong></p>
+</div>
+
+<div class="actions no-print">
+<button class="primary" onclick="saveAdjustment()">Save Adjustment</button>
+<button class="secondary" onclick="printAdjustment()">Print Preview / PDF</button>
+</div>
+</div>
+
+<div class="card">
+<h3>Adjustment History</h3>
+<div id="adjustmentHistory"></div>
+</div>
+</section>
 <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
 <button data-tab="ledger"><span class="nav-icon">👥</span><br>Customer Ledger</button>
 <button data-tab="supplierLedger"><span class="nav-icon">🚚</span><br>Supplier Ledger</button>
