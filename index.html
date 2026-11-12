@@ -907,7 +907,6 @@ row.querySelector('.adj-amount').value=(qty*rate).toFixed(2);
 calcAdjustment();
   }
 function calcAdjustment(){
-function calcAdjustment(){
 let total=0,discount=0;
 document.querySelectorAll('.adjustment-row').forEach(row=>{
 total+=Math.max(0,+row.querySelector('.adj-amount').value||0);
