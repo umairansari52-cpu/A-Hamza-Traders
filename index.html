@@ -940,9 +940,14 @@ date:document.getElementById('adjDate').value||today(),
 customer,items,total,discount,net,received,remaining:net-received
 };
 if(index>=0){
-record.id=db.adjustments[index].id;
+let old=db.adjustments[index];
+record.id=old.id;
+record.payments=old.payments||[];
+if(record.payments.length){
+record.received=record.payments.reduce((a,p)=>a+(+p.amount||0),0);
+}
 db.adjustments[index]=record;
-}else{
+  }
 record.id=Date.now();
 db.adjustments.push(record);
 }
