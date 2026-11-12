@@ -862,6 +862,13 @@ function gotoTab(id){document.querySelector(`nav button[data-tab="${id}"]`).clic
 
 function loginApp(){let u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value;if(u==='umair'&&p==='hamza'){document.body.classList.add('authenticated');document.getElementById('loginScreen').style.display='none';sessionStorage.setItem('aht_logged_in','1');}else{document.getElementById('loginError').textContent='Incorrect username or password.'}}
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')loginApp()});
+// Exit confirmation
+history.pushState({ahtExitGuard:true},'',location.href);
+window.addEventListener('popstate',()=>{
+if(!confirm('Do you want to exit?')){
+history.pushState({ahtExitGuard:true},'',location.href);
+}
+});
 if(sessionStorage.getItem('aht_logged_in')==='1'){document.body.classList.add('authenticated');document.getElementById('loginScreen').style.display='none'}
 function openPrintPage(title,content){let w=window.open('','_blank');if(!w){alert('Please allow pop-ups in Chrome to print or save PDF.');return}w.document.write(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>body{font:13px Arial;padding:18px;color:#172b3a}h1,h2{text-align:center;color:#123b5d}table{width:100%;border-collapse:collapse;margin-top:15px}th,td{border:1px solid #ccd5dd;padding:7px;text-align:left}th{background:#edf2f6}.actions{text-align:center;margin:12px}.actions button{padding:10px 16px;background:#176b9b;color:white;border:0;border-radius:6px}@media print{.actions{display:none}}</style></head><body><div class="actions"><button onclick="window.print()">Print / Save as PDF</button></div><h1>A.HAMZA TRADERS</h1><h2>${esc(title)}</h2>${content}</body></html>`);w.document.close()}
 function saveDebitCreditOpening(){
