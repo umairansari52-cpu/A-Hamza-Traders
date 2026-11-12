@@ -985,6 +985,34 @@ ${payments.map(p=>`<p>${esc(p.date)} — Rs ${money(p.amount)}</p>`).join('')}
 </div>`;
 }).join('')||'<p>No Adjustment Records</p>';
 }
+function receiveAdjustmentPayment(id){
+let x=(db.adjustments||[]).find(a=>String(a.id)===String(id));
+if(!x)return;
+
+let date=document.getElementById('adjPayDate'+id).value||today();
+let amount=+document.getElementById('adjPayAmount'+id).value||0;
+
+let payments=x.payments||[];
+if(!payments.length&&(+x.received||0)>0){
+payments.push({date:x.date||today(),amount:+x.received});
+}
+
+let received=payments.reduce((a,p)=>a+(+p.amount||0),0);
+let remaining=(+x.discount||0)-received;
+
+if(amount<=0){
+alert('Payment amount enter karein');
+return;
+}
+if(amount>remaining){
+alert('Payment remaining amount se zyada nahi ho sakti');
+return;
+}
+
+payments.push({date,amount});
+x.payments=payments;
+x.received=received+amount;
+x
   function editAdjustment(id){
 let x=(db.adjustments||[]).find(a=>String(a.id)===String(id));
 if(!x)return;
