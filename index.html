@@ -959,8 +959,6 @@ alert('Adjustment saved successfully');
   }
 function renderAdjustmentHistory(){
 let rows=(db.adjustments||[]).slice().reverse();
-function renderAdjustmentHistory(){
-let rows=(db.adjustments||[]).slice().reverse();
 document.getElementById('adjustmentHistory').innerHTML=rows.map(x=>{
 let payments=x.payments||[];
 let received=payments.length?payments.reduce((a,p)=>a+(+p.amount||0),0):(+x.received||0);
