@@ -957,7 +957,7 @@ document.getElementById('adjustmentHistory').innerHTML=rows.map(x=>`
 <strong>Remaining: Rs ${money(x.remaining)}</strong>
 </div>`).join('')||'<p>No Adjustment Records</p>';
   }
-
+function printAdjustment(){
 function renderExpenseReport(){
 let from=document.getElementById('exFrom').value||'0000';
 let to=document.getElementById('exTo').value||'9999';
