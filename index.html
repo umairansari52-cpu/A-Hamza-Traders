@@ -913,6 +913,36 @@ document.getElementById('adjDiscount').textContent=money(discount);
 document.getElementById('adjNet').textContent=money(net);
 document.getElementById('adjRemaining').textContent=money(net-received);
   }
+function saveAdjustment(){
+let customer=document.getElementById('adjCustomer').value.trim();
+let rows=[...document.querySelectorAll('.adjustment-row')];
+let items=rows.map(row=>({
+name:row.querySelector('.adj-product').value.trim(),
+amount:+row.querySelector('.adj-amount').value||0,
+discount:+row.querySelector('.adj-discount').value||0
+}));
+if(!customer){alert('Customer name is required');return}
+if(!items.length||items.some(x=>!x.name||x.amount<=0||x.discount>x.amount)){
+alert('Enter valid product, amount and discount');return;
+}
+let total=items.reduce((a,x)=>a+x.amount,0);
+let discount=items.reduce((a,x)=>a+x.discount,0);
+let net=total-discount;
+let received=+document.getElementById('adjReceived').value||0;
+if(received<0||received>net){alert('Received payment cannot exceed net amount');return}
+db.adjustments.push({
+id:Date.now(),date:document.getElementById('adjDate').value||today(),
+customer,items,total,discount,net,received,remaining:net-received
+});
+if(save()){
+document.getElementById('adjCustomer').value='';
+document.getElementById('adjReceived').value=0;
+document.getElementById('adjustmentRows').innerHTML='';
+addAdjustmentRow();
+calcAdjustment();
+alert('Adjustment saved successfully');
+}
+  }
   function renderExpenseReport(){
 let from=document.getElementById('exFrom').value||'0000';
 let to=document.getElementById('exTo').value||'9999';
