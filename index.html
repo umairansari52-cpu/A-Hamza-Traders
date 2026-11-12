@@ -905,6 +905,8 @@ let row=el.closest('.adjustment-row');
 let qty=+row.querySelector('.adj-qty').value||0;
 let rate=+row.querySelector('.adj-rate').value||0;
 row.querySelector('.adj-amount').value=(qty*rate).toFixed(2);
+let percent=+row.querySelector('.adj-discount-percent').value||0;
+row.querySelector('.adj-discount').value=(qty*rate*percent/100).toFixed(2);
 calcAdjustment();
   }
 function calcAdjustment(){
