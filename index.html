@@ -957,7 +957,6 @@ document.getElementById('adjustmentHistory').innerHTML=rows.map(x=>`
 <p>Products: ${x.items.map(i=>esc(i.name)).join(', ')}</p>
 <p>Total: Rs ${money(x.total)}</p>
 <p>Discount: Rs ${money(x.discount)}</p>
-<p>Net Amount: Rs ${money(x.net)}</p>
 <p>Received: Rs ${money(x.received)}</p>
 <strong>Remaining: Rs ${money(x.remaining)}</strong>
 </div>`).join('')||'<p>No Adjustment Records</p>';
