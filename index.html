@@ -957,12 +957,12 @@ document.getElementById('adjustmentHistory').innerHTML=rows.map(x=>`
 <strong>Remaining: Rs ${money(x.remaining)}</strong>
 </div>`).join('')||'<p>No Adjustment Records</p>';
   }
-  function renderExpenseReport(){
+
 function renderExpenseReport(){
 let from=document.getElementById('exFrom').value||'0000';
 let to=document.getElementById('exTo').value||'9999';
 let rows=db.expenses.filter(x=>x.date>=from&&x.date<=to);
-let rows=db.expenses.filter(x=>x.date>=from&&x.date<=to);
+
 let groups={};
 rows.forEach(x=>{
 let sale=db.sales.find(s=>s.no===x.saleNo);
