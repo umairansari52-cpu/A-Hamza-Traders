@@ -888,7 +888,7 @@ ${(db.products||[]).map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</optio
 <input class="adj-rate" type="number" value="0" readonly>
 <label>Amount (Rs)</label>
 <input class="adj-amount" type="number" value="0" readonly>
-<<label>Discount (%)</label>
+<label>Discount (%)</label>
 <input class="adj-discount-percent" type="number" min="0" max="100" step=".01" value="0" oninput="calcAdjustmentRow(this)">
 <label>Discount Amount (Rs)</label>
 <input class="adj-discount" type="number" value="0" readonly><button class="danger" onclick="this.parentElement.remove();calcAdjustment()">Remove</button>
