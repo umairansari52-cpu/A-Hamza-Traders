@@ -641,7 +641,36 @@ if ('serviceWorker' in navigator) {
 <div class="total"><span id="pDiscAmt" hidden>0.00</span><strong>Net Amount: Rs <span id="pGrand">0.00</span></strong><br>Supplier Balance: Rs <span id="pDue">0.00</span></div>
 <div class="actions no-print"><button class="primary" onclick="savePurchase()">Save Purchase</button><button class="secondary" onclick="printPurchase()">Preview / Save Purchase PDF</button><button class="secondary" onclick="newPurchase()">New Purchase</button></div>
 </div><div class="card"><h3>Purchase History</h3><div class="tablewrap"><table><thead><tr><th>No.</th><th>Date</th><th>Supplier</th><th>Total</th><th></th></tr></thead><tbody id="purchaseList"></tbody></table></div></div></section>
-<section id="customers" class="tab">
+<section id="adjustment" class="tab">
+<div class="card">
+<h2>Adjustment Entry</h2>
+<div class="grid">
+<div><label>Date</label><input type="date" id="adjDate"></div>
+<div><label>Customer Name</label><input id="adjCustomer" placeholder="Enter customer name"></div>
+</div>
+<h3>Products</h3>
+<div id="adjustmentRows"></div>
+<div class="actions no-print">
+<button class="secondary" onclick="addAdjustmentRow()">+ Add Product</button>
+</div>
+<div class="card">
+<p>Total Amount: Rs <strong id="adjTotal">0.00</strong></p>
+<p>Total Discount: Rs <strong id="adjDiscount">0.00</strong></p>
+<p>Net Amount: Rs <strong id="adjNet">0.00</strong></p>
+<label>Received Payment (Rs)</label>
+<input type="number" id="adjReceived" value="0" oninput="calcAdjustment()">
+<p>Remaining Payment: Rs <strong id="adjRemaining">0.00</strong></p>
+</div>
+<div class="actions no-print">
+<button class="primary" onclick="saveAdjustment()">Save Adjustment</button>
+<button class="secondary" onclick="printAdjustment()">Print Preview / PDF</button>
+</div>
+</div>
+<div class="card">
+<h3>Adjustment History</h3>
+<div id="adjustmentHistory"></div>
+</div>
+</section>
 <section id="customers" class="tab"><div class="card"><h2>Add Customer</h2><div class="grid"><div><label>Name</label><input id="cName"></div><div><label>Phone</label><input id="cPhone"></div><div><label>Address</label><input id="cAddress"></div></div><div class="actions"><button class="primary" onclick="addCustomer()">Save Customer</button></div></div><div class="card"><h3>Customer List — Debit / Credit / Balance</h3><div class="actions no-print"><button class="primary" onclick="printAllCustomerLedger()">Print Total Customer Ledger / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Total Debit (Sales)</th><th>Total Credit (Payments)</th><th>Balance</th><th></th></tr></thead><tbody id="customerRows"></tbody><tfoot><tr><th colspan="2">Grand Total</th><th id="customerDebitTotal">0.00</th><th id="customerCreditTotal">0.00</th><th id="customerBalanceTotal">0.00</th><th></th></tr></tfoot></table></div></div></section>
 
 <section id="products" class="tab">
