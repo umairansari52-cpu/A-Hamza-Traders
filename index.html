@@ -1083,6 +1083,30 @@ let content=`<p><b>Date:</b> ${esc(date)} &nbsp; <b>Customer:</b> ${esc(customer
 <p><b>Remaining Payment: Rs ${money(remaining)}</b></p>`;
 openPrintPage('Adjustment',content);
 }
+function printAdjustmentCustomerHistory(){
+let name=prompt('Customer ka naam likhein:');
+if(!name)return;
+let rows=(db.adjustments||[]).filter(x=>x.customer.toLowerCase()===name.trim().toLowerCase());
+if(!rows.length){alert('Customer record nahi mila');return;}
+let total=0,discount=0,received=0;
+let html=rows.map(x=>{
+let paid=(x.payments||[]).length?x.payments.reduce((a,p)=>a+(+p.amount||0),0):(+x.received||0);
+total+=+x.total||0;
+discount+=+x.discount||0;
+received+=paid;
+let payments=(x.payments||[]).map(p=>`<tr><td>${esc(p.date)}</td><td>Payment</td><td>${money(p.amount)}</td></tr>`).join('');
+return `<h3>${esc(x.customer)} — ${esc(x.date)}</h3>
+<p>Total Amount: Rs ${money(x.total)} | Discount: Rs ${money(x.discount)}</p>
+${payments}`;
+}).join('');
+let content=`${html}<hr>
+<h3>Grand Total</h3>
+<p>Total Amount: Rs ${money(total)}</p>
+<p>Total Discount: Rs ${money(discount)}</p>
+<p>Received: Rs ${money(received)}</p>
+<p>Remaining: Rs ${money(discount-received)}</p>`;
+openPrintPage('Customer Adjustment History',content);
+  }
 function renderExpenseReport(){
 let from=document.getElementById('exFrom').value||'0000';
 let to=document.getElementById('exTo').value||'9999';
