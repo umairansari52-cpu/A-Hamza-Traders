@@ -1012,7 +1012,13 @@ return;
 payments.push({date,amount});
 x.payments=payments;
 x.received=received+amount;
+x.remaining=(+x.discount||0)-x.received;
 
+if(save()){
+renderAdjustmentHistory();
+alert('Payment successfully saved');
+}
+  }
   function editAdjustment(id){
 let x=(db.adjustments||[]).find(a=>String(a.id)===String(id));
 if(!x)return;
