@@ -939,7 +939,7 @@ document.getElementById('adjCustomer').value='';
 document.getElementById('adjReceived').value=0;
 document.getElementById('adjustmentRows').innerHTML='';
 addAdjustmentRow();
-calcAdjustment();
+calcAdjustment(); 
 alert('Adjustment saved successfully');
 }
   }
@@ -958,24 +958,10 @@ document.getElementById('adjustmentHistory').innerHTML=rows.map(x=>`
 </div>`).join('')||'<p>No Adjustment Records</p>';
   }
   function renderExpenseReport(){
+function renderExpenseReport(){
 let from=document.getElementById('exFrom').value||'0000';
-    function printAdjustment(){
-calcAdjustment();
-let rows=[...document.querySelectorAll('.adjustment-row')];
-let customer=document.getElementById('adjCustomer').value.trim();
-let date=document.getElementById('adjDate').value||today();
-let items=rows.map(r=>({
-name:r.querySelector('.adj-product').value.trim(),
-amount:+r.querySelector('.adj-amount').value||0,
-discount:+r.querySelector('.adj-discount').value||0
-})).filter(x=>x.name);
-let total=items.reduce((a,x)=>a+x.amount,0);
-let discount=items.reduce((a,x)=>a+x.discount,0);
-let net=total-discount;
-let received=+document.getElementById('adjReceived').value||0;
-let remaining=net-received;
-let trs=items.map(x=>`<tr><td>${esc(x.name)}</td><td
 let to=document.getElementById('exTo').value||'9999';
+let rows=db.expenses.filter(x=>x.date>=from&&x.date<=to);
 let rows=db.expenses.filter(x=>x.date>=from&&x.date<=to);
 let groups={};
 rows.forEach(x=>{
