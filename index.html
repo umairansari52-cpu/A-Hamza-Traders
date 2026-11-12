@@ -813,7 +813,7 @@ if ('serviceWorker' in navigator) {
 <script>
 const KEY='medicine_wholesale_v1';
 let db=load();
-function blank(){return {customers:[],products:[],sales:[],purchases:[],payments:[],suppliers:[],supplierPayments:[],expenses:[],adjustments:[]}}
+function blank(){return {customers:[],products:[],sales:[],purchases:[],payments:[],suppliers:[],supplierPayments:[],expenses:[],adjustments:[],debitCredit:[],debitCreditOpening:0}}
 function load(){try{let d=JSON.parse(localStorage.getItem(KEY))||blank();d.suppliers ||= [];d.supplierPayments ||= [];d.payments ||= [];d.expenses ||= [];d.adjustments ||= [];return d}catch(e){return blank()}}
   function renderProductsLedger(){
 let from=document.getElementById('plFrom').value||'0000-01-01';
