@@ -1031,7 +1031,7 @@ if(!x)return;
 window.editingAdjustmentId=x.id;
 document.getElementById('adjDate').value=x.date||today();
 document.getElementById('adjCustomer').value=x.customer||'';
-document.getElementById('adjReceived').value=x.received||0;
+document.getElementById('adjReceived').value=x.payments&&x.payments.length?0:(x.received||0);
 document.getElementById('adjustmentRows').innerHTML='';
 x.items.forEach(item=>{
 addAdjustmentRow();
