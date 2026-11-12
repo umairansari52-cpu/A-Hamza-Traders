@@ -1067,7 +1067,6 @@ let content=`<p><b>Date:</b> ${esc(date)} &nbsp; <b>Customer:</b> ${esc(customer
 <table><thead><tr><th>Product</th><th>Amount</th><th>Discount / Profit</th></tr></thead><tbody>${trs}</tbody></table>
 <p>Total Amount: Rs ${money(total)}</p>
 <p>Total Discount: Rs ${money(discount)}</p>
-<p><b>Net Amount: Rs ${money(net)}</b></p>
 <p>Received Payment: Rs ${money(received)}</p>
 <p><b>Remaining Payment: Rs ${money(remaining)}</b></p>`;
 openPrintPage('Adjustment',content);
