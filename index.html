@@ -547,6 +547,12 @@ font-size:12px!important;
 font-weight:900!important;
 padding:10px 4px!important;
 white-space:normal!important;
+  }#nav>div:first-child>details[open]{
+grid-column:1/-1!important;
+width:100%!important;
+}
+#nav>div:first-child>details[open]>div{
+grid-template-columns:repeat(2,minmax(0,1fr))!important;
   }</style></head>
 <script>
 if ('serviceWorker' in navigator) {
