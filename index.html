@@ -916,7 +916,6 @@ let net=total-discount;
 let received=Math.max(0,+document.getElementById('adjReceived').value||0);
 document.getElementById('adjTotal').textContent=money(total);
 document.getElementById('adjDiscount').textContent=money(discount);
-document.getElementById('adjNet').textContent=money(net);
 document.getElementById('adjRemaining').textContent=money(net-received);
   }
 function saveAdjustment(){
