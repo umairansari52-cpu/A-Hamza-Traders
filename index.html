@@ -948,9 +948,10 @@ record.received=record.payments.reduce((a,p)=>a+(+p.amount||0),0);
 }
 db.adjustments[index]=record;
   }
+else{
 record.id=Date.now();
 db.adjustments.push(record);
-}
+  }
 if(save()){
 window.editingAdjustmentId=null;
 document.getElementById('adjCustomer').value='';
