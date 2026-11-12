@@ -630,7 +630,35 @@ if ('serviceWorker' in navigator) {
 </div>
 <div class="card"><h3>Saved Invoices</h3><div class="tablewrap"><table><thead><tr><th>No.</th><th>Date</th><th>Customer</th><th>Total</th><th></th></tr></thead><tbody id="salesList"></tbody></table></div></div>
 </section>
+<section id="debitCredit" class="tab">
+<div class="card">
+<h2>Debit & Credit Sheet</h2>
 
+<div class="grid">
+<div>
+<label>Opening Balance (Rs)</label>
+<input id="dcOpening" type="number" min="0" step=".01" placeholder="Opening Balance">
+</div>
+<div>
+<label>Date</label>
+<input id="dcDate" type="date">
+</div>
+<div>
+<label>Description</label>
+<input id="dcDescription" placeholder="Entry details">
+</div>
+<div>
+<label>Credit Amount (Rs)</label>
+<input id="dcCredit" type="number" min="0" step=".01" value="0">
+</div>
+<div>
+<label>Debit Amount (Rs)</label>
+<input id="dcDebit" type="number" min="0" step=".01" value="0">
+</div>
+</div>
+
+<div class="actions">
+<button class
 <section id="purchase" class="tab"><div class="card">
 <h2>Purchase Entry</h2><div class="grid">
   
