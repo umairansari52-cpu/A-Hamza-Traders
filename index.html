@@ -959,19 +959,34 @@ alert('Adjustment saved successfully');
   }
 function renderAdjustmentHistory(){
 let rows=(db.adjustments||[]).slice().reverse();
-document.getElementById('adjustmentHistory').innerHTML=rows.map(x=>`
+function renderAdjustmentHistory(){
+let rows=(db.adjustments||[]).slice().reverse();
+document.getElementById('adjustmentHistory').innerHTML=rows.map(x=>{
+let payments=x.payments||[];
+let received=payments.length?payments.reduce((a,p)=>a+(+p.amount||0),0):(+x.received||0);
+let remaining=(+x.discount||0)-received;
+return `
 <div class="card">
 <strong>${esc(x.customer)}</strong>
 <p>Date: ${esc(x.date)}</p>
 <p>Products: ${x.items.map(i=>esc(i.name)).join(', ')}</p>
-<p>Total: Rs ${money(x.total)}</p>
-<p>Discount: Rs ${money(x.discount)}</p>
-<p>Received: Rs ${money(x.received)}</p>
-<strong>Remaining: Rs ${money(x.remaining)}</strong>
-<br><br>
+<p>Total Amount: Rs ${money(x.total)}</p>
+<p>Discount / Profit: Rs ${money(x.discount)}</p>
+<p>Received Payment: Rs ${money(received)}</p>
+<strong>Remaining Payment: Rs ${money(remaining)}</strong>
+<h4>Payment Entry</h4>
+<label>Payment Date</label>
+<input type="date" id="adjPayDate${x.id}" value="${today()}">
+<label>Payment Amount</label>
+<input type="number" id="adjPayAmount${x.id}" min="0" step=".01">
+<button class="primary" onclick="receiveAdjustmentPayment('${x.id}')">Receive Payment</button>
+<h4>Payment History</h4>
+${payments.map(p=>`<p>${esc(p.date)} — Rs ${money(p.amount)}</p>`).join('')}
+<br>
 <button class="secondary" onclick="editAdjustment('${x.id}')">Edit</button>
-</div>`).join('')||'<p>No Adjustment Records</p>';
-  }
+</div>`;
+}).join('')||'<p>No Adjustment Records</p>';
+}
   function editAdjustment(id){
 let x=(db.adjustments||[]).find(a=>String(a.id)===String(id));
 if(!x)return;
