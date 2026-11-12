@@ -973,6 +973,28 @@ document.getElementById('adjustmentHistory').innerHTML=rows.map(x=>`
 <button class="secondary" onclick="editAdjustment('${x.id}')">Edit</button>
 </div>`).join('')||'<p>No Adjustment Records</p>';
   }
+  function editAdjustment(id){
+let x=(db.adjustments||[]).find(a=>String(a.id)===String(id));
+if(!x)return;
+window.editingAdjustmentId=x.id;
+document.getElementById('adjDate').value=x.date||today();
+document.getElementById('adjCustomer').value=x.customer||'';
+document.getElementById('adjReceived').value=x.received||0;
+document.getElementById('adjustmentRows').innerHTML='';
+x.items.forEach(item=>{
+addAdjustmentRow();
+let row=document.querySelector('#adjustmentRows .adjustment-row:last-child');
+let select=row.querySelector('.adj-product');
+select.value=item.name;
+updateAdjustmentRate(select);
+row.querySelector('.adj-qty').value=(+item.amount||0)/(+row.querySelector('.adj-rate').value||1);
+calcAdjustmentRow(row);
+row.querySelector('.adj-discount').value=item.discount||0;
+});
+calcAdjustment();
+document.getElementById('adjustment').scrollIntoView();
+alert('Adjustment opened for editing');
+}
 function printAdjustment(){
 calcAdjustment();
 let rows=[...document.querySelectorAll('.adjustment-row')];
