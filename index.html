@@ -658,7 +658,25 @@ if ('serviceWorker' in navigator) {
 </div>
 
 <div class="actions">
-<button class
+<button class="primary" onclick="saveDebitCredit()">Save Entry</button>
+<button class="secondary" onclick="printDebitCredit()">Print Preview / PDF</button>
+</div>
+</div>
+<div class="card">
+<h3>Debit & Credit History</h3>
+<div class="tablewrap">
+<table>
+<thead>
+<tr><th>Date</th><th>Description</th><th>Credit</th><th>Debit</th><th>Balance</th><th>Action</th></tr>
+</thead>
+<tbody id="dcRows"></tbody>
+<tfoot>
+<tr><th colspan="4">Closing Balance</th><th id="dcClosing">0.00</th><th></th></tr>
+</tfoot>
+</table>
+</div>
+</div>
+  </section>
 <section id="purchase" class="tab"><div class="card">
 <h2>Purchase Entry</h2><div class="grid">
   
