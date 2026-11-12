@@ -943,6 +943,20 @@ calcAdjustment();
 alert('Adjustment saved successfully');
 }
   }
+  function renderAdjustmentHistory(){
+let rows=(db.adjustments||[]).slice().reverse();
+document.getElementById('adjustmentHistory').innerHTML=rows.map(x=>`
+<div class="card">
+<strong>${esc(x.customer)}</strong>
+<p>Date: ${esc(x.date)}</p>
+<p>Products: ${x.items.map(i=>esc(i.name)).join(', ')}</p>
+<p>Total: Rs ${money(x.total)}</p>
+<p>Discount: Rs ${money(x.discount)}</p>
+<p>Net Amount: Rs ${money(x.net)}</p>
+<p>Received: Rs ${money(x.received)}</p>
+<strong>Remaining: Rs ${money(x.remaining)}</strong>
+</div>`).join('')||'<p>No Adjustment Records</p>';
+  }
   function renderExpenseReport(){
 let from=document.getElementById('exFrom').value||'0000';
 let to=document.getElementById('exTo').value||'9999';
