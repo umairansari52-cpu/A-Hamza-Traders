@@ -878,13 +878,33 @@ function addAdjustmentRow(){
 document.getElementById('adjustmentRows').insertAdjacentHTML('beforeend',`
 <div class="adjustment-row card">
 <label>Product Name</label>
-<input class="adj-product" placeholder="Product name">
+<select class="adj-product" onchange="updateAdjustmentRate(this)">
+<option value="">Select Product</option>
+${(db.products||[]).map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
+</select>
+<label>Quantity</label>
+<input class="adj-qty" type="number" min="1" value="1" oninput="calcAdjustmentRow(this)">
+<label>T.P Rate (Rs)</label>
+<input class="adj-rate" type="number" value="0" readonly>
 <label>Amount (Rs)</label>
-<input class="adj-amount" type="number" min="0" step=".01" value="0" oninput="calcAdjustment()">
+<input class="adj-amount" type="number" value="0" readonly>
 <label>Discount Amount (Rs)</label>
 <input class="adj-discount" type="number" min="0" step=".01" value="0" oninput="calcAdjustment()">
 <button class="danger" onclick="this.parentElement.remove();calcAdjustment()">Remove</button>
 </div>`);
+}
+function updateAdjustmentRate(select){
+let p=(db.products||[]).find(x=>x.name===select.value);
+let row=select.closest('.adjustment-row');
+row.querySelector('.adj-rate').value=p?(+p.price||0):0;
+calcAdjustmentRow(row);
+}
+function calcAdjustmentRow(el){
+let row=el.closest('.adjustment-row');
+let qty=+row.querySelector('.adj-qty').value||0;
+let rate=+row.querySelector('.adj-rate').value||0;
+row.querySelector('.adj-amount').value=(qty*rate).toFixed(2);
+calcAdjustment();
   }
 function calcAdjustment(){
 let total=0,discount=0;
