@@ -1416,19 +1416,7 @@ if(b.dataset.a==='sd')deleteSale(i);
 if(b.dataset.a==='pd')deletePurchase(i);
 })});
 }
-  function deleteSale(i){
-let x=db.sales[i];
-if(!x)return;
-if(!confirm('Delete this sales invoice? Stock will be returned.'))return;
-(x.items||[]).forEach(it=>{
-let pr=db.products.find(p=>p.name.toLowerCase()===it.name.toLowerCase());
-if(pr)pr.stock=(+pr.stock||0)+(+it.qty||0);
-});
-db.sales.splice(i,1);
-save();
-renderAll();
-alert('Sales invoice deleted. Stock returned.');
-}
+  function deleteSale(i){let x=db.sales[i];if(!x)return;if(!confirm('Delete this sales invoice? Stock will be returned.'))return;(x.items||[]).forEach(it=>{let pr=db.products.find(p=>p.name.toLowerCase()===it.name.toLowerCase());if(pr)pr.stock=(+pr.stock||0)+(+it.qty||0);let b=(db.batches||[]).find(b=>b.id===it.batchId);if(b)b.remaining=(+b.remaining||0)+(+it.qty||0)});db.sales.splice(i,1);save();renderAll();alert('Sales invoice deleted. Stock returned.')}}
 
 function deletePurchase(i){
 let x=db.purchases[i];
