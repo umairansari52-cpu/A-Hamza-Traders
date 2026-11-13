@@ -1418,17 +1418,17 @@ renderDashboard();
 renderAdjustmentHistory();
 renderDebitCredit();
   }
-history.pushState({ahtBackGuard:true},'',location.href);
+history.replaceState({ahtBackGuard:true},'',location.href);
 history.pushState({ahtBackGuard:true},'',location.href);
 window.addEventListener('popstate',()=>{
   const active=document.querySelector('.tab.active');
   if(active && active.id!=='dashboard'){
     gotoTab('dashboard');
-  }else if(confirm('Do you want to exit?')){
-    document.body.classList.remove('authenticated');
-    document.getElementById('loginScreen').style.display='flex';
-    sessionStorage.removeItem('aht_logged_in');
+    history.pushState({ahtBackGuard:true},'',location.href);
+    return;
   }
-  history.pushState({ahtBackGuard:true},'',location.href);
+  if(!confirm('Do you want to exit?')){
+    history.pushState({ahtBackGuard:true},'',location.href);
+  }
 });
 </script></body></html>
