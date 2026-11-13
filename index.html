@@ -828,8 +828,8 @@ if ('serviceWorker' in navigator) {
 const KEY='medicine_wholesale_v1';
 let db=load();
 function blank(){return {customers:[],products:[],sales:[],purchases:[],payments:[],suppliers:[],supplierPayments:[],expenses:[],adjustments:[],debitCredit:[],debitCreditOpening:0}}
-function load(){try{let d=JSON.parse(localStorage.getItem(KEY))||blank();d.suppliers ||= [];d.supplierPayments ||= [];d.payments ||= [];d.expenses ||= [];d.adjustments ||= [];d.debitCredit ||= [];if(typeof d.debitCreditOpening!=='number')d.debitCreditOpening=0;return d}catch(e){return blank()}}
-  function renderProductsLedger(){
+function load(){try{let d=JSON.parse(localStorage.getItem(KEY))||blank();d.suppliers ||= [];d.supplierPayments ||= [];d.payments ||= [];d.expenses ||= [];d.adjustments ||= [];d.debitCredit ||= [];if(typeof d.debitCreditOpening!=='number')d.debitCreditOpening=0;if(!Array.isArray(d.batches))d.batches=(d.products||[]).filter(p=>(+p.stock||0)>0).map(p=>({id:'existing-'+p.id,productId:p.id,productName:p.name,tp:null,qty:+p.stock||0,remaining:+p.stock||0,kind:'existing'}));return d}catch(e){return blank()}}
+function renderProductsLedger(){
 let from=document.getElementById('plFrom').value||'0000-01-01';
 let to=document.getElementById('plTo').value||'9999-12-31';
 let rows=db.products.map(p=>{
