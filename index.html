@@ -910,8 +910,6 @@ document.getElementById('dcDebit').value=0;
 renderDebitCredit();
 }
 }
-
-function renderDebitCredit(){
 function renderDebitCredit(){
  let allRows=[...db.debitCredit].sort((a,b)=>a.date.localeCompare(b.date));
  let from=document.getElementById('dcFrom').value;
