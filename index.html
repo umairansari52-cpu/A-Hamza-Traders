@@ -957,17 +957,20 @@ document.getElementById('dcCredit').value=x.credit;
 document.getElementById('dcDebit').value=x.debit;
 }
 function printDebitCredit(){
+function printDebitCredit(){
  renderDebitCredit();
 
  let rows=document.getElementById('dcRows').innerHTML;
  let credit=document.getElementById('dcTotalCredit').textContent;
  let debit=document.getElementById('dcTotalDebit').textContent;
  let closing=document.getElementById('dcClosing').textContent;
- let date=document.getElementById('dcClosingDate').value;
+ let from=document.getElementById('dcFrom').value;
+ let to=document.getElementById('dcTo').value;
 
  let content=`
  <p>Opening Balance: Rs ${money(db.debitCreditOpening)}</p>
- <p>Balance Date: ${date||'All Dates'}</p>
+ <p>Date From: ${from||'All Dates'}</p>
+ <p>Date To: ${to||'All Dates'}</p>
  <table>
  <thead><tr><th>Date</th><th>Description</th><th>Credit</th><th>Debit</th><th>Balance</th></tr></thead>
  <tbody>${rows.replace(/<td><button.*?<\/button><\/td>/g,'')}</tbody>
