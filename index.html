@@ -666,9 +666,15 @@ if ('serviceWorker' in navigator) {
 </div>
 <div class="card">
 <h3>Debit & Credit History</h3>
+<div class="grid">
 <div>
-<label>Closing Balance Date</label>
-<input id="dcClosingDate" type="date" onchange="renderDebitCredit()">
+<label>Date From</label>
+<input id="dcFrom" type="date" onchange="renderDebitCredit()">
+</div>
+<div>
+<label>Date To</label>
+<input id="dcTo" type="date" onchange="renderDebitCredit()">
+</div>
 </div>
 <div class="tablewrap">
 <table>
