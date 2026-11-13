@@ -912,33 +912,39 @@ renderDebitCredit();
 }
 
 function renderDebitCredit(){
+function renderDebitCredit(){
  let allRows=[...db.debitCredit].sort((a,b)=>a.date.localeCompare(b.date));
- let selectedDate=document.getElementById('dcClosingDate').value;
- let balance=Number(db.debitCreditOpening)||0;
+ let from=document.getElementById('dcFrom').value;
+ let to=document.getElementById('dcTo').value;
+
+ if(from && to && from>to){
+  alert('Date From cannot be after Date To');
+  return;
+ }
+
+ let filtered=allRows.filter(x=>(!from||x.date>=from)&&(!to||x.date<=to));
  let totalCredit=0;
  let totalDebit=0;
+ let balance=Number(db.debitCreditOpening)||0;
  let balanceMap={};
 
- allRows.forEach(x=>{
-   balance+=Number(x.credit||0)-Number(x.debit||0);
-   balanceMap[x.id]=balance;
- });
-
- let filtered=allRows.filter(x=>!selectedDate||x.date<=selectedDate);
  filtered.forEach(x=>{
-   totalCredit+=Number(x.credit||0);
-   totalDebit+=Number(x.debit||0);
+  totalCredit+=Number(x.credit||0);
+  totalDebit+=Number(x.debit||0);
  });
 
- let closing=(Number(db.debitCreditOpening)||0)+totalCredit-totalDebit;
+ allRows.filter(x=>!to||x.date<=to).forEach(x=>{
+  balance+=Number(x.credit||0)-Number(x.debit||0);
+  balanceMap[x.id]=balance;
+ });
 
- document.getElementById('dcRows').innerHTML=[...allRows].reverse().map(x=>{
- return `<tr><td>${esc(x.date)}</td><td>${esc(x.description)}</td><td>${money(x.credit)}</td><td>${money(x.debit)}</td><td>${money(balanceMap[x.id])}</td><td><button onclick="editDebitCredit(${x.id})">Edit</button></td></tr>`;
+ document.getElementById('dcRows').innerHTML=[...filtered].reverse().map(x=>{
+  return `<tr><td>${esc(x.date)}</td><td>${esc(x.description)}</td><td>${money(x.credit)}</td><td>${money(x.debit)}</td><td>${money(balanceMap[x.id])}</td><td><button onclick="editDebitCredit(${x.id})">Edit</button></td></tr>`;
  }).join('');
 
  document.getElementById('dcTotalCredit').textContent=money(totalCredit);
  document.getElementById('dcTotalDebit').textContent=money(totalDebit);
- document.getElementById('dcClosing').textContent=money(closing);
+ document.getElementById('dcClosing').textContent=money(balance);
   }
 
 function editDebitCredit(id){
