@@ -616,6 +616,13 @@ grid-template-columns:repeat(2,minmax(0,1fr))!important;
  #ahtPrintPreview .aht-print-paper table{page-break-inside:auto}
  #ahtPrintPreview .aht-print-paper tr{page-break-inside:avoid;page-break-after:auto}
 }
+/* Final layout and print fixes */
+#nav>div:first-child>button{min-height:40px!important;height:42px!important;padding:5px 6px!important;font-size:11px!important;line-height:1.15!important;border-radius:8px!important;box-shadow:none!important}
+#nav>div:first-child>details>summary{min-height:38px!important;padding:6px 8px!important;font-size:11px!important}
+#ahtPrintPreview .aht-print-paper{overflow-wrap:anywhere!important;word-break:normal!important;max-width:900px}
+#ahtPrintPreview .aht-print-paper table{width:100%!important;table-layout:fixed!important;border-collapse:collapse!important}
+#ahtPrintPreview .aht-print-paper th,#ahtPrintPreview .aht-print-paper td{overflow-wrap:anywhere!important;word-break:break-word!important;white-space:normal!important;padding:5px!important;font-size:11px!important}
+@media(max-width:600px){#ahtPrintPreview{padding:5px!important}#ahtPrintPreview .aht-print-paper{padding:10px!important}#ahtPrintPreview .aht-print-paper th,#ahtPrintPreview .aht-print-paper td{font-size:9px!important;padding:3px!important}}
 </style></head>
 <script>
 if ('serviceWorker' in navigator) {
@@ -731,6 +738,7 @@ startProductAutocomplete();
 <div><label>Paid Amount (Rs)</label><input id="sPaid" type="number" min="0" step=".01" value="0" oninput="calcInvoice('sale')"></div>
 <div><label>Payment note</label><input id="sNote" placeholder="Cash / bank / credit"></div>
 </div>
+<div class="total"><span id="sDiscAmt" hidden>0.00</span><strong>Net Amount: Rs <span id="sGrand">0.00</span></strong><br>Customer Balance: Rs <span id="sDue">0.00</span></div>
 <div class="actions no-print"><button class="primary" onclick="saveSale()">Save Invoice</button><button class="secondary" onclick="printInvoice()">Preview / Save Invoice PDF</button><button class="secondary" onclick="newSale()">New Invoice</button></div>
 </div>
 
