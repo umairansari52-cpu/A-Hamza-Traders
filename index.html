@@ -554,7 +554,69 @@ width:100%!important;
 }
 #nav>div:first-child>details[open]>div{
 grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  }</style></head>
+  }
+/* Compact top navigation: five main buttons, small Reports button, four lower shortcuts */
+#nav>div:first-child{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:6px!important;align-items:stretch!important}
+#nav>div:first-child>button{min-width:0!important;min-height:58px!important;padding:7px 3px!important;font-size:12px!important;line-height:1.15!important}
+#nav>div:first-child>details{grid-column:1/-1!important;width:100%!important}
+#nav>div:first-child>details>summary{display:block!important;text-align:center!important;min-height:34px!important;padding:7px 10px!important;font-size:12px!important;border-radius:8px!important}
+#nav>div:nth-of-type(2){display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important}
+#nav>div:nth-of-type(2)>button{min-width:0!important;height:55px!important;min-height:55px!important;font-size:10px!important;padding:4px 2px!important}
+@media(max-width:520px){#nav>div:first-child{grid-template-columns:repeat(2,minmax(0,1fr))!important}#nav>div:first-child>button{min-height:48px!important}#nav>div:first-child>details{grid-column:1/-1!important}#nav>div:nth-of-type(2){grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+#ahtPrintPreview{position:fixed;inset:0;z-index:10050;background:#e9eef3;overflow:auto;padding:12px;color:#172b3a}
+#ahtPrintPreview .aht-print-toolbar{position:sticky;top:0;z-index:2;background:#123b5d;color:white;padding:10px;border-radius:9px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 auto 12px;max-width:900px}
+#ahtPrintPreview .aht-print-toolbar div{display:flex;gap:6px;flex-wrap:wrap}
+#ahtPrintPreview button{border:0;border-radius:6px;padding:9px 11px;background:#eaf2fa;color:#123b5d;font-weight:700}
+#ahtPrintPreview .aht-print-paper{background:white;max-width:900px;min-height:80vh;margin:0 auto;padding:24px;box-shadow:0 2px 10px #0002}
+#ahtPrintPreview h1{text-align:center;color:#123b5d;margin:0 0 4px}
+#ahtPrintPreview h2{text-align:center;color:#526273;margin:0 0 18px}
+#ahtPrintPreview table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12px}
+#ahtPrintPreview th,#ahtPrintPreview td{border:1px solid #ccd5dd;padding:8px;text-align:left}
+#ahtPrintPreview th{background:#edf2f6}
+#ahtPrintPreview .aht-invoice-meta{display:flex;justify-content:space-between;gap:16px;margin:20px 0}
+#ahtPrintPreview .aht-invoice-meta strong{font-size:18px}
+#ahtPrintPreview .aht-invoice-totals{text-align:right;line-height:1.9;margin-top:18px}
+@media print{body>*:not(#ahtPrintPreview){display:none!important}#ahtPrintPreview{position:static!important;inset:auto!important;overflow:visible!important;padding:0!important;background:white!important}#ahtPrintPreview .aht-print-toolbar{display:none!important}#ahtPrintPreview .aht-print-paper{max-width:none!important;min-height:0!important;margin:0!important;padding:0!important;box-shadow:none!important}#ahtPrintPreview table{page-break-inside:auto}#ahtPrintPreview tr{page-break-inside:avoid;page-break-after:auto}}
+
+
+/* Product autocomplete dropdown for Android/WebView */
+.product-auto-host{position:relative!important;min-width:0}
+.product-suggestions{position:absolute;left:0;right:0;top:100%;z-index:10050;max-height:220px;overflow-y:auto;background:#fff;border:1px solid #8daec7;border-radius:0 0 9px 9px;box-shadow:0 5px 14px #123b5d30;display:none}
+.product-suggestions.show{display:block}
+.product-suggestion{display:block;width:100%;padding:10px 12px;text-align:left;border:0;border-bottom:1px solid #e6edf3;background:#fff;color:#173b56;font:inherit;font-size:14px;border-radius:0}
+.product-suggestion:active,.product-suggestion:hover{background:#e8f3ff}
+
+
+/* Dashboard navigation: five main buttons and four lower shortcuts on one row on desktop */
+@media(min-width:700px){
+ #nav>div:first-child{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:8px!important}
+ #nav>div:first-child>details{grid-column:1/-1!important;width:100%}
+ #nav>div:nth-child(2){display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important;width:100%}
+ #nav>div>button{min-width:0!important;white-space:normal!important;padding:10px 6px!important}
+ #dashboard>#quickActionsBox details>.actions{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}
+ #dashboard>#quickActionsBox details>.actions button{min-width:0!important;padding:10px 6px!important}
+}
+.product-auto-host{position:relative!important;min-width:0}
+.product-suggestions{z-index:10050!important}
+#ahtPrintPreview{position:fixed;inset:0;z-index:20000;background:#e9eef3;overflow:auto;padding:12px;display:block}
+#ahtPrintPreview .aht-print-toolbar{position:sticky;top:0;z-index:2;background:#123b5d;color:#fff;padding:10px 12px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 auto 12px;max-width:900px}
+#ahtPrintPreview .aht-print-toolbar>div{display:flex;gap:7px;flex-wrap:wrap}
+#ahtPrintPreview .aht-print-toolbar button{border:0;border-radius:7px;padding:9px 11px;background:#fff;color:#123b5d;font-weight:700}
+#ahtPrintPreview .aht-print-paper{background:#fff;color:#111;max-width:900px;min-height:75vh;margin:0 auto;padding:28px;box-shadow:0 2px 12px #0002;font-family:Arial,sans-serif}
+#ahtPrintPreview .aht-print-paper h1{text-align:center;font-size:22px;margin:0 0 8px}
+#ahtPrintPreview .aht-print-paper h2{text-align:center;margin:0 0 18px;font-size:18px}
+#ahtPrintPreview .aht-print-paper table{width:100%;border-collapse:collapse;margin-top:12px}
+#ahtPrintPreview .aht-print-paper th,#ahtPrintPreview .aht-print-paper td{border:1px solid #777;padding:7px;color:#111}
+#ahtPrintPreview .aht-print-paper th{background:#eee!important}
+@media print{
+ body>*:not(#ahtPrintPreview){display:none!important}
+ #ahtPrintPreview{position:absolute!important;inset:0!important;display:block!important;overflow:visible!important;padding:0!important;margin:0!important;background:#fff!important;z-index:999999!important}
+ #ahtPrintPreview .aht-print-toolbar{display:none!important}
+ #ahtPrintPreview .aht-print-paper{display:block!important;max-width:none!important;min-height:0!important;margin:0!important;padding:10mm!important;box-shadow:none!important}
+ #ahtPrintPreview .aht-print-paper table{page-break-inside:auto}
+ #ahtPrintPreview .aht-print-paper tr{page-break-inside:avoid;page-break-after:auto}
+}
+</style></head>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
@@ -564,6 +626,46 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
+
+// Reliable in-field product dropdown: works in Android WebView even where datalist is unsupported.
+function closeProductSuggest(except){document.querySelectorAll('.product-suggestions.show').forEach(box=>{if(!except||box!==except)box.classList.remove('show')})}
+function productInputChanged(input){
+ if(!input||input.dataset.productAuto!=='1')return;
+ const box=input.parentElement.querySelector('.product-suggestions');
+ const q=(input.value||'').trim().toLocaleLowerCase();
+ const all=(db.products||[]).map(p=>String(p.name||'')).filter(Boolean);
+ const matches=q?all.filter(n=>n.toLocaleLowerCase().startsWith(q)).concat(all.filter(n=>!n.toLocaleLowerCase().startsWith(q)&&n.toLocaleLowerCase().includes(q))):all;
+ const unique=[...new Set(matches)].slice(0,40);
+ box.innerHTML=unique.length?unique.map(n=>`<button type="button" class="product-suggestion" data-product-name="${esc(n)}">${esc(n)}</button>`).join(''):'<div class="product-suggestion" style="color:#7b8792">کوئی پروڈکٹ نہیں ملی</div>';
+ box.classList.toggle('show',unique.length>0);
+}
+function selectProductSuggestion(input,name){
+ input.value=name;const box=input.parentElement.querySelector('.product-suggestions');if(box)box.classList.remove('show');
+ input.dispatchEvent(new Event('change',{bubbles:true}));
+ input.dispatchEvent(new Event('input',{bubbles:true}));
+ input.focus();
+}
+function setupProductAutocomplete(){
+ const selector='.item-product,#prName,#smsProduct,#smpProduct';
+ document.querySelectorAll(selector).forEach(input=>{
+  if(input.dataset.productAuto==='1')return;
+  input.dataset.productAuto='1';input.removeAttribute('list');input.setAttribute('autocomplete','off');
+  const host=input.parentElement;host.classList.add('product-auto-host');
+  const box=document.createElement('div');box.className='product-suggestions';host.appendChild(box);
+  input.addEventListener('focus',()=>productInputChanged(input));
+  input.addEventListener('input',()=>productInputChanged(input));
+  box.addEventListener('mousedown',e=>{const b=e.target.closest('[data-product-name]');if(!b)return;e.preventDefault();selectProductSuggestion(input,b.dataset.productName)});
+  input.addEventListener('blur',()=>setTimeout(()=>box.classList.remove('show'),160));
+ });
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.product-auto-host'))closeProductSuggest()});
+const productAutoObserver=new MutationObserver(()=>setupProductAutocomplete());
+function startProductAutocomplete(){
+ const begin=()=>{setupProductAutocomplete();if(document.body&&!productAutoObserverStarted){productAutoObserver.observe(document.body,{childList:true,subtree:true});productAutoObserverStarted=true;}};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',begin,{once:true});else begin();
+}
+let productAutoObserverStarted=false;
+startProductAutocomplete();
 </script><body>
 <div id="loginScreen"><div class="card"><h2> A.Hamza Traders Login</h2><p class="muted">Please sign in to continue.</p><label>Username</label><input id="loginUser" autocomplete="username" placeholder="Username"><br><br><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" placeholder="Password"><div class="actions"><button class="primary" style="width:100%" onclick="loginApp()">Login</button></div><p id="loginError" class="bad small"></p></div></div>
  <header><div class="brand"><div class="brand-mark">✚</div><div><h1>A.Hamza Traders</h1><small>Medicine Wholesaler & Retailers</small></div><div class="owner"><small>Proprietor:</small><strong>M. Umair</strong></div></div></header> 
@@ -576,7 +678,6 @@ if ('serviceWorker' in navigator) {
 <button data-tab="products"><span class="nav-icon">💊</span><br>Products</button>
 <button data-tab="backup"><span class="nav-icon">📂</span><br>Backup</button>
 <details><summary><span class="nav-icon">📊</span><br>Reports</summary><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:100%">
-<button data-tab="dashboard">Dashboard</button>
 <button data-tab="customers">Customers</button>
 <button data-tab="reports">Profit Reports</button>
 <button data-tab="businessReports">Daily Summary & Outstanding</button>
@@ -588,7 +689,8 @@ if ('serviceWorker' in navigator) {
   <button data-tab="debitCredit">📒 Debit & Credit</button>
 </div></details>
 </div>
-<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px">
+<button data-tab="dashboard">🏠<br>Dashboard</button>
 <button data-tab="ledger"><span class="nav-icon">👥</span><br>Customer Ledger</button>
 <button data-tab="detailReports"><span class="nav-icon">📅</span><br>Date-wise Reports</button>
 <button data-tab="productsLedger"><span class="nav-icon">📦</span><br>Products Ledger</button></div>
@@ -713,11 +815,11 @@ if ('serviceWorker' in navigator) {
 <div><label>Purchase T.P. (automatic)</label><select id="smsBatch" onchange="sampleSaleBatchChanged()"><option value="">Select purchase T.P.</option></select></div>
 <div><label>Available Stock</label><input id="smsStock" readonly value="0"></div><div><label>Quantity</label><input id="smsQty" type="number" min="0.01" step="0.01" value="1" oninput="calcSampleSale()"></div>
 <div><label>Sales T.P. Net Amount (manual)</label><input id="smsRate" type="number" min="0.01" step="0.01" oninput="calcSampleSale()"></div>
-</div><p><b>Net Amount: Rs <span id="smsTotal">0.00</span></b></p><div class="actions"><button class="primary" onclick="saveSampleSale()">Save Sample Sales</button><button class="secondary" onclick="resetSampleSale()">New Sample Sales</button></div></div>
+</div><p><b>Net Amount: Rs <span id="smsTotal">0.00</span></b></p><div class="actions"><button class="primary" onclick="saveSampleSale()">Save Sample Sales</button><button class="secondary" onclick="printSampleSalePreview()">Print Preview</button><button class="secondary" onclick="resetSampleSale()">New Sample Sales</button></div></div>
 <div class="card" id="samplePurchaseForm" style="display:none"><h3>Sample Purchase</h3><div class="grid">
 <div><label>Sample Purchase No.</label><input id="smpNo" readonly></div><div><label>Date</label><input id="smpDate" type="date"></div><div><label>Supplier (optional)</label><input id="smpSupplier" placeholder="Supplier name"></div>
 <div><label>Product</label><input id="smpProduct" list="productList" placeholder="Type product name"></div><div><label>Quantity</label><input id="smpQty" type="number" min="0.01" step="0.01" value="1" oninput="calcSamplePurchase()"></div><div><label>T.P. Rate (manual)</label><input id="smpRate" type="number" min="0.01" step="0.01" oninput="calcSamplePurchase()"></div>
-</div><p><b>Total Amount: Rs <span id="smpTotal">0.00</span></b></p><div class="actions"><button class="primary" onclick="saveSamplePurchaseNew()">Save Sample Purchase</button><button class="secondary" onclick="resetSamplePurchaseNew()">New Sample Purchase</button></div></div>
+</div><p><b>Total Amount: Rs <span id="smpTotal">0.00</span></b></p><div class="actions"><button class="primary" onclick="saveSamplePurchaseNew()">Save Sample Purchase</button><button class="secondary" onclick="printSamplePurchasePreview()">Print Preview</button><button class="secondary" onclick="resetSamplePurchaseNew()">New Sample Purchase</button></div></div>
 <div class="card"><h3>Purchase History</h3><div class="grid"><div><label>Date From</label><input id="phFrom" type="date" onchange="renderLists()"></div><div><label>Date To</label><input id="phTo" type="date" onchange="renderLists()"></div></div><div class="actions no-print"><button class="secondary" onclick="printHistory('purchaseList','Purchase History')">Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>No.</th><th>Date</th><th>Supplier</th><th>Total</th></tr></thead><tbody id="purchaseList"></tbody></table></div></div>
 <div class="card"><h3>Sales History</h3><div class="grid"><div><label>Date From</label><input id="shFrom" type="date" onchange="renderLists()"></div><div><label>Date To</label><input id="shTo" type="date" onchange="renderLists()"></div></div><div class="actions no-print"><button class="secondary" onclick="printHistory('salesList','Sales History')">Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>No.</th><th>Date</th><th>Customer</th><th>Total</th></tr></thead><tbody id="salesList"></tbody></table></div></div>
 <div class="card"><h3>Sample Sales History</h3><div class="grid"><div><label>Date From</label><input id="sshFrom" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Date To</label><input id="sshTo" type="date" onchange="renderSampleHistoryNew()"></div></div><div class="actions no-print"><button class="secondary" onclick="printHistory('sampleSalesHistory','Sample Sales History')">Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>No.</th><th>Date</th><th>Customer</th><th>Product</th><th>Qty</th><th>Purchase T.P.</th><th>Sales Net T.P.</th><th>Total</th></tr></thead><tbody id="sampleSalesHistory"></tbody></table></div></div>
@@ -919,7 +1021,17 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementB
 
 if(sessionStorage.getItem('aht_logged_in')==='1'){document.body.classList.add('authenticated');document.getElementById('loginScreen').style.display='none'}
 if(db.debitCreditOpening!==0){let openingInput=document.getElementById('dcOpening');if(openingInput){openingInput.value=db.debitCreditOpening;openingInput.readOnly=true}}
-function openPrintPage(title,content){let w=window.open('','_blank');if(!w){alert('Please allow pop-ups in Chrome to print or save PDF.');return}w.document.write(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>body{font:13px Arial;padding:18px;color:#172b3a}h1,h2{text-align:center;color:#123b5d}table{width:100%;border-collapse:collapse;margin-top:15px}th,td{border:1px solid #ccd5dd;padding:7px;text-align:left}th{background:#edf2f6}.actions{text-align:center;margin:12px}.actions button{padding:10px 16px;background:#176b9b;color:white;border:0;border-radius:6px}@media print{.actions{display:none}}</style></head><body><div class="actions"><button onclick="window.print()">Print / Save as PDF</button></div><h1>A.HAMZA TRADERS</h1><h2>${esc(title)}</h2>${content}</body></html>`);w.document.close()}
+function showPrintPreview(title,content,invoiceData){
+  let old=document.getElementById('ahtPrintPreview');if(old)old.remove();
+  let layer=document.createElement('div');layer.id='ahtPrintPreview';
+  layer.innerHTML=`<div class="aht-print-toolbar no-print"><b>${esc(title)}</b><div><button type="button" id="ahtPrintNow">پرنٹ / PDF</button>${invoiceData?'<button type="button" id="ahtDownloadPdf">PDF ڈاؤن لوڈ</button>':''}<button type="button" id="ahtClosePreview">بند کریں</button></div></div><article class="aht-print-paper"><h1>A.HAMZA TRADERS</h1><h2>${esc(title)}</h2>${content}</article>`;
+  document.body.appendChild(layer);
+  layer.querySelector('#ahtPrintNow').onclick=()=>{try{window.print()}catch(e){alert('پرنٹ کھولنے میں مسئلہ آیا۔ براہِ کرم دوبارہ کوشش کریں۔')}};
+  layer.querySelector('#ahtClosePreview').onclick=()=>layer.remove();
+  let dl=layer.querySelector('#ahtDownloadPdf');if(dl)dl.onclick=()=>downloadInvoicePDF(invoiceData);
+}
+function openPrintPage(title,content){showPrintPreview(title,content)}
+
 function saveDebitCreditOpening(){
 if(db.debitCreditOpening!==0){alert('Opening Balance pehle save ho chuka hai.');return}
 let v=Number(document.getElementById('dcOpening').value);
@@ -1075,8 +1187,20 @@ function resetSamplePurchaseNew(){document.getElementById('smpNo').value=nextNo(
 function calcSamplePurchase(){document.getElementById('smpTotal').textContent=money((+document.getElementById('smpQty').value||0)*(+document.getElementById('smpRate').value||0))}
 function saveSamplePurchaseNew(){try{let name=document.getElementById('smpProduct').value.trim(),qty=+document.getElementById('smpQty').value,rate=+document.getElementById('smpRate').value,supplier=document.getElementById('smpSupplier').value.trim()||'Sample';if(!name||qty<=0||rate<=0){alert('Product, quantity aur manual T.P. Rate enter karein.');return}let pr=db.products.find(p=>p.name.toLowerCase()===name.toLowerCase());if(!pr){alert('Pehle Products mein product add karein.');return}let no=document.getElementById('smpNo').value,total=qty*rate,item={name,qty,rate,discount:0,net:total,netCost:rate},rec={no,date:document.getElementById('smpDate').value,supplier,kind:'samplePurchase',items:[item],subtotal:total,total,discount:0,paid:0,due:total};let oldStock=+pr.stock||0,oldCost=+pr.cost||0,oldBatchCount=(db.batches||[]).length;db.purchases.push(rec);pr.stock=oldStock+qty;pr.cost=pr.stock?((oldStock*oldCost)+(qty*rate))/pr.stock:rate;db.batches||=[];db.batches.push({id:'sample-purchase-'+Date.now()+'-'+Math.random(),purchaseNo:no,productId:pr.id,productName:pr.name,tp:rate,qty,remaining:qty,kind:'sample'});if(!save()){db.purchases.pop();pr.stock=oldStock;pr.cost=oldCost;db.batches.splice(oldBatchCount);return}renderSampleHistoryNew();alert('Sample Purchase saved. Stock updated.');resetSamplePurchaseNew()}catch(e){console.error(e);alert('Sample Purchase save error: '+e.message)}}
 function saveSampleSale(){try{let customer=document.getElementById('smsCustomer').value.trim(),name=document.getElementById('smsProduct').value.trim(),qty=+document.getElementById('smsQty').value,rate=+document.getElementById('smsRate').value,batchId=document.getElementById('smsBatch').value,p=db.products.find(x=>x.name.toLowerCase()===name.toLowerCase()),b=db.batches.find(x=>String(x.id)===String(batchId));if(!customer||!p||!b||qty<=0||rate<=0){alert('Customer, product, Purchase T.P. batch, quantity aur Sales Net T.P. enter karein.');return}if((+b.remaining||0)<qty||( +p.stock||0)<qty){alert('Selected batch mein required stock available nahi.');return}let c=ensureCustomer(customer,''),costRate=b.kind==='existing'?(+p.cost||0):(+b.tp||0),total=qty*rate,no=document.getElementById('smsNo').value,item={name,qty,rate,discount:0,net:total,batchId,costRate},rec={no,date:document.getElementById('smsDate').value,customer:c.name,customerId:c.id,kind:'sampleSale',items:[item],subtotal:total,discount:0,total,paid:0,due:total,cost:qty*costRate,profit:total-qty*costRate,netProfit:total-qty*costRate};b.remaining-=qty;p.stock-=qty;db.sales.push(rec);if(!save()){db.sales.pop();b.remaining+=qty;p.stock+=qty;return}renderSampleHistoryNew();alert('Sample Sales saved. Stock aur profit update ho gaya.');resetSampleSale()}catch(e){console.error(e);alert('Sample Sales save error: '+e.message)}}
+function printSampleSalePreview(){
+ let customer=document.getElementById('smsCustomer').value.trim(),name=document.getElementById('smsProduct').value.trim(),qty=+document.getElementById('smsQty').value||0,rate=+document.getElementById('smsRate').value||0,batchId=document.getElementById('smsBatch').value,b=db.batches.find(x=>String(x.id)===String(batchId)),total=qty*rate;
+ if(!name||qty<=0||rate<=0){alert('Product, quantity aur Sales Net T.P. enter karein.');return}
+ let content=`<p><b>Customer:</b> ${esc(customer)} &nbsp; <b>Date:</b> ${esc(document.getElementById('smsDate').value)} &nbsp; <b>Invoice:</b> ${esc(document.getElementById('smsNo').value)}</p><table><thead><tr><th>Product</th><th>Qty</th><th>Purchase T.P.</th><th>Sales Net T.P.</th><th>Net Amount</th></tr></thead><tbody><tr><td>${esc(name)}</td><td>${money(qty)}</td><td>${money(b?.tp||0)}</td><td>${money(rate)}</td><td>${money(total)}</td></tr></tbody></table><h3 style="text-align:right">Net Amount: Rs ${money(total)}</h3><p style="text-align:center;margin-top:50px">Thank you</p>`;
+ showPrintPreview('Sample Sales Invoice',content);
+}
+function printSamplePurchasePreview(){
+ let supplier=document.getElementById('smpSupplier').value.trim(),name=document.getElementById('smpProduct').value.trim(),qty=+document.getElementById('smpQty').value||0,rate=+document.getElementById('smpRate').value||0,total=qty*rate;
+ if(!name||qty<=0||rate<=0){alert('Product, quantity aur manual T.P. Rate enter karein.');return}
+ let content=`<p><b>Supplier:</b> ${esc(supplier||'Sample')} &nbsp; <b>Date:</b> ${esc(document.getElementById('smpDate').value)} &nbsp; <b>Purchase No.:</b> ${esc(document.getElementById('smpNo').value)}</p><table><thead><tr><th>Product</th><th>Qty</th><th>Manual T.P.</th><th>Total Amount</th></tr></thead><tbody><tr><td>${esc(name)}</td><td>${money(qty)}</td><td>${money(rate)}</td><td>${money(total)}</td></tr></tbody></table><h3 style="text-align:right">Total Amount: Rs ${money(total)}</h3><p style="text-align:center;margin-top:50px">Thank you</p>`;
+ showPrintPreview('Sample Purchase Invoice',content);
+}
 function renderSampleHistoryNew(){let fromS=document.getElementById('sshFrom')?.value||'',toS=document.getElementById('sshTo')?.value||'',fromP=document.getElementById('sphFrom')?.value||'',toP=document.getElementById('sphTo')?.value||'';let ss=(db.sales||[]).filter(x=>x.kind==='sampleSale'&&(!fromS||x.date>=fromS)&&(!toS||x.date<=toS)).slice().reverse(),sp=(db.purchases||[]).filter(x=>(x.kind==='samplePurchase'||x.kind==='sample')&&(!fromP||x.date>=fromP)&&(!toP||x.date<=toP)).slice().reverse();let a=document.getElementById('sampleSalesHistory'),b=document.getElementById('samplePurchaseHistory');if(a)a.innerHTML=ss.map(x=>{let it=x.items?.[0]||{};return `<tr><td>${esc(x.no)}</td><td>${esc(x.date)}</td><td>${esc(x.customer)}</td><td>${esc(it.name)}</td><td>${money(it.qty)}</td><td>${money(it.costRate||0)}</td><td>${money(it.rate||0)}</td><td>${money(x.total)}</td></tr>`}).join('')||'<tr><td colspan="8">No sample sales</td></tr>';if(b)b.innerHTML=sp.map(x=>{let it=x.items?.[0]||{};return `<tr><td>${esc(x.no)}</td><td>${esc(x.date)}</td><td>${esc(x.supplier)}</td><td>${esc(it.name)}</td><td>${money(it.qty)}</td><td>${money(it.rate)}</td><td>${money(x.total)}</td></tr>`}).join('')||'<tr><td colspan="7">No sample purchases</td></tr>'}
-function printHistory(id,title){let el=document.getElementById(id);if(!el)return;let table=el.closest('table');openPrint(`<h2>A.Hamza Traders — ${esc(title)}</h2><table>${table.innerHTML}</table>`)}
+function printHistory(id,title){if(title==='Purchase History'||title==='Sales History')renderLists();else renderSampleHistoryNew();let el=document.getElementById(id);if(!el)return;let table=el.closest('table');let range='';if(title==='Purchase History')range=`Date From: ${document.getElementById('phFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('phTo')?.value||'All'}`;else if(title==='Sales History')range=`Date From: ${document.getElementById('shFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('shTo')?.value||'All'}`;else if(title==='Sample Sales History')range=`Date From: ${document.getElementById('sshFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('sshTo')?.value||'All'}`;else if(title==='Sample Purchase History')range=`Date From: ${document.getElementById('sphFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('sphTo')?.value||'All'}`;showPrintPreview(title,`<p>${range}</p><table>${table.innerHTML}</table>`)}
 function filterSampleProducts(){let q=(document.getElementById('smProductSearch')?.value||'').toLowerCase(),sel=document.getElementById('smProduct');if(!sel)return;let cur=sel.value;sel.innerHTML='<option value="">Select product</option>'+(db.products||[]).filter(p=>!q||p.name.toLowerCase().includes(q)).map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');if([...sel.options].some(o=>o.value===cur))sel.value=cur}
 function resetSampleForm(){resetSamplePurchaseNew();renderSampleHistoryNew()}
 function saveSamplePurchase(){saveSamplePurchaseNew()}
@@ -1414,33 +1538,12 @@ function printPurchase(){
 function reprint(no){let x=db.sales.find(s=>s.no===no);if(x)doPrint({...x,kind:'Sales Invoice',customer:x.customer})}
 function reprintPurchase(no){let x=db.purchases.find(s=>s.no===no);if(x)doPrint({...x,kind:'Purchase Invoice',customer:x.supplier,discount:x.discount||0})}
 function doPrint(x){
- let w=window.open('','_blank'); 
- if(!w){alert('Allow pop-ups to preview or save PDF.');return}
  const isPurchase=x.kind==='Purchase Invoice';
- const payload=encodeURIComponent(JSON.stringify(x));
- w.document.write(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(x.no)}</title>
- <style>
- body{font:14px Arial,sans-serif;color:#172b3a;padding:24px;max-width:850px;margin:auto}
- h1{text-align:center;color:#123b5d;margin-bottom:4px}h2{text-align:center;font-size:16px;margin-top:0;color:#526273}
- .meta{display:flex;justify-content:space-between;gap:20px;margin:25px 0}
- table{width:100%;border-collapse:collapse;margin-top:16px}td,th{border:1px solid #ccd5dd;padding:9px;text-align:left}th{background:#edf2f6}
- .totals{margin:20px 0 0 auto;width:280px;line-height:2}.grand{font-size:18px;font-weight:bold;border-top:2px solid #123b5d;padding-top:6px}
- .actions{display:flex;gap:10px;justify-content:center;margin:10px auto 25px;flex-wrap:wrap}.actions button{border:0;border-radius:7px;padding:11px 16px;background:#176b9b;color:#fff;font-weight:bold}
- .hint{text-align:center;color:#637383;font-size:12px;margin-bottom:20px}
- @media print{.actions,.hint{display:none}body{padding:0}}
- </style></head><body>
- <div class="actions"><button onclick="if(window.opener&&window.opener.downloadInvoicePDF){window.opener.downloadInvoicePDF(JSON.parse(decodeURIComponent('${payload}')))}else{window.print()}" >Download PDF</button><button onclick="window.print()">Print</button><button onclick="window.close()">Close Preview</button></div>
- <div class="hint">If Download PDF does not start, use Print and select Save as PDF.</div>
- <h1>A.HAMZA TRADERS</h1><h2>MEDICINE WHOLESALE</h2><h2>${isPurchase?'PURCHASE INVOICE':'SALES INVOICE'}</h2>
- <div class="meta"><div><b>${isPurchase?'Supplier':'Customer'}:</b> <span style="font-size:20px;font-weight:bold">${esc(x.customer)}</span><br><b>Date:</b> ${esc(x.date)}</div><div><b>${isPurchase?'Purchase':'Invoice'} No.:</b> ${esc(x.no)}</div></div>
- <table><thead><tr><th>Product</th><th>Qty</th><th>T.P Amount (Rs)</th><th>T.P Total Amount (Rs)</th><th>Discount %</th><th>Net Amount (Rs)</th></tr></thead><tbody>
- ${x.items.map(i=>`<tr><td>${esc(i.name)}</td><td>${money(i.qty)}</td><td>${money(i.rate)}</td><td>${money(i.qty*i.rate)}</td><td>${money(i.discount)}%</td><td>${money(i.net)}</td></tr>`).join('')}
- </tbody></table>
- <div class="totals"><div class="grand">Net Amount: Rs ${money(x.total)}</div><div>Amount in words: ${amountWords(x.total)}</div><div>Paid: Rs ${money(x.paid)}</div><div>Balance: Rs ${money(x.due)}</div></div>
- <p style="margin-top:55px">Prepared by: ____________________ <span style="float:right">Received by: ____________________</span></p><p style="text-align:center;margin-top:35px">Thank you</p>
- </body></html>`);
- w.document.close();
+ const rows=(x.items||[]).map(i=>`<tr><td>${esc(i.name)}</td><td>${money(i.qty)}</td><td>${money(i.rate)}</td><td>${money(i.qty*i.rate)}</td><td>${money(i.discount||0)}%</td><td>${money(i.net??(i.qty*i.rate))}</td></tr>`).join('');
+ const content=`<div class="aht-invoice-meta"><div><b>${isPurchase?'Supplier':'Customer'}:</b> <strong>${esc(x.customer||'')}</strong><br><b>Date:</b> ${esc(x.date||'')}</div><div><b>${isPurchase?'Purchase':'Invoice'} No.:</b> ${esc(x.no||'')}</div></div><table><thead><tr><th>Product</th><th>Qty</th><th>T.P. Rate (Rs)</th><th>Total Amount (Rs)</th><th>Discount %</th><th>Net Amount (Rs)</th></tr></thead><tbody>${rows}</tbody></table><div class="aht-invoice-totals"><b>Net Amount: Rs ${money(x.total)}</b><br>Amount in words: ${amountWords(x.total)}<br>Paid: Rs ${money(x.paid)}<br>Balance: Rs ${money(x.due)}</div><p style="margin-top:50px">Prepared by: ____________________ <span style="float:right">Received by: ____________________</span></p><p style="text-align:center;margin-top:30px">Thank you</p>`;
+ showPrintPreview(x.kind,content,x);
 }
+
 function downloadInvoicePDF(x){
  const clean=t=>String(t??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x20-\x7E]/g,' ').replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
  const lines=['A.HAMZA TRADERS','MEDICINE WHOLESALE',x.kind,'Invoice: '+x.no,'Date: '+x.date,(x.kind==='Purchase Invoice'?'Supplier: ':'Customer: ')+x.customer,'','Product | Qty | TP Rate | TP Total | Disc % | Net'];
