@@ -1646,5 +1646,24 @@ function renderAll(){renderCustomerList();renderSampleHistory();if(document.getE
   window.addEventListener('pageshow',function(){guardReady=false;arm();});
 })();
 </script>
+<style>
+#nav>div:first-child{
+display:grid!important;
+grid-template-columns:repeat(5,minmax(0,1fr))!important;
+gap:4px!important;
+}
+#nav>div:first-child>button{
+min-width:0!important;
+width:100%!important;
+height:48px!important;
+padding:3px 1px!important;
+font-size:10px!important;
+white-space:normal!important;
+}
+#nav>div:first-child>details{
+grid-column:1/-1!important;
+width:100%!important;
+}
+</style>
 </body>
 </html>
