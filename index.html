@@ -578,6 +578,7 @@ if ('serviceWorker' in navigator) {
 <button data-tab="dashboard">Dashboard</button>
 <button data-tab="customers">Customers</button>
 <button data-tab="reports">Profit Reports</button>
+<button data-tab="businessReports">Daily Summary & Outstanding</button>
 <button data-tab="detailReports">Date-wise Reports</button>
 <button data-tab="productsLedger">Products Ledger</button>
   <button data-tab="expenses">💰 Expenses</button>
@@ -659,6 +660,7 @@ if ('serviceWorker' in navigator) {
 </div>
 </div>
 
+<p><b>Opening Balance for selected date:</b> Rs <span id="dcPeriodOpening">0.00</span></p>
 <div class="actions">
 <button class="primary" onclick="saveDebitCredit()">Save Entry</button>
 <button class="secondary" onclick="printDebitCredit()">Print Preview / PDF</button>
@@ -823,6 +825,26 @@ if ('serviceWorker' in navigator) {
 </div>
   </section>
                                </section><section id="backup" class="tab"><div class="card"><h2>Backup & Restore</h2><p>Export your records as a JSON backup file. Keep a copy somewhere safe.</p><div class="actions"><button class="primary" onclick="backup()">Download Backup</button><button class="secondary" onclick="showBackupText(JSON.stringify(db,null,2))">Show Backup Text</button><label class="secondary" style="display:inline-block">Restore Backup <input type="file" accept=".json,application/json" onchange="restore(event)" style="display:none"></label><button class="secondary" onclick="restorePasted()">Restore from copied text</button></div><div class="notice" style="margin-top:12px">This app stores data only in this browser on this device. It does not sync automatically to another phone.</div><div class="actions"><button class="danger" onclick="clearAll()">Delete all app data</button></div></div></section>
+<section id="businessReports" class="tab">
+<div class="card">
+<h2>Daily Summary</h2>
+<div class="grid"><div><label>Report Date</label><input type="date" id="dailyReportDate" onchange="renderBusinessReports()"></div></div>
+<div class="tablewrap"><table><tbody>
+<tr><th>Total Sales</th><td id="dailySales">0.00</td></tr>
+<tr><th>Total Purchase</th><td id="dailyPurchases">0.00</td></tr>
+<tr><th>Expenses</th><td id="dailyExpenses">0.00</td></tr>
+<tr><th>Customer Recovery</th><td id="dailyRecovery">0.00</td></tr>
+<tr><th>Gross Profit</th><td id="dailyProfit">0.00</td></tr>
+<tr><th>Profit After Expenses</th><td id="dailyNetProfit">0.00</td></tr>
+</tbody></table></div>
+<div class="actions no-print"><button class="primary" onclick="printDailySummary()">Print Preview / PDF</button><button class="secondary" onclick="shareDailySummary()">Share on WhatsApp</button></div>
+</div>
+<div class="card">
+<h2>Customer Outstanding</h2>
+<div class="actions no-print"><button class="primary" onclick="printCustomerOutstanding()">Print Preview / PDF</button><button class="secondary" onclick="shareCustomerOutstanding()">Share on WhatsApp</button></div>
+<div class="tablewrap"><table><thead><tr><th>Customer</th><th>Phone</th><th>Outstanding (Rs)</th></tr></thead><tbody id="outstandingRows"></tbody><tfoot><tr><th colspan="2">Grand Total</th><th id="outstandingGrand">0.00</th></tr></tfoot></table></div>
+</div>
+</section>
 </main>
 <script>
 const KEY='medicine_wholesale_v1';
@@ -876,6 +898,7 @@ function loginApp(){let u=document.getElementById('loginUser').value.trim(),p=do
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')loginApp()});
 
 if(sessionStorage.getItem('aht_logged_in')==='1'){document.body.classList.add('authenticated');document.getElementById('loginScreen').style.display='none'}
+if(db.debitCreditOpening!==0){let openingInput=document.getElementById('dcOpening');if(openingInput){openingInput.value=db.debitCreditOpening;openingInput.readOnly=true}}
 function openPrintPage(title,content){let w=window.open('','_blank');if(!w){alert('Please allow pop-ups in Chrome to print or save PDF.');return}w.document.write(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>body{font:13px Arial;padding:18px;color:#172b3a}h1,h2{text-align:center;color:#123b5d}table{width:100%;border-collapse:collapse;margin-top:15px}th,td{border:1px solid #ccd5dd;padding:7px;text-align:left}th{background:#edf2f6}.actions{text-align:center;margin:12px}.actions button{padding:10px 16px;background:#176b9b;color:white;border:0;border-radius:6px}@media print{.actions{display:none}}</style></head><body><div class="actions"><button onclick="window.print()">Print / Save as PDF</button></div><h1>A.HAMZA TRADERS</h1><h2>${esc(title)}</h2>${content}</body></html>`);w.document.close()}
 function saveDebitCreditOpening(){
 if(db.debitCreditOpening!==0){alert('Opening Balance pehle save ho chuka hai.');return}
@@ -910,40 +933,29 @@ document.getElementById('dcDebit').value=0;
 renderDebitCredit();
 }
 }
+function debitCreditBalanceBefore(date){
+ let bal=Number(db.debitCreditOpening)||0;
+ (db.debitCredit||[]).filter(x=>x.date<date).forEach(x=>{bal+=(Number(x.credit)||0)-(Number(x.debit)||0)});
+ return bal;
+}
 function renderDebitCredit(){
- let allRows=[...db.debitCredit].sort((a,b)=>a.date.localeCompare(b.date));
- let from=document.getElementById('dcFrom').value;
- let to=document.getElementById('dcTo').value;
-
- if(from && to && from>to){
-  alert('Date From cannot be after Date To');
-  return;
- }
-
+ let allRows=[...(db.debitCredit||[])].sort((a,b)=>a.date.localeCompare(b.date)||(a.id-b.id));
+ let from=document.getElementById('dcFrom').value,to=document.getElementById('dcTo').value;
+ if(from&&to&&from>to){alert('Date From cannot be after Date To');return;}
  let filtered=allRows.filter(x=>(!from||x.date>=from)&&(!to||x.date<=to));
- let totalCredit=0;
- let totalDebit=0;
- let balance=Number(db.debitCreditOpening)||0;
- let balanceMap={};
-
- filtered.forEach(x=>{
-  totalCredit+=Number(x.credit||0);
-  totalDebit+=Number(x.debit||0);
- });
-
- allRows.filter(x=>!to||x.date<=to).forEach(x=>{
-  balance+=Number(x.credit||0)-Number(x.debit||0);
-  balanceMap[x.id]=balance;
- });
-
- document.getElementById('dcRows').innerHTML=[...filtered].reverse().map(x=>{
-  return `<tr><td>${esc(x.date)}</td><td>${esc(x.description)}</td><td>${money(x.credit)}</td><td>${money(x.debit)}</td><td>${money(balanceMap[x.id])}</td><td><button onclick="editDebitCredit(${x.id})">Edit</button></td></tr>`;
- }).join('');
-
+ let totalCredit=filtered.reduce((a,x)=>a+(Number(x.credit)||0),0),totalDebit=filtered.reduce((a,x)=>a+(Number(x.debit)||0),0);
+ let opening=from?debitCreditBalanceBefore(from):(Number(db.debitCreditOpening)||0);
+ let balanceMap={},running=Number(db.debitCreditOpening)||0;
+ allRows.forEach(x=>{running+=(Number(x.credit)||0)-(Number(x.debit)||0);balanceMap[x.id]=running;});
+ let endBalance=running;
+ if(to)endBalance=debitCreditBalanceBefore(to+'\uffff') ;
+ else if(allRows.length)endBalance=running;
+ document.getElementById('dcRows').innerHTML=[...filtered].reverse().map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.description)}</td><td>${money(x.credit)}</td><td>${money(x.debit)}</td><td>${money(balanceMap[x.id])}</td><td><button onclick="editDebitCredit(${x.id})">Edit</button></td></tr>`).join('');
  document.getElementById('dcTotalCredit').textContent=money(totalCredit);
  document.getElementById('dcTotalDebit').textContent=money(totalDebit);
- document.getElementById('dcClosing').textContent=money(balance);
-  }
+ document.getElementById('dcClosing').textContent=money(endBalance);
+ let op=document.getElementById('dcPeriodOpening');if(op)op.textContent=money(opening);
+}
 
 function editDebitCredit(id){
 let x=db.debitCredit.find(a=>a.id===id);
@@ -956,36 +968,18 @@ document.getElementById('dcDebit').value=x.debit;
 }
 function printDebitCredit(){
  renderDebitCredit();
-
  let rows=document.getElementById('dcRows').innerHTML;
- let credit=document.getElementById('dcTotalCredit').textContent;
- let debit=document.getElementById('dcTotalDebit').textContent;
- let closing=document.getElementById('dcClosing').textContent;
- let from=document.getElementById('dcFrom').value;
- let to=document.getElementById('dcTo').value;
-
- let content=`
- <p>Opening Balance: Rs ${money(db.debitCreditOpening)}</p>
- <p>Date From: ${from||'All Dates'}</p>
- <p>Date To: ${to||'All Dates'}</p>
- <table>
- <thead><tr><th>Date</th><th>Description</th><th>Credit</th><th>Debit</th><th>Balance</th></tr></thead>
- <tbody>${rows.replace(/<td><button.*?<\/button><\/td>/g,'')}</tbody>
- </table>
- <h3>Total Credit: Rs ${credit}</h3>
- <h3>Total Debit: Rs ${debit}</h3>
- <h3>Closing Balance: Rs ${closing}</h3>`;
-
+ let credit=document.getElementById('dcTotalCredit').textContent,debit=document.getElementById('dcTotalDebit').textContent,closing=document.getElementById('dcClosing').textContent;
+ let from=document.getElementById('dcFrom').value,to=document.getElementById('dcTo').value;
+ let opening=from?debitCreditBalanceBefore(from):(Number(db.debitCreditOpening)||0);
+ let content=`<p><b>Opening Balance:</b> Rs ${money(opening)}</p><p>Date From: ${from||'All Dates'}</p><p>Date To: ${to||'All Dates'}</p><table><thead><tr><th>Date</th><th>Description</th><th>Credit</th><th>Debit</th><th>Balance</th></tr></thead><tbody>${rows.replace(/<td><button.*?<\/button><\/td>/g,'')}</tbody></table><h3>Total Credit: Rs ${credit}</h3><h3>Total Debit: Rs ${debit}</h3><h3>Closing Balance: Rs ${closing}</h3>`;
  openPrintPage('Debit & Credit Sheet',content);
-  }
-function printCustomerLedger(){let id=+document.getElementById('ledgerCustomer').value,c=db.customers.find(x=>x.id===id);if(!c){alert('Please select a customer first.');return}let rows=document.getElementById('ledgerRows').innerHTML;let content=`<p><b>Customer:</b> ${esc(c.name)} &nbsp; <b>Phone:</b> ${esc(c.phone||'')}</p><p><b>Outstanding Balance:</b> Rs ${money(balance(c))}</p><table><thead><tr><th>Date</th><th>Details</th><th>Debit / Sale</th><th>Credit / Paid</th><th>Balance</th></tr></thead><tbody>${rows}</tbody></table>`;openPrintPage('Customer Ledger',content)}
-function printAllCustomerLedger(){let rows=db.customers.map(c=>{let debit=db.sales.filter(x=>x.customerId===c.id).reduce((a,x)=>a+(+x.total||0),0),credit=db.sales.filter(x=>x.customerId===c.id).reduce((a,x)=>a+(+x.paid||0),0)+db.payments.filter(x=>x.customerId===c.id).reduce((a,x)=>a+(+x.amount||0),0);return `<tr><td>${esc(c.name)}</td><td>${esc(c.phone||'')}</td><td>${money(debit)}</td><td>${money(credit)}</td><td>${money(debit-credit)}</td></tr>`}).join('');let d=db.customers.reduce((a,c)=>a+db.sales.filter(x=>x.customerId===c.id).reduce((s,x)=>s+(+x.total||0),0),0),cr=db.customers.reduce((a,c)=>a+db.sales.filter(x=>x.customerId===c.id).reduce((s,x)=>s+(+x.paid||0),0)+db.payments.filter(x=>x.customerId===c.id).reduce((s,x)=>s+(+x.amount||0),0),0);let content=`<table><thead><tr><th>Customer</th><th>Phone</th><th>Total Debit</th><th>Total Credit</th><th>Balance</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><th colspan="2">Grand Total</th><th>${money(d)}</th><th>${money(cr)}</th><th>${money(d-cr)}</th></tr></tfoot></table>`;openPrintPage('Total Customer Ledger',content)}
-function fillDates(){['sDate','pDate','payDate','spDate','eDate','adjDate'].forEach(id=>document.getElementById(id).value=today());document.getElementById('rFrom').value=today().slice(0,8)+'01';document.getElementById('rTo').value=today()}
-function productOptions(selected=''){return '<option value="">Select product</option>'+(db.products||[]).map(p=>'<option value="'+esc(p.name)+'" '+(p.name===selected?'selected':'')+'>'+esc(p.name)+'</option>').join('')}
-function makeRow(type){let sale=type==='sale';return `<div class="itemrow"><div><label>Product</label><select class="item-product" onchange="rowCalc(this,'${type}')">${productOptions()}</select></div>${sale?`<div><label>Purchase T.P Batch</label><select class="item-batch" onchange="rowCalc(this,'sale')"><option value="">Select batch</option></select></div><div><label>Batch Closing Stock</label><input class="item-closing" readonly value="0"></div>`:''}<div><label>Qty</label><input class="item-qty" type="number" min=".01" step=".01" value="1" oninput="rowCalc(this,'${type}')"></div><div><label>${sale?'Sale Rate':'T.P Amount'} (Rs)</label><input class="item-rate" type="number" min="0" step=".01" oninput="rowCalc(this,'${type}')"></div><div><label>Total Amount (Rs)</label><input class="item-total" readonly value="0.00"></div><div><label>Discount %</label><input class="item-disc" type="number" min="0" max="100" value="0" oninput="rowCalc(this,'${type}')"></div><div><label>Net Amount (Rs)</label><input class="item-net" readonly value="0.00"></div><button class="danger" onclick="this.parentElement.remove();calcInvoice('${type}')">×</button></div>`}
+}
+
+function makeRow(type){let sale=type==='sale';return `<div class="itemrow"><div><label>Search Product</label><input class="item-product-search" type="search" placeholder="Type product name" oninput="filterProductList(this)"></div><div><label>Product</label><select class="item-product" onchange="rowCalc(this,'${type}')">${productOptions()}</select></div>${!sale?`<div><label>Saved T.P. Rates</label><select class="purchase-tp-select" onchange="selectPurchaseTP(this)"><option value="">Select saved T.P.</option></select></div>`:''}${sale?`<div><label>Purchase T.P Batch</label><select class="item-batch" onchange="rowCalc(this,'sale')"><option value="">Select batch</option></select></div><div><label>Batch Closing Stock</label><input class="item-closing" readonly value="0"></div>`:''}<div><label>Qty</label><input class="item-qty" type="number" min=".01" step=".01" value="1" oninput="rowCalc(this,'${type}')"></div><div><label>${sale?'Sale Rate':'T.P Amount'} (Rs)</label><input class="item-rate" type="number" min="0" step=".01" ${sale?'':'readonly'} oninput="rowCalc(this,'${type}')"></div><div><label>Total Amount (Rs)</label><input class="item-total" readonly value="0.00"></div><div><label>Discount %</label><input class="item-disc" type="number" min="0" max="100" value="0" oninput="rowCalc(this,'${type}')"></div><div><label>Net Amount (Rs)</label><input class="item-net" readonly value="0.00"></div><button class="danger" onclick="this.parentElement.remove();calcInvoice('${type}')">×</button></div>`}
 function addRow(id,type){document.getElementById(id).insertAdjacentHTML('beforeend',makeRow(type));calcInvoice(type)}
-function rowCalc(el,type){let row=el.closest('.itemrow'),name=row.querySelector('.item-product').value.trim(),p=db.products.find(x=>x.name.toLowerCase()===name.toLowerCase()),isProduct=el.classList.contains('item-product'),batchSel=row.querySelector('.item-batch');if(type==='sale'&&isProduct&&batchSel){let oldSale=editingSaleNo?db.sales.find(x=>x.no===editingSaleNo):null,oldBatchIds=new Set((oldSale?.items||[]).map(it=>String(it.batchId||'')));let batches=(db.batches||[]).filter(b=>(String(b.productId)===String(p?.id)||((b.productName||'').toLowerCase()===name.toLowerCase()))&&((+b.remaining||0)>0||oldBatchIds.has(String(b.id))));batchSel.innerHTML='<option value="">Select batch</option>'+batches.map(b=>'<option value="'+esc(b.id)+'">'+(b.kind==='existing'?'Existing Stock (No T.P.)':'T.P. Rs '+money(b.tp))+' — Available: '+money(b.remaining)+'</option>').join('');}if(p){let rate=row.querySelector('.item-rate');if(isProduct||!rate.dataset.edited){rate.value=type==='sale'?(+p.price||0):(+p.cost||p.price||0);rate.dataset.edited='';}}let q=+row.querySelector('.item-qty').value||0,r=+row.querySelector('.item-rate').value||0,d=Math.min(100,Math.max(0,+row.querySelector('.item-disc').value||0)),gross=q*r;if(type==='sale'){let b=(db.batches||[]).find(x=>String(x.id)===String(batchSel?.value)),closing=row.querySelector('.item-closing');if(closing)closing.value=b?money(Math.max(0,(+b.remaining||0)-q)):'0.00';}row.querySelector('.item-total').value=money(gross);row.querySelector('.item-net').value=money(gross*(1-d/100));calcInvoice(type)}
-document.addEventListener('input',e=>{if(e.target.classList.contains('item-rate'))e.target.dataset.edited='1'});
+function rowCalc(el,type){let row=el.closest('.itemrow'),name=row.querySelector('.item-product').value.trim(),p=db.products.find(x=>x.name.toLowerCase()===name.toLowerCase()),isProduct=el.classList.contains('item-product'),batchSel=row.querySelector('.item-batch');if(isProduct){let search=row.querySelector('.item-product-search');if(search)search.value='';}if(type==='purchase'&&isProduct){let tpSel=row.querySelector('.purchase-tp-select');if(tpSel){let rates=[...(p?.tpRates||[]).map(Number).filter(x=>x>0)];if(p?.cost>0&&!rates.some(x=>Math.abs(x-p.cost)<.005))rates.unshift(+p.cost);if(p?.price>0&&!rates.some(x=>Math.abs(x-p.price)<.005))rates.push(+p.price);let current=+row.querySelector('.item-rate').value||0;tpSel.innerHTML='<option value="">Select saved T.P.</option>'+rates.map(x=>'<option value="'+x+'">Rs '+money(x)+'</option>').join('');if(current>0&&rates.some(x=>Math.abs(x-current)<.005))tpSel.value=String(rates.find(x=>Math.abs(x-current)<.005));}}if(type==='sale'&&isProduct&&batchSel){let oldSale=editingSaleNo?db.sales.find(x=>x.no===editingSaleNo):null,oldBatchIds=new Set((oldSale?.items||[]).map(it=>String(it.batchId||'')));let batches=(db.batches||[]).filter(b=>(String(b.productId)===String(p?.id)||((b.productName||'').toLowerCase()===name.toLowerCase()))&&((+b.remaining||0)>0||oldBatchIds.has(String(b.id))));batchSel.innerHTML='<option value="">Select batch</option>'+batches.map(b=>'<option value="'+esc(b.id)+'">'+(b.kind==='existing'?'Existing Stock (No T.P.)':'T.P. Rs '+money(b.tp))+' — Available: '+money(b.remaining)+'</option>').join('');}if(p){let rate=row.querySelector('.item-rate');if(isProduct||!rate.dataset.edited){let saved=[...(p.tpRates||[]).map(Number).filter(x=>x>0)];rate.value=type==='sale'?(+p.price||0):(+p.cost||saved[0]||p.price||0);rate.dataset.edited='';let tpSel=row.querySelector('.purchase-tp-select');if(tpSel&&rate.value>0)tpSel.value=String(rate.value);}}let q=+row.querySelector('.item-qty').value||0,r=+row.querySelector('.item-rate').value||0,d=Math.min(100,Math.max(0,+row.querySelector('.item-disc').value||0)),gross=q*r;if(type==='sale'){let b=(db.batches||[]).find(x=>String(x.id)===String(batchSel?.value)),closing=row.querySelector('.item-closing');if(closing)closing.value=b?money(Math.max(0,(+b.remaining||0)-q)):'0.00';}row.querySelector('.item-total').value=money(gross);row.querySelector('.item-net').value=money(gross*(1-d/100));calcInvoice(type)}
+document.addEventListener('input',e=>{if(e.target.classList.contains('item-rate')&&!e.target.readOnly)e.target.dataset.edited='1'});
 function calcInvoice(type){let sale=type==='sale',rows=[...document.querySelectorAll('#'+(sale?'salesRows':'purchaseRows')+' .itemrow')],sub=rows.reduce((a,r)=>a+(+r.querySelector('.item-net').value.replace(/,/g,'')||0),0),d=Math.min(100,Math.max(0,+(document.getElementById(sale?'sDiscount':'pDiscount').value)||0)),disc=sub*d/100,grand=sub-disc,paid=+(document.getElementById(sale?'sPaid':'pPaid').value)||0;let pre=sale?'s':'p';document.getElementById(pre+'DiscAmt').textContent=money(disc);document.getElementById(pre+'Grand').textContent=money(grand);document.getElementById(pre+'Due').textContent=money(Math.max(0,grand-paid));return {rows,sub,disc,grand,paid}}
 function lineItems(type){let {rows}=calcInvoice(type);return rows.map(r=>({name:r.querySelector('.item-product').value.trim(),qty:+r.querySelector('.item-qty').value||0,rate:+r.querySelector('.item-rate').value||0,discount:+r.querySelector('.item-disc').value||0,net:+r.querySelector('.item-net').value.replace(/,/g,'')||0,batchId:r.querySelector('.item-batch')?.value||''})).filter(x=>x.name&&x.qty>0)}
 function ensureCustomer(name,phone=''){if(!name)return null;let c=db.customers.find(x=>x.name.toLowerCase()===name.toLowerCase());if(!c){c={id:Date.now()+Math.random(),name,phone,address:''};db.customers.push(c)}else if(phone)c.phone=phone;return c}
@@ -1020,9 +1014,31 @@ function recordPayment(){let id=+document.getElementById('payCustomer').value,am
 function editCustomerPayment(i){let p=db.payments[i];if(!p)return;let date=prompt('Payment date (YYYY-MM-DD)',p.date);if(date===null)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){alert('Enter date as YYYY-MM-DD');return}let amount=prompt('Received amount',p.amount);if(amount===null)return;amount=+amount;if(!Number.isFinite(amount)||amount<=0){alert('Enter a valid amount');return}let note=prompt('Payment note',p.note||'');if(note===null)return;p.date=date;p.amount=amount;p.note=note;save()}
 function renderLedger(){let id=+document.getElementById('ledgerCustomer').value,c=db.customers.find(x=>x.id===id);if(!c){document.getElementById('ledgerRows').innerHTML='';document.getElementById('ledgerBalance').textContent='Rs 0.00';return}let tx=[...db.sales.filter(x=>x.customerId===id).flatMap(x=>[{date:x.date,detail:'Invoice '+x.no,debit:x.total,credit:0},...(x.paid>0?[{date:x.date,detail:'Paid with invoice '+x.no,debit:0,credit:x.paid}]:[])]),...db.payments.map((p,i)=>({p,i})).filter(x=>x.p.customerId===id).map(x=>({date:x.p.date,detail:x.p.note||'Payment received',debit:0,credit:x.p.amount,editIndex:x.i}))].sort((a,b)=>a.date.localeCompare(b.date));let bal=0;document.getElementById('ledgerRows').innerHTML=tx.map(x=>{bal+=x.debit-x.credit;return `<tr><td>${esc(x.date)}</td><td>${esc(x.detail)}${x.editIndex!==undefined?' <button class="secondary" onclick="editCustomerPayment('+x.editIndex+')">Edit</button>':''}</td><td>${money(x.debit)}</td><td>${money(x.credit)}</td><td>${money(bal)}</td></tr>`}).join('');document.getElementById('ledgerBalance').textContent='Rs '+money(balance(c))}
 function renderExpenseInvoices(){let el=document.getElementById('eInvoice');if(!el)return;let current=el.value;el.innerHTML='<option value="">General Expense</option>'+db.sales.slice().reverse().map(x=>`<option value="${esc(x.no)}">${esc(x.no)} - ${esc(x.customer)}</option>`).join('');if([...el.options].some(o=>o.value===current))el.value=current}
-function renderAll(){renderExpenseInvoices();renderLists();renderProducts();renderLedgerOptions();renderSupplierOptions();renderReports();renderDetailReports();fillDatalists();renderDashboard();renderAdjustmentHistory();renderDebitCredit()}
+function renderAll(){renderExpenseInvoices();renderLists();renderProducts();renderLedgerOptions();renderSupplierOptions();renderReports();renderDetailReports();fillDatalists();renderDashboard();renderAdjustmentHistory();renderDebitCredit();if(document.getElementById("dailyReportDate")&&!document.getElementById("dailyReportDate").value)document.getElementById("dailyReportDate").value=today();renderBusinessReports()}
 
 function renderDetailReports(){let from=document.getElementById('drFrom').value||'0000-01-01',to=document.getElementById('drTo').value||'9999-12-31',sales=db.sales.filter(x=>x.date>=from&&x.date<=to),purchases=db.purchases.filter(x=>x.date>=from&&x.date<=to);let aggregate=(rows,amount)=>{let m={};rows.forEach(x=>(x.items||[]).forEach(it=>{let n=it.name||'Unknown',v=m[n]||(m[n]={qty:0,total:0});v.qty+=(+it.qty||0);v.total+=(+amount(it)||0)}));return Object.keys(m).sort().map(n=>`<tr><td>${esc(n)}</td><td>${money(m[n].qty)}</td><td>${money(m[n].total)}</td></tr>`).join('')||'<tr><td colspan="3">No records</td></tr>'};let groups=(rows,key)=>{let m={};rows.forEach(x=>{let n=x[key]||'Unknown',v=m[n]||(m[n]={count:0,total:0});v.count++;v.total+=(+x.total||0)});return Object.keys(m).sort().map(n=>`<tr><td>${esc(n)}</td><td>${m[n].count}</td><td>${money(m[n].total)}</td></tr>`).join('')||'<tr><td colspan="3">No records</td></tr>'};document.getElementById('drSalesItems').innerHTML=aggregate(sales,it=>it.net);document.getElementById('drPurchaseItems').innerHTML=aggregate(purchases,it=>it.netCost??it.net);document.getElementById('drCustomers').innerHTML=groups(sales,'customer');document.getElementById('drSuppliers').innerHTML=groups(purchases,'supplier')}
+
+function reportDate(){return document.getElementById('dailyReportDate')?.value||today()}
+function dailySummaryData(date){
+ let sales=db.sales.filter(x=>x.date===date),purchases=db.purchases.filter(x=>x.date===date),expenses=db.expenses.filter(x=>x.date===date);
+ let totalSales=sales.reduce((a,x)=>a+(+x.total||0),0),totalPurchase=purchases.reduce((a,x)=>a+(+x.total||0),0),totalExpenses=expenses.reduce((a,x)=>a+(+x.amount||0),0);
+ let recovery=sales.reduce((a,x)=>a+(+x.paid||0),0)+db.payments.filter(x=>x.date===date).reduce((a,x)=>a+(+x.amount||0),0);
+ let profit=sales.reduce((a,x)=>a+(+(x.profit??x.netProfit)||0),0);
+ return {date,totalSales,totalPurchase,totalExpenses,recovery,profit,netProfit:profit-totalExpenses};
+}
+function renderBusinessReports(){
+ let d=dailySummaryData(reportDate());
+ [['dailySales',d.totalSales],['dailyPurchases',d.totalPurchase],['dailyExpenses',d.totalExpenses],['dailyRecovery',d.recovery],['dailyProfit',d.profit],['dailyNetProfit',d.netProfit]].forEach(([id,v])=>{let e=document.getElementById(id);if(e)e.textContent='Rs '+money(v)});
+ let list=db.customers.map(c=>({c,amount:balance(c)})).filter(x=>Math.abs(x.amount)>.004).sort((a,b)=>b.amount-a.amount);
+ document.getElementById('outstandingRows').innerHTML=list.map(x=>`<tr><td>${esc(x.c.name)}</td><td>${esc(x.c.phone||'')}</td><td>${money(x.amount)}</td></tr>`).join('')||'<tr><td colspan="3">No outstanding balance</td></tr>';
+ document.getElementById('outstandingGrand').textContent=money(list.reduce((a,x)=>a+x.amount,0));
+}
+function printDailySummary(){let d=dailySummaryData(reportDate()),content=`<p><b>Date:</b> ${esc(d.date)}</p><table><tr><th>Total Sales</th><td>${money(d.totalSales)}</td></tr><tr><th>Total Purchase</th><td>${money(d.totalPurchase)}</td></tr><tr><th>Expenses</th><td>${money(d.totalExpenses)}</td></tr><tr><th>Customer Recovery</th><td>${money(d.recovery)}</td></tr><tr><th>Gross Profit</th><td>${money(d.profit)}</td></tr><tr><th>Profit After Expenses</th><td>${money(d.netProfit)}</td></tr></table>`;openPrintPage('Daily Summary',content)}
+function printCustomerOutstanding(){renderBusinessReports();let rows=document.getElementById('outstandingRows').innerHTML,grand=document.getElementById('outstandingGrand').textContent;openPrintPage('Customer Outstanding',`<table><thead><tr><th>Customer</th><th>Phone</th><th>Outstanding</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><th colspan="2">Grand Total</th><th>${grand}</th></tr></tfoot></table>`)}
+function shareReportText(title,body){let msg=title+'\nA.Hamza Traders\n'+body;let url='https://wa.me/?text='+encodeURIComponent(msg);try{if(navigator.share){navigator.share({title,text:msg}).catch(()=>{location.href=url});return}}catch(e){}location.href=url}
+function shareDailySummary(){let d=dailySummaryData(reportDate());shareReportText('Daily Summary','Date: '+d.date+'\nSales: Rs '+money(d.totalSales)+'\nPurchase: Rs '+money(d.totalPurchase)+'\nExpenses: Rs '+money(d.totalExpenses)+'\nRecovery: Rs '+money(d.recovery)+'\nGross Profit: Rs '+money(d.profit)+'\nProfit After Expenses: Rs '+money(d.netProfit))}
+function shareCustomerOutstanding(){let rows=db.customers.map(c=>({c,amount:balance(c)})).filter(x=>Math.abs(x.amount)>.004).sort((a,b)=>b.amount-a.amount);let body=rows.map(x=>x.c.name+': Rs '+money(x.amount)).join('\n')+'\nGrand Total: Rs '+money(rows.reduce((a,x)=>a+x.amount,0));shareReportText('Customer Outstanding',body||'No outstanding balance')}
+
 function renderDashboard(){let d=today(),s=db.sales.filter(x=>x.date===d);document.getElementById('dashSales').textContent='Rs '+money(s.reduce((a,x)=>a+(+x.total||0),0));document.getElementById('dashProfit').textContent='Rs '+money(s.reduce((a,x)=>a+(+x.profit||(+x.total||0)-(+x.cost||0)),0));document.getElementById('dashCustomers').textContent=db.customers.length;document.getElementById('dashProducts').textContent=db.products.length}
 function renderSupplierOptions(){let names=[...new Set([...(db.suppliers||[]).map(x=>x.name),...db.purchases.map(x=>x.supplier)])];document.getElementById('ledgerSupplier').innerHTML='<option value="">Choose supplier</option>'+names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');document.getElementById('supplierList').innerHTML=names.map(n=>`<option value="${esc(n)}">`).join('')}
 function renderLedgerOptions(){let opts='<option value="">Choose customer</option>'+db.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');document.getElementById('ledgerCustomer').innerHTML=opts;document.getElementById('payCustomer').innerHTML=opts}
@@ -1420,26 +1436,43 @@ if(b.dataset.a==='pd')deletePurchase(i);
   function deletePurchase(i){let x=db.purchases[i];if(!x)return;let batches=(db.batches||[]).filter(b=>b.purchaseNo===x.no);if(batches.some(b=>(+b.remaining||0)<(+b.qty||0))){alert('Is purchase ka kuch stock sell ho chuka hai. Purchase delete nahi ho sakti.');return}if(!batches.length){for(let it of (x.items||[])){let pr=db.products.find(p=>p.name.toLowerCase()===it.name.toLowerCase());if(!pr||(+pr.stock||0)<(+it.qty||0)){alert(it.name+': Stock kam hai. Purchase delete nahi ho sakti.');return}}}if(!confirm('Delete this purchase? Stock will be reduced.'))return;if(batches.length){batches.forEach(b=>{let pr=db.products.find(p=>p.id===b.productId);if(pr)pr.stock=Math.max(0,(+pr.stock||0)-(+b.remaining||0))});db.batches=db.batches.filter(b=>b.purchaseNo!==x.no)}else{(x.items||[]).forEach(it=>{let pr=db.products.find(p=>p.name.toLowerCase()===it.name.toLowerCase());if(pr)pr.stock=(+pr.stock||0)-(+it.qty||0)})}db.purchases.splice(i,1);save();renderAll();alert('Purchase deleted. Stock reduced.')}
 function renderProducts(){let body=document.getElementById('productRows');if(!body)return;body.innerHTML=db.products.map((p,i)=>{let batches=(db.batches||[]).filter(b=>String(b.productId)===String(p.id)||((b.productName||'').toLowerCase()===(p.name||'').toLowerCase()));let rates=[...new Set([...(p.tpRates||[]).map(Number).filter(x=>x>0),...batches.filter(b=>b.kind!=='existing').map(b=>+b.tp||0)].filter(x=>x>0))];let details=rates.map(tp=>'Rs '+money(tp)).join('<br>')||'—';let stockDetails=batches.map(b=>(b.kind==='existing'?'No T.P.':'TP '+money(b.tp))+': '+money(b.remaining)+' available').join('<br>');return `<tr><td>${esc(p.name)}</td><td>${esc(p.unit||'Unit')}</td><td>${money(p.stock)}</td><td>${details}${stockDetails?'<hr style="border:0;border-top:1px solid #ddd">'+stockDetails:''}</td><td><button class="secondary" onclick="addProductTP(${i})">Add T.P.</button> <button class="secondary" onclick="editOpeningStock(${i})">Edit Opening</button></td></tr>`}).join('')||'<tr><td colspan="5">No products</td></tr>'}
 function addProductTP(i){let p=db.products[i];if(!p)return;let value=prompt('New T.P. Rate for '+p.name+' (Rs):');if(value===null)return;let tp=Number(value);if(!Number.isFinite(tp)||tp<=0){alert('Valid T.P. rate enter karein.');return}p.tpRates ||= [];if(!p.tpRates.some(x=>Math.abs((+x||0)-tp)<0.005))p.tpRates.push(tp);p.price=tp;if(!p.cost)p.cost=tp;save();alert('New T.P. rate saved. Purchase entry par is rate ka stock batch banega.')}
-function renderAll(){renderExpenseInvoices();renderLists();renderProducts();renderLedgerOptions();renderSupplierOptions();renderReports();renderDetailReports();fillDatalists();renderDashboard();renderAdjustmentHistory();renderDebitCredit()}
+function renderAll(){renderExpenseInvoices();renderLists();renderProducts();renderLedgerOptions();renderSupplierOptions();renderReports();renderDetailReports();fillDatalists();renderDashboard();renderAdjustmentHistory();renderDebitCredit();if(document.getElementById("dailyReportDate")&&!document.getElementById("dailyReportDate").value)document.getElementById("dailyReportDate").value=today();renderBusinessReports()}
 
 </script>
 <script>
-history.pushState({ahtBackGuard:true}, '', location.href);
-
-window.onpopstate = function () {
-alert('Back button event working');
-  const active = document.querySelector('.tab.active');
-
-  if (active && active.id !== 'dashboard') {
-    document.querySelector('nav button[data-tab="dashboard"]').click();
-    history.pushState({ahtBackGuard:true}, '', location.href);
-    return;
+(function(){
+  let backPromptOpen = false;
+  function armBackGuard(){
+    try {
+      history.pushState({ahtBackGuard:true, stamp:Date.now()}, '', location.href);
+    } catch(e) {}
   }
-
-  if (!confirm('Do you want to exit?')) {
-    history.pushState({ahtBackGuard:true}, '', location.href);
-  }
-};
+  // Keep a fresh history guard so Android's hardware Back reaches this handler.
+  armBackGuard();
+  window.addEventListener('pageshow', function(){ armBackGuard(); });
+  window.addEventListener('popstate', function(){
+    if (backPromptOpen) return;
+    const active = document.querySelector('.tab.active');
+    if (active && active.id !== 'dashboard') {
+      const dashboardButton = document.querySelector('nav button[data-tab="dashboard"]');
+      if (dashboardButton) dashboardButton.click();
+      armBackGuard();
+      return;
+    }
+    backPromptOpen = true;
+    const shouldExit = window.confirm('Do you want to exit A.Hamza Traders?');
+    backPromptOpen = false;
+    if (!shouldExit) {
+      armBackGuard();
+    }
+    // If Yes is selected, do not add another history entry; Android can exit/back.
+  });
+  // Re-arm after app navigation without changing the selected page.
+  document.addEventListener('click', function(e){
+    const button = e.target.closest && e.target.closest('nav button[data-tab]');
+    if (button) setTimeout(armBackGuard, 0);
+  }, true);
+})();
 </script>
 </body>
 </html>
