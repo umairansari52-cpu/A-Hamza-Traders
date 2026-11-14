@@ -830,7 +830,24 @@ startProductAutocomplete();
 <div class="grid" style="margin-top:12px"><input id="pDiscount" type="hidden" value="0"><div><label>Paid Amount (Rs)</label><input id="pPaid" type="number" min="0" value="0" oninput="calcInvoice('purchase')"></div></div>
 <div class="total"><span id="pDiscAmt" hidden>0.00</span><strong>Net Amount: Rs <span id="pGrand">0.00</span></strong><br>Supplier Balance: Rs <span id="pDue">0.00</span></div>
 <div class="actions no-print"><button class="primary" onclick="savePurchase()">Save Purchase</button><button class="secondary" onclick="printPurchase()">Preview / Save Purchase PDF</button><button class="secondary" onclick="newPurchase()">New Purchase</button></div>
-</div></section>
+</div>
+<div class="card">
+<h3>Purchase History</h3>
+<div class="grid">
+<div><label>Date From</label><input id="phFrom" type="date" onchange="renderLists()"></div>
+<div><label>Date To</label><input id="phTo" type="date" onchange="renderLists()"></div>
+</div>
+<div class="actions no-print">
+<button class="secondary" onclick="printHistory('purchaseList','Purchase History')">Print Preview / PDF</button>
+</div>
+<div class="tablewrap">
+<table>
+<thead><tr><th>No.</th><th>Date</th><th>Supplier</th><th>Total</th><th>Actions</th></tr></thead>
+<tbody id="purchaseList"></tbody>
+</table>
+</div>
+</div>
+</section>
 <section id="sample" class="tab">
 <div class="card"><h2>Sample</h2><div class="actions"><button class="primary" onclick="showSampleMode('sale')">Sample Sales Invoice</button><button class="secondary" onclick="showSampleMode('purchase')">Sample Purchase</button></div></div>
 <div class="card" id="sampleSaleForm" style="display:none"><h3>Sample Sales Invoice</h3><div class="grid">
