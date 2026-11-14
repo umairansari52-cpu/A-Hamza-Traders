@@ -976,6 +976,38 @@ function printDebitCredit(){
  openPrintPage('Debit & Credit Sheet',content);
 }
 
+function productOptions(selected=''){
+  let opts='<option value="">Select product</option>';
+  opts+=(db.products||[]).map(p=>`<option value="${esc(p.name)}" ${p.name===selected?'selected':''}>${esc(p.name)}</option>`).join('');
+  return opts;
+}
+function filterProductList(input){
+  const row=input.closest('.itemrow'); if(!row)return;
+  const select=row.querySelector('.item-product'); if(!select)return;
+  const q=input.value.trim().toLowerCase();
+  const current=select.value;
+  const matches=(db.products||[]).filter(p=>!q||String(p.name||'').toLowerCase().includes(q));
+  select.innerHTML='<option value="">Select product</option>'+matches.map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');
+  if(matches.some(p=>p.name===current))select.value=current;
+  else if(matches.length===1){select.value=matches[0].name;rowCalc(select, row.closest('#purchaseRows')?'purchase':'sale');}
+}
+function selectPurchaseTP(select){
+  const row=select.closest('.itemrow'); if(!row)return;
+  const rate=Number(select.value)||0;
+  const rateInput=row.querySelector('.item-rate');
+  if(rateInput){rateInput.value=rate;rateInput.dataset.edited='';}
+  rowCalc(rateInput||select,'purchase');
+}
+function fillDates(){
+  const d=today();
+  ['sDate','pDate','dcDate','adjDate','eDate','payDate','spDate','dailyReportDate','rFrom','rTo','drFrom','drTo','plFrom','plTo'].forEach(id=>{
+    const el=document.getElementById(id); if(el&&!el.value){
+      if(['rFrom','drFrom','plFrom'].includes(id)) el.value=d.slice(0,8)+'01';
+      else if(['rTo','drTo','plTo'].includes(id)) el.value=d;
+      else el.value=d;
+    }
+  });
+}
 function makeRow(type){let sale=type==='sale';return `<div class="itemrow"><div><label>Search Product</label><input class="item-product-search" type="search" placeholder="Type product name" oninput="filterProductList(this)"></div><div><label>Product</label><select class="item-product" onchange="rowCalc(this,'${type}')">${productOptions()}</select></div>${!sale?`<div><label>Saved T.P. Rates</label><select class="purchase-tp-select" onchange="selectPurchaseTP(this)"><option value="">Select saved T.P.</option></select></div>`:''}${sale?`<div><label>Purchase T.P Batch</label><select class="item-batch" onchange="rowCalc(this,'sale')"><option value="">Select batch</option></select></div><div><label>Batch Closing Stock</label><input class="item-closing" readonly value="0"></div>`:''}<div><label>Qty</label><input class="item-qty" type="number" min=".01" step=".01" value="1" oninput="rowCalc(this,'${type}')"></div><div><label>${sale?'Sale Rate':'T.P Amount'} (Rs)</label><input class="item-rate" type="number" min="0" step=".01" ${sale?'':'readonly'} oninput="rowCalc(this,'${type}')"></div><div><label>Total Amount (Rs)</label><input class="item-total" readonly value="0.00"></div><div><label>Discount %</label><input class="item-disc" type="number" min="0" max="100" value="0" oninput="rowCalc(this,'${type}')"></div><div><label>Net Amount (Rs)</label><input class="item-net" readonly value="0.00"></div><button class="danger" onclick="this.parentElement.remove();calcInvoice('${type}')">×</button></div>`}
 function addRow(id,type){document.getElementById(id).insertAdjacentHTML('beforeend',makeRow(type));calcInvoice(type)}
 function rowCalc(el,type){let row=el.closest('.itemrow'),name=row.querySelector('.item-product').value.trim(),p=db.products.find(x=>x.name.toLowerCase()===name.toLowerCase()),isProduct=el.classList.contains('item-product'),batchSel=row.querySelector('.item-batch');if(isProduct){let search=row.querySelector('.item-product-search');if(search)search.value='';}if(type==='purchase'&&isProduct){let tpSel=row.querySelector('.purchase-tp-select');if(tpSel){let rates=[...(p?.tpRates||[]).map(Number).filter(x=>x>0)];if(p?.cost>0&&!rates.some(x=>Math.abs(x-p.cost)<.005))rates.unshift(+p.cost);if(p?.price>0&&!rates.some(x=>Math.abs(x-p.price)<.005))rates.push(+p.price);let current=+row.querySelector('.item-rate').value||0;tpSel.innerHTML='<option value="">Select saved T.P.</option>'+rates.map(x=>'<option value="'+x+'">Rs '+money(x)+'</option>').join('');if(current>0&&rates.some(x=>Math.abs(x-current)<.005))tpSel.value=String(rates.find(x=>Math.abs(x-current)<.005));}}if(type==='sale'&&isProduct&&batchSel){let oldSale=editingSaleNo?db.sales.find(x=>x.no===editingSaleNo):null,oldBatchIds=new Set((oldSale?.items||[]).map(it=>String(it.batchId||'')));let batches=(db.batches||[]).filter(b=>(String(b.productId)===String(p?.id)||((b.productName||'').toLowerCase()===name.toLowerCase()))&&((+b.remaining||0)>0||oldBatchIds.has(String(b.id))));batchSel.innerHTML='<option value="">Select batch</option>'+batches.map(b=>'<option value="'+esc(b.id)+'">'+(b.kind==='existing'?'Existing Stock (No T.P.)':'T.P. Rs '+money(b.tp))+' — Available: '+money(b.remaining)+'</option>').join('');}if(p){let rate=row.querySelector('.item-rate');if(isProduct||!rate.dataset.edited){let saved=[...(p.tpRates||[]).map(Number).filter(x=>x>0)];rate.value=type==='sale'?(+p.price||0):(+p.cost||saved[0]||p.price||0);rate.dataset.edited='';let tpSel=row.querySelector('.purchase-tp-select');if(tpSel&&rate.value>0)tpSel.value=String(rate.value);}}let q=+row.querySelector('.item-qty').value||0,r=+row.querySelector('.item-rate').value||0,d=Math.min(100,Math.max(0,+row.querySelector('.item-disc').value||0)),gross=q*r;if(type==='sale'){let b=(db.batches||[]).find(x=>String(x.id)===String(batchSel?.value)),closing=row.querySelector('.item-closing');if(closing)closing.value=b?money(Math.max(0,(+b.remaining||0)-q)):'0.00';}row.querySelector('.item-total').value=money(gross);row.querySelector('.item-net').value=money(gross*(1-d/100));calcInvoice(type)}
@@ -1441,37 +1473,29 @@ function renderAll(){renderExpenseInvoices();renderLists();renderProducts();rend
 </script>
 <script>
 (function(){
-  let backPromptOpen = false;
-  function armBackGuard(){
-    try {
-      history.pushState({ahtBackGuard:true, stamp:Date.now()}, '', location.href);
-    } catch(e) {}
+  let promptOpen=false, guardReady=false;
+  function arm(){
+    if(guardReady)return;
+    try{history.pushState({ahtBackGuard:true},'',location.href);guardReady=true;}catch(e){}
   }
-  // Keep a fresh history guard so Android's hardware Back reaches this handler.
-  armBackGuard();
-  window.addEventListener('pageshow', function(){ armBackGuard(); });
-  window.addEventListener('popstate', function(){
-    if (backPromptOpen) return;
-    const active = document.querySelector('.tab.active');
-    if (active && active.id !== 'dashboard') {
-      const dashboardButton = document.querySelector('nav button[data-tab="dashboard"]');
-      if (dashboardButton) dashboardButton.click();
-      armBackGuard();
-      return;
+  arm();
+  window.addEventListener('popstate',function(){
+    guardReady=false;
+    if(promptOpen){arm();return;}
+    const active=document.querySelector('.tab.active');
+    if(active&&active.id!=='dashboard'){
+      const dash=document.querySelector('nav button[data-tab="dashboard"]');
+      if(dash)dash.click();
+      arm();return;
     }
-    backPromptOpen = true;
-    const shouldExit = window.confirm('Do you want to exit A.Hamza Traders?');
-    backPromptOpen = false;
-    if (!shouldExit) {
-      armBackGuard();
-    }
-    // If Yes is selected, do not add another history entry; Android can exit/back.
+    promptOpen=true;
+    let exit=false;
+    try{exit=window.confirm('Do you want to exit A.Hamza Traders?');}catch(e){}
+    promptOpen=false;
+    if(!exit)arm();
+    // On Yes, leave history unarmed so Android/browser can close or navigate back.
   });
-  // Re-arm after app navigation without changing the selected page.
-  document.addEventListener('click', function(e){
-    const button = e.target.closest && e.target.closest('nav button[data-tab]');
-    if (button) setTimeout(armBackGuard, 0);
-  }, true);
+  window.addEventListener('pageshow',function(){guardReady=false;arm();});
 })();
 </script>
 </body>
