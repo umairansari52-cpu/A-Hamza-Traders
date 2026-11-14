@@ -828,22 +828,7 @@ startProductAutocomplete();
 <div><label>Sample Purchase No.</label><input id="smpNo" readonly></div><div><label>Date</label><input id="smpDate" type="date"></div><div><label>Supplier (optional)</label><input id="smpSupplier" placeholder="Supplier name"></div>
 <div><label>Product</label><input id="smpProduct" list="productList" placeholder="Type product name"></div><div><label>Quantity</label><input id="smpQty" type="number" min="0.01" step="0.01" value="1" oninput="calcSamplePurchase()"></div><div><label>T.P. Rate (manual)</label><input id="smpRate" type="number" min="0.01" step="0.01" oninput="calcSamplePurchase()"></div>
 </div><p><b>Total Amount: Rs <span id="smpTotal">0.00</span></b></p><div class="actions"><button class="primary" onclick="saveSamplePurchaseNew()">Save Sample Purchase</button><button class="secondary" onclick="printSamplePurchasePreview()">Print Preview</button><button class="secondary" onclick="resetSamplePurchaseNew()">New Sample Purchase</button></div></div>
-<div class="card">
-<h3>Purchase History</h3>
-<div class="grid">
-<div><label>Date From</label><input id="phFrom" type="date" onchange="renderLists()"></div>
-<div><label>Date To</label><input id="phTo" type="date" onchange="renderLists()"></div>
-</div>
-<div class="actions no-print">
-<button class="secondary" onclick="printHistory('purchaseList','Purchase History')">Print Preview / PDF</button>
-</div>
-<div class="tablewrap">
-<table>
-<thead><tr><th>No.</th><th>Date</th><th>Supplier</th><th>Total</th><th>Actions</th></tr></thead>
-<tbody id="purchaseList"></tbody>
-</table>
-</div>
-</div>
+
 <div class="card">
 <h3>Sales History</h3>
 <div class="grid">
