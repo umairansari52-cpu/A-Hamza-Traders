@@ -980,6 +980,7 @@ startProductAutocomplete();
 const KEY='medicine_wholesale_v1';
 let db=load();
 function blank(){return {customers:[],products:[],sales:[],purchases:[],payments:[],suppliers:[],supplierPayments:[],expenses:[],adjustments:[],debitCredit:[],debitCreditOpening:0,productEntries:[]}}
+function load(){try{let d=JSON.parse(localStorage.getItem(KEY))||blank();if(!Array.isArray(d.customers))d.customers=[];if(!Array.isArray(d.products))d.products=[];if(!Array.isArray(d.sales))d.sales=[];if(!Array.isArray(d.purchases))d.purchases=[];
 function load(){try{let d=JSON.parse(localStorage.getItem(KEY))||blank();d.suppliers ||= [];d.supplierPayments ||= [];d.payments ||= [];d.expenses ||= [];d.adjustments ||= [];d.debitCredit ||= [];if(typeof d.debitCreditOpening!=='number')d.debitCreditOpening=0;if(!Array.isArray(d.batches))d.batches=[];d.products ||= [];d.productEntries ||= [];d.products.forEach(p=>{p.tpRates=Array.isArray(p.tpRates)?p.tpRates:[];let known=d.batches.filter(b=>String(b.productId)===String(p.id)||((b.productName||'').toLowerCase()===(p.name||'').toLowerCase())).reduce((a,b)=>a+(+b.remaining||0),0);let missing=Math.max(0,(+p.stock||0)-known);if(missing>0)d.batches.push({id:'existing-'+p.id,productId:p.id,productName:p.name,tp:null,qty:missing,remaining:missing,kind:'existing'});});return d}catch(e){return blank()}}
 function renderProductsLedger(){
 let from=document.getElementById('plFrom').value||'0000-01-01';
