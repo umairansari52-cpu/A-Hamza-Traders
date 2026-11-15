@@ -1406,7 +1406,15 @@ function printCustomerLedger(){
   '<td>Rs '+money(running)+'</td></tr>';
  }).join('');
 
- let content='<h2 style="text-align:center">'+esc(c.name)+'</h
+  let content='<h2 style="text-align:center">'+esc(c.name)+'</h2>'+
+ '<table style="width:100%;border-collapse:collapse;font-size:12px" border="1" cellpadding="6">'+
+ '<tr><th>Invoice No.</th><th>Date</th><th>Invoice Amount</th><th>Credit</th><th>Debit Amount</th><th>Remaining Amount</th></tr>'+
+ body+
+ '<tr><th colspan="2">Total</th><th>Rs '+money(totalInvoice)+'</th><th>Rs '+money(totalCredit)+'</th><th>Rs '+money(totalDebit)+'</th><th>Rs '+money(running)+'</th></tr>'+
+ '</table><h3>Final Remaining Amount: Rs '+money(balance(c))+'</h3>';
+
+ openPrintPage('Customer Ledger',content);
+  }
 function renderExpenseInvoices(){let el=document.getElementById('eInvoice');if(!el)return;let current=el.value;el.innerHTML='<option value="">General Expense</option>'+db.sales.slice().reverse().map(x=>`<option value="${esc(x.no)}">${esc(x.no)} - ${esc(x.customer)}</option>`).join('');if([...el.options].some(o=>o.value===current))el.value=current}
 function showSampleMode(mode){
  document.getElementById('sampleSaleForm').style.display=mode==='sale'?'block':'none';
