@@ -1441,10 +1441,17 @@ let total=Number(x.total)||items.reduce((s,it)=>s+(+it.qty||0)*(+it.rate||0),0);
 let content=`<h2 style="text-align:center">A.Hamza Traders</h2><h3 style="text-align:center">Sample Sales Invoice</h3><p>Invoice: ${esc(x.no)} | Date: ${esc(x.date)} | Customer: ${esc(x.customer)}</p><table><tr><th>Product</th><th>Qty</th><th>Rate</th><th>Total</th></tr>${body}</table><h3>Total: Rs ${money(total)}</h3><p style="text-align:center;margin-top:40px">Thank you<br>Proprietor M.Umair</p>`;
 showPrintPreview('Sample Sales Invoice',content);
   }
+function printSamplePurchaseRecord(no){
 let x=db.purchases.find(v=>v.no==no&&(v.kind==='samplePurchase'||v.kind==='sample'));
 if(!x)return;
-let it=x.items[0]||{};
-showPrintPreview('Sample Purchase Invoice',`<p>Purchase: ${esc(x.no)} | Date: ${esc(x.date)} | Supplier: ${esc(x.supplier)}</p><table><tr><th>Product</th><th>Qty</th><th>Rate</th><th>Total</th></tr><tr><td>${esc(it.name)}</td><td>${money(it.qty)}</td><td>${money(it.rate)}</td><td>${money(x.total)}</td></tr></table><h3>Total: Rs ${money(x.total)}</h3><p>Thank you</p>`);
+let items=Array.isArray(x.items)?x.items:[];
+let body=items.map(it=>{
+let amount=(+it.qty||0)*(+it.rate||0);
+return `<tr><td>${esc(it.name||'')}</td><td>${money(it.qty||0)}</td><td>${money(it.rate||0)}</td><td>${money(amount)}</td></tr>`;
+}).join('');
+let total=Number(x.total)||items.reduce((s,it)=>s+(+it.qty||0)*(+it.rate||0),0);
+let content=`<h2 style="text-align:center">A.Hamza Traders</h2><h3 style="text-align:center">Sample Purchase Invoice</h3><p>Purchase: ${esc(x.no)} | Date: ${esc(x.date)} | Supplier: ${esc(x.supplier)}</p><table><tr><th>Product</th><th>Qty</th><th>Rate</th><th>Total</th></tr>${body}</table><h3>Total: Rs ${money(total)}</h3><p style="text-align:center;margin-top:40px">Thank you<br>Proprietor M.Umair</p>`;
+showPrintPreview('Sample Purchase Invoice',content);
   }
 function editSampleSale(no){
 let x=db.sales.find(v=>v.no==no&&v.kind==='sampleSale');
