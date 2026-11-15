@@ -1249,24 +1249,183 @@ function editCustomerPayment(i){let p=db.payments[i];if(!p)return;let date=promp
 function renderLedger(){let id=+document.getElementById('ledgerCustomer').value,c=db.customers.find(x=>x.id===id);if(!c){document.getElementById('ledgerRows').innerHTML='';document.getElementById('ledgerBalance').textContent='Rs 0.00';return}let tx=[...db.sales.filter(x=>x.customerId===id).flatMap(x=>[{date:x.date,detail:'Invoice '+x.no,debit:x.total,credit:0},...(x.paid>0?[{date:x.date,detail:'Paid with invoice '+x.no,debit:0,credit:x.paid}]:[])]),...db.payments.map((p,i)=>({p,i})).filter(x=>x.p.customerId===id).map(x=>({date:x.p.date,detail:x.p.note||'Payment received',debit:0,credit:x.p.amount,editIndex:x.i}))].sort((a,b)=>a.date.localeCompare(b.date));let bal=0;document.getElementById('ledgerRows').innerHTML=tx.map(x=>{bal+=x.debit-x.credit;return `<tr><td>${esc(x.date)}</td><td>${esc(x.detail)}${x.editIndex!==undefined?' <button class="secondary" onclick="editCustomerPayment('+x.editIndex+')">Edit</button>':''}</td><td>${money(x.debit)}</td><td>${money(x.credit)}</td><td>${money(bal)}</td></tr>`}).join('');document.getElementById('ledgerBalance').textContent='Rs '+money(balance(c))}
 function renderExpenseInvoices(){let el=document.getElementById('eInvoice');if(!el)return;let current=el.value;el.innerHTML='<option value="">General Expense</option>'+db.sales.slice().reverse().map(x=>`<option value="${esc(x.no)}">${esc(x.no)} - ${esc(x.customer)}</option>`).join('');if([...el.options].some(o=>o.value===current))el.value=current}
 function showSampleMode(mode){document.getElementById('sampleSaleForm').style.display=mode==='sale'?'block':'none';document.getElementById('samplePurchaseForm').style.display=mode==='purchase'?'block':'none';if(mode==='sale'&&!document.getElementById('smsNo').value)resetSampleSale();if(mode==='purchase'&&!document.getElementById('smpNo').value)resetSamplePurchaseNew()}
-function resetSampleSale(){document.getElementById('smsNo').value=nextNo('SS',db.sales.filter(x=>x.kind==='sampleSale'));document.getElementById('smsDate').value=today();document.getElementById('smsCustomer').value='';document.getElementById('smsProduct').value='';document.getElementById('smsBatch').innerHTML='<option value="">Select purchase T.P.</option>';document.getElementById('smsStock').value='0';document.getElementById('smsQty').value='1';document.getElementById('smsRate').value='';document.getElementById('smsTotal').textContent='0.00'}
-function sampleSaleProductChanged(){let name=document.getElementById('smsProduct').value.trim(),p=db.products.find(x=>x.name.toLowerCase()===name.toLowerCase()),sel=document.getElementById('smsBatch');sel.innerHTML='<option value="">Select purchase T.P.</option>';if(p){(db.batches||[]).filter(b=>(String(b.productId)===String(p.id)||(b.productName||'').toLowerCase()===name.toLowerCase())&&(+b.remaining||0)>0).forEach(b=>sel.insertAdjacentHTML('beforeend',`<option value="${esc(b.id)}">TP Rs ${money(b.tp||0)} — Stock ${money(b.remaining)}</option>`))}document.getElementById('smsStock').value='0';calcSampleSale()}
-function sampleSaleBatchChanged(){let b=db.batches.find(x=>String(x.id)===String(document.getElementById('smsBatch').value));document.getElementById('smsStock').value=b?money(b.remaining):'0';calcSampleSale()}
-function calcSampleSale(){let q=+document.getElementById('smsQty').value||0,r=+document.getElementById('smsRate').value||0;document.getElementById('smsTotal').textContent=money(q*r)}
-function resetSamplePurchaseNew(){document.getElementById('smpNo').value=nextNo('SP',db.purchases.filter(x=>x.kind==='samplePurchase'||x.kind==='sample'));document.getElementById('smpDate').value=today();document.getElementById('smpSupplier').value='';document.getElementById('smpProduct').value='';document.getElementById('smpQty').value='1';document.getElementById('smpRate').value='';document.getElementById('smpTotal').textContent='0.00'}
-function calcSamplePurchase(){document.getElementById('smpTotal').textContent=money((+document.getElementById('smpQty').value||0)*(+document.getElementById('smpRate').value||0))}
-function saveSamplePurchaseNew(){try{let name=document.getElementById('smpProduct').value.trim(),qty=+document.getElementById('smpQty').value,rate=+document.getElementById('smpRate').value,supplier=document.getElementById('smpSupplier').value.trim()||'Sample';if(!name||qty<=0||rate<=0){alert('Product, quantity aur manual T.P. Rate enter karein.');return}let pr=db.products.find(p=>p.name.toLowerCase()===name.toLowerCase());if(!pr){alert('Pehle Products mein product add karein.');return}let no=document.getElementById('smpNo').value,total=qty*rate,item={name,qty,rate,discount:0,net:total,netCost:rate},rec={no,date:document.getElementById('smpDate').value,supplier,kind:'samplePurchase',items:[item],subtotal:total,total,discount:0,paid:0,due:total};let oldStock=+pr.stock||0,oldCost=+pr.cost||0,oldBatchCount=(db.batches||[]).length;db.purchases.push(rec);pr.stock=oldStock+qty;pr.cost=pr.stock?((oldStock*oldCost)+(qty*rate))/pr.stock:rate;db.batches||=[];db.batches.push({id:'sample-purchase-'+Date.now()+'-'+Math.random(),purchaseNo:no,productId:pr.id,productName:pr.name,tp:rate,qty,remaining:qty,kind:'sample'});if(!save()){db.purchases.pop();pr.stock=oldStock;pr.cost=oldCost;db.batches.splice(oldBatchCount);return}renderSampleHistoryNew();alert('Sample Purchase saved. Stock updated.');resetSamplePurchaseNew()}catch(e){console.error(e);alert('Sample Purchase save error: '+e.message)}}
-function saveSampleSale(){try{let customer=document.getElementById('smsCustomer').value.trim(),name=document.getElementById('smsProduct').value.trim(),qty=+document.getElementById('smsQty').value,rate=+document.getElementById('smsRate').value,batchId=document.getElementById('smsBatch').value,p=db.products.find(x=>x.name.toLowerCase()===name.toLowerCase()),b=db.batches.find(x=>String(x.id)===String(batchId));if(!customer||!p||!b||qty<=0||rate<=0){alert('Customer, product, Purchase T.P. batch, quantity aur Sales Net T.P. enter karein.');return}if((+b.remaining||0)<qty||( +p.stock||0)<qty){alert('Selected batch mein required stock available nahi.');return}let c=ensureCustomer(customer,''),costRate=b.kind==='existing'?(+p.cost||0):(+b.tp||0),total=qty*rate,no=document.getElementById('smsNo').value,item={name,qty,rate,discount:0,net:total,batchId,costRate},rec={no,date:document.getElementById('smsDate').value,customer:c.name,customerId:c.id,kind:'sampleSale',items:[item],subtotal:total,discount:0,total,paid:0,due:total,cost:qty*costRate,profit:total-qty*costRate,netProfit:total-qty*costRate};b.remaining-=qty;p.stock-=qty;db.sales.push(rec);if(!save()){db.sales.pop();b.remaining+=qty;p.stock+=qty;return}renderSampleHistoryNew();alert('Sample Sales saved. Stock aur profit update ho gaya.');resetSampleSale()}catch(e){console.error(e);alert('Sample Sales save error: '+e.message)}}
+function showSampleMode(mode){
+ document.getElementById('sampleSaleForm').style.display=mode==='sale'?'block':'none';
+ document.getElementById('samplePurchaseForm').style.display=mode==='purchase'?'block':'none';
+ if(mode==='sale'&&!document.getElementById('smsNo').value)resetSampleSale();
+ if(mode==='purchase'&&!document.getElementById('smpNo').value)resetSamplePurchaseNew();
+}
+
+function addSampleSaleRow(){
+ document.getElementById('smsItems').insertAdjacentHTML('beforeend',`
+ <div class="itemrow sample-row">
+ <div><label>Product</label><input class="ss-product" list="productList" placeholder="Product name" onchange="sampleSaleRowChanged(this)"></div>
+ <div><label>Purchase T.P.</label><select class="ss-batch" onchange="sampleSaleCalc()"><option value="">Select batch</option></select></div>
+ <div><label>Available Stock</label><input class="ss-stock" readonly value="0"></div>
+ <div><label>Quantity</label><input class="ss-qty" type="number" min="0.01" step="0.01" value="1" oninput="sampleSaleCalc()"></div>
+ <div><label>Sales Net T.P.</label><input class="ss-rate" type="number" min="0" step="0.01" oninput="sampleSaleCalc()"></div>
+ <button class="danger no-print" onclick="this.parentElement.remove();sampleSaleCalc()">×</button>
+ </div>`);
+}
+
+function sampleSaleRowChanged(el){
+ let row=el.closest('.sample-row'),name=el.value.trim();
+ let p=db.products.find(x=>x.name.toLowerCase()===name.toLowerCase());
+ let sel=row.querySelector('.ss-batch');
+ sel.innerHTML='<option value="">Select batch</option>';
+ if(p){
+ (db.batches||[]).filter(b=>(String(b.productId)===String(p.id)||(b.productName||'').toLowerCase()===name.toLowerCase())&&(+b.remaining||0)>0)
+ .forEach(b=>sel.insertAdjacentHTML('beforeend',`<option value="${esc(b.id)}">TP Rs ${money(b.tp||0)} — Stock ${money(b.remaining)}</option>`));
+ }
+ sampleSaleCalc();
+}
+
+function sampleSaleCalc(){
+ let total=0;
+ document.querySelectorAll('#smsItems .sample-row').forEach(row=>{
+ let q=+row.querySelector('.ss-qty').value||0;
+ let r=+row.querySelector('.ss-rate').value||0;
+ let b=db.batches.find(x=>String(x.id)===String(row.querySelector('.ss-batch').value));
+ row.querySelector('.ss-stock').value=b?money(b.remaining):'0';
+ total+=q*r;
+ });
+ document.getElementById('smsTotal').textContent=money(total);
+}
+
+function addSamplePurchaseRow(){
+ document.getElementById('smpItems').insertAdjacentHTML('beforeend',`
+ <div class="itemrow sample-row">
+ <div><label>Product</label><input class="sp-product" list="productList" placeholder="Product name"></div>
+ <div><label>Quantity</label><input class="sp-qty" type="number" min="0.01" step="0.01" value="1" oninput="samplePurchaseCalc()"></div>
+ <div><label>Manual T.P. Rate</label><input class="sp-rate" type="number" min="0" step="0.01" oninput="samplePurchaseCalc()"></div>
+ <button class="danger no-print" onclick="this.parentElement.remove();samplePurchaseCalc()">×</button>
+ </div>`);
+}
+
+function samplePurchaseCalc(){
+ let total=0;
+ document.querySelectorAll('#smpItems .sample-row').forEach(row=>{
+ total+=(+row.querySelector('.sp-qty').value||0)*(+row.querySelector('.sp-rate').value||0);
+ });
+ document.getElementById('smpTotal').textContent=money(total);
+}
+
+function resetSampleSale(){
+ document.getElementById('smsNo').value=nextNo('SS',db.sales.filter(x=>x.kind==='sampleSale'));
+ document.getElementById('smsDate').value=today();
+ document.getElementById('smsCustomer').value='';
+ document.getElementById('smsItems').innerHTML='';
+ addSampleSaleRow();
+ sampleSaleCalc();
+}
+
+function resetSamplePurchaseNew(){
+ document.getElementById('smpNo').value=nextNo('SP',db.purchases.filter(x=>x.kind==='samplePurchase'||x.kind==='sample'));
+ document.getElementById('smpDate').value=today();
+ document.getElementById('smpSupplier').value='';
+ document.getElementById('smpItems').innerHTML='';
+ addSamplePurchaseRow();
+ samplePurchaseCalc();
+}
+
+function saveSamplePurchaseNew(){
+ let rows=[...document.querySelectorAll('#smpItems .sample-row')];
+ let items=rows.map(row=>{
+ let name=row.querySelector('.sp-product').value.trim();
+ let qty=+row.querySelector('.sp-qty').value||0;
+ let rate=+row.querySelector('.sp-rate').value||0;
+ return {name,qty,rate,discount:0,net:qty*rate,netCost:rate};
+ });
+ if(!items.length||items.some(it=>!it.name||it.qty<=0||it.rate<=0)){alert('Har product ka naam, quantity aur rate enter karein.');return}
+ let products=items.map(it=>db.products.find(p=>p.name.toLowerCase()===it.name.toLowerCase()));
+ if(products.some(p=>!p)){alert('Pehle tamam products Products mein add karein.');return}
+ let total=items.reduce((a,it)=>a+it.net,0);
+ let no=document.getElementById('smpNo').value;
+ let rec={no,date:document.getElementById('smpDate').value,supplier:document.getElementById('smpSupplier').value.trim()||'Sample',kind:'samplePurchase',items,subtotal:total,total,discount:0,paid:0,due:total};
+ let old=products.map(p=>({p,stock:+p.stock||0,cost:+p.cost||0}));
+ db.purchases.push(rec);
+ db.batches||=[];
+ items.forEach((it,i)=>{
+ let p=products[i],oldStock=+p.stock||0,oldCost=+p.cost||0;
+ p.stock=oldStock+it.qty;
+ p.cost=p.stock?((oldStock*oldCost)+(it.qty*it.rate))/p.stock:it.rate;
+ db.batches.push({id:'sample-purchase-'+Date.now()+'-'+Math.random(),purchaseNo:no,productId:p.id,productName:p.name,tp:it.rate,qty:it.qty,remaining:it.qty,kind:'sample'});
+ });
+ if(!save()){
+ db.purchases.pop();
+ old.forEach(v=>{v.p.stock=v.stock;v.p.cost=v.cost});
+ db.batches=db.batches.filter(b=>b.purchaseNo!==no);
+ return;
+ }
+ alert('Sample Purchase saved. Stock updated.');
+ renderSampleHistoryNew();
+ resetSamplePurchaseNew();
+}
+
+function saveSampleSale(){
+ let rows=[...document.querySelectorAll('#smsItems .sample-row')];
+ let items=rows.map(row=>{
+ let name=row.querySelector('.ss-product').value.trim();
+ let qty=+row.querySelector('.ss-qty').value||0;
+ let rate=+row.querySelector('.ss-rate').value||0;
+ let batchId=row.querySelector('.ss-batch').value;
+ let b=db.batches.find(x=>String(x.id)===String(batchId));
+ let p=db.products.find(x=>x.name.toLowerCase()===name.toLowerCase());
+ return {name,qty,rate,discount:0,net:qty*rate,batchId,costRate:b?(b.kind==='existing'?(+p?.cost||0):(+b.tp||0)):0,_batch:b,_product:p};
+ });
+ let customer=document.getElementById('smsCustomer').value.trim();
+ if(!customer||!items.length||items.some(it=>!it.name||!it._product||!it._batch||it.qty<=0||it.rate<=0)){alert('Customer aur har product ki quantity, batch aur rate enter karein.');return}
+ let required={};
+ items.forEach(it=>required[it.batchId]=(required[it.batchId]||0)+it.qty);
+ for(let id in required){
+ let b=db.batches.find(x=>String(x.id)===String(id));
+ if(!b||(+b.remaining||0)<required[id]){alert('Selected batch mein stock kam hai.');return}
+ }
+ let total=items.reduce((a,it)=>a+it.net,0);
+ let cost=items.reduce((a,it)=>a+it.qty*it.costRate,0);
+ let c=ensureCustomer(customer,'');
+ let no=document.getElementById('smsNo').value;
+ let rec={no,date:document.getElementById('smsDate').value,customer:c.name,customerId:c.id,kind:'sampleSale',items:items.map(({_batch,_product,...it})=>it),subtotal:total,total,discount:0,paid:0,due:total,cost,profit:total-cost,netProfit:total-cost};
+ items.forEach(it=>{it._batch.remaining-=it.qty;it._product.stock-=it.qty});
+ db.sales.push(rec);
+ if(!save()){
+ db.sales.pop();
+ items.forEach(it=>{it._batch.remaining+=it.qty;it._product.stock+=it.qty});
+ return;
+ }
+ alert('Sample Sales saved. Stock updated.');
+ renderSampleHistoryNew();
+ resetSampleSale();
+}
+
 function printSampleSalePreview(){
- let customer=document.getElementById('smsCustomer').value.trim(),name=document.getElementById('smsProduct').value.trim(),qty=+document.getElementById('smsQty').value||0,rate=+document.getElementById('smsRate').value||0,batchId=document.getElementById('smsBatch').value,b=db.batches.find(x=>String(x.id)===String(batchId)),total=qty*rate;
- if(!name||qty<=0||rate<=0){alert('Product, quantity aur Sales Net T.P. enter karein.');return}
- let content=`<p><b>Customer:</b> ${esc(customer)} &nbsp; <b>Date:</b> ${esc(document.getElementById('smsDate').value)} &nbsp; <b>Invoice:</b> ${esc(document.getElementById('smsNo').value)}</p><table><thead><tr><th>Product</th><th>Qty</th><th>Purchase T.P.</th><th>Sales Net T.P.</th><th>Net Amount</th></tr></thead><tbody><tr><td>${esc(name)}</td><td>${money(qty)}</td><td>${money(b?.tp||0)}</td><td>${money(rate)}</td><td>${money(total)}</td></tr></tbody></table><h3 style="text-align:right">Net Amount: Rs ${money(total)}</h3><p style="text-align:center;margin-top:50px">Thank you</p>`;
+ let rows=[...document.querySelectorAll('#smsItems .sample-row')];
+ let total=0;
+ let body=rows.map(row=>{
+ let name=row.querySelector('.ss-product').value.trim();
+ let qty=+row.querySelector('.ss-qty').value||0;
+ let rate=+row.querySelector('.ss-rate').value||0;
+ let b=db.batches.find(x=>String(x.id)===String(row.querySelector('.ss-batch').value));
+ let amount=qty*rate;total+=amount;
+ return `<tr><td>${esc(name)}</td><td>${money(qty)}</td><td>${money(b?.tp||0)}</td><td>${money(rate)}</td><td>${money(amount)}</td></tr>`;
+ }).join('');
+ if(!body||!total){alert('Product details enter karein.');return}
+ let content=`<h2 style="text-align:center">A.Hamza Traders</h2><h3 style="text-align:center">Sample Sales Invoice</h3><p>Invoice: ${esc(document.getElementById('smsNo').value)} | Date: ${esc(document.getElementById('smsDate').value)} | Customer: ${esc(document.getElementById('smsCustomer').value)}</p><table><thead><tr><th>Product</th><th>Qty</th><th>Purchase T.P.</th><th>Sales T.P.</th><th>Amount</th></tr></thead><tbody>${body}</tbody></table><h3 style="text-align:right">Net Amount: Rs ${money(total)}</h3><p>Amount in Words: ${amountWords(total)}</p><p style="text-align:center;margin-top:40px">Thank you<br>Proprietor M.Umair</p>`;
  showPrintPreview('Sample Sales Invoice',content);
 }
+
 function printSamplePurchasePreview(){
- let supplier=document.getElementById('smpSupplier').value.trim(),name=document.getElementById('smpProduct').value.trim(),qty=+document.getElementById('smpQty').value||0,rate=+document.getElementById('smpRate').value||0,total=qty*rate;
- if(!name||qty<=0||rate<=0){alert('Product, quantity aur manual T.P. Rate enter karein.');return}
- let content=`<p><b>Supplier:</b> ${esc(supplier||'Sample')} &nbsp; <b>Date:</b> ${esc(document.getElementById('smpDate').value)} &nbsp; <b>Purchase No.:</b> ${esc(document.getElementById('smpNo').value)}</p><table><thead><tr><th>Product</th><th>Qty</th><th>Manual T.P.</th><th>Total Amount</th></tr></thead><tbody><tr><td>${esc(name)}</td><td>${money(qty)}</td><td>${money(rate)}</td><td>${money(total)}</td></tr></tbody></table><h3 style="text-align:right">Total Amount: Rs ${money(total)}</h3><p style="text-align:center;margin-top:50px">Thank you</p>`;
+ let rows=[...document.querySelectorAll('#smpItems .sample-row')];
+ let total=0;
+ let body=rows.map(row=>{
+ let name=row.querySelector('.sp-product').value.trim();
+ let qty=+row.querySelector('.sp-qty').value||0;
+ let rate=+row.querySelector('.sp-rate').value||0;
+ let amount=qty*rate;total+=amount;
+ return `<tr><td>${esc(name)}</td><td>${money(qty)}</td><td>${money(rate)}</td><td>${money(amount)}</td></tr>`;
+ }).join('');
+ if(!body||!total){alert('Product details enter karein.');return}
+ let content=`<h2 style="text-align:center">A.Hamza Traders</h2><h3 style="text-align:center">Sample Purchase</h3><p>Purchase: ${esc(document.getElementById('smpNo').value)} | Date: ${esc(document.getElementById('smpDate').value)} | Supplier: ${esc(document.getElementById('smpSupplier').value||'Sample')}</p><table><thead><tr><th>Product</th><th>Qty</th><th>T.P. Rate</th><th>Amount</th></tr></thead><tbody>${body}</tbody></table><h3 style="text-align:right">Total Amount: Rs ${money(total)}</h3><p>Amount in Words: ${amountWords(total)}</p><p style="text-align:center;margin-top:40px">Thank you<br>Proprietor M.Umair</p>`;
  showPrintPreview('Sample Purchase Invoice',content);
 }
 function renderSampleHistoryNew(){let fromS=document.getElementById('sshFrom')?.value||'',toS=document.getElementById('sshTo')?.value||'',fromP=document.getElementById('sphFrom')?.value||'',toP=document.getElementById('sphTo')?.value||'';let ss=(db.sales||[]).filter(x=>x.kind==='sampleSale'&&(!fromS||x.date>=fromS)&&(!toS||x.date<=toS)).slice().reverse(),sp=(db.purchases||[]).filter(x=>(x.kind==='samplePurchase'||x.kind==='sample')&&(!fromP||x.date>=fromP)&&(!toP||x.date<=toP)).slice().reverse();let a=document.getElementById('sampleSalesHistory'),b=document.getElementById('samplePurchaseHistory');if(a)a.innerHTML=ss.map(x=>{let it=x.items?.[0]||{};return `<tr><td>${esc(x.no)}</td><td>${esc(x.date)}</td><td>${esc(x.customer)}</td><td>${esc(it.name)}</td><td>${money(it.qty)}</td><td>${money(it.costRate||0)}</td><td>${money(it.rate||0)}</td><td>${money(x.total)}</td><td><button onclick="printSampleSaleRecord('${esc(x.no)}')">Print</button> <button onclick="editSampleSale('${esc(x.no)}')">Edit</button> <button class="danger" onclick="deleteSampleSale('${esc(x.no)}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="9">No sample sales</td></tr>';if(b)b.innerHTML=sp.map(x=>{let it=x.items?.[0]||{};return `<tr><td>${esc(x.no)}</td><td>${esc(x.date)}</td><td>${esc(x.supplier)}</td><td>${esc(it.name)}</td><td>${money(it.qty)}</td><td>${money(it.rate)}</td><td>${money(x.total)}</td><td><button onclick="printSamplePurchaseRecord('${esc(x.no)}')">Print</button> <button onclick="editSamplePurchase('${esc(x.no)}')">Edit</button> <button class="danger" onclick="deleteSamplePurchase('${esc(x.no)}')">Delete</button></td></tr>`}).join('')||'<tr><td colspan="8">No sample purchases</td></tr>'}
