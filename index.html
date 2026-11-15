@@ -953,11 +953,71 @@ startProductAutocomplete();
 <div class="card"><h3>Product Entry History</h3><div class="tablewrap"><table><thead><tr><th>Date</th><th>Product</th><th>Unit</th><th>T.P.</th><th>Opening Stock Added</th></tr></thead><tbody id="productEntryHistory"></tbody></table></div></div>
 </section>
 
-<div><label>Customer</label><select id="payCustomer"></select></div>
-<div><label>Date</label><input id="payDate" type="date"></div>
-<div><label>Amount (Rs)</label><input id="payAmount" type="number" min=".01" step=".01"></div>
-<div><label>Note</label><input id="payNote" placeholder="Cash received"></div>
-<section id="supplierLedger" class="tab"><div class="card"><h2>Supplier Ledger</h2><label>Select supplier</label><select id="ledgerSupplier" onchange="renderSupplierLedger()"><option value="">Choose supplier</option></select><div class="metric" id="supplierBalance">Rs 0.00</div><div class="muted">Outstanding balance payable to supplier</div></div><div class="card"><div class="tablewrap"><table><thead><tr><th>Date</th><th>Details</th><th>Debit / Paid</th><th>Credit / Purchase</th><th>Balance</th></tr></thead><tbody id="supplierLedgerRows"></tbody></table></div></div><div class="card"><h3>Record Supplier Payment</h3><div class="grid"><div><label>Supplier</label><input id="spName" list="supplierList" placeholder="Supplier name"><datalist id="supplierList"></datalist></div><div><label>Date</label><input id="spDate" type="date"></div><div><label>Amount (Rs)</label><input id="spAmount" type="number" min=".01" step=".01"></div><div><label>Note</label><input id="spNote" placeholder="Payment note"></div></div><div class="actions"><button class="primary" onclick="recordSupplierPayment()">Save Supplier Payment</button></div></div><div class="card">
+<section id="ledger" class="tab">
+
+<div class="card">
+<h2>Customer Ledger</h2>
+<label>Select Customer</label>
+<select id="ledgerCustomer" onchange="renderLedger()">
+<option value="">Choose customer</option>
+</select>
+<div class="metric" id="ledgerBalance">Rs 0.00</div>
+<div class="muted">Outstanding Balance</div>
+</div>
+
+<div class="card">
+<div class="actions no-print">
+<button class="primary" onclick="printCustomerLedger()">Print Customer Ledger / PDF</button>
+</div>
+
+<div class="tablewrap">
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Details</th>
+<th>Debit / Sale</th>
+<th>Credit / Paid</th>
+<th>Balance</th>
+</tr>
+</thead>
+<tbody id="ledgerRows"></tbody>
+</table>
+</div>
+</div>
+
+<div class="card">
+<h3>Record Customer Payment</h3>
+<div class="grid">
+
+<div>
+<label>Customer</label>
+<select id="payCustomer"></select>
+</div>
+
+<div>
+<label>Date</label>
+<input id="payDate" type="date">
+</div>
+
+<div>
+<label>Amount (Rs)</label>
+<input id="payAmount" type="number" min=".01" step=".01">
+</div>
+
+<div>
+<label>Note</label>
+<input id="payNote" placeholder="Cash received">
+</div>
+
+</div>
+<div class="actions">
+<button class="primary" onclick="recordPayment()">Save Payment</button>
+</div>
+</div>
+
+</section>
+  <section id="supplierLedger" class="tab"><div class="card"><h2>Supplier Ledger</h2><label>Select supplier</label><select id="ledgerSupplier" onchange="renderSupplierLedger()"><option value="">Choose supplier</option></select><div class="metric" id="supplierBalance">Rs 0.00</div><div class="muted">Outstanding balance payable to supplier</div></div><div class="card"><div class="tablewrap"><table><thead><tr><th>Date</th><th>Details</th><th>Debit / Paid</th><th>Credit / Purchase</th><th>Balance</th></tr></thead><tbody id="supplierLedgerRows"></tbody></table></div></div><div class="card"><h3>Record Supplier Payment</h3><div class="grid"><div><label>Supplier</label><input id="spName" list="supplierList" placeholder="Supplier name"><datalist id="supplierList"></datalist></div><div><label>Date</label><input id="spDate" type="date"></div><div><label>Amount (Rs)</label><input id="spAmount" type="number" min=".01" step=".01"></div><div><label>Note</label><input id="spNote" placeholder="Payment note"></div></div><div class="actions"><button class="primary" onclick="recordSupplierPayment()">Save Supplier Payment</button></div></div><div class="card">
 
                              </div></section>
 
