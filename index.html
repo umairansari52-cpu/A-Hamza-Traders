@@ -1371,7 +1371,42 @@ function renderLedger(){
  }).join('');
  document.getElementById('ledgerBalance').textContent='Rs '+money(balance(c));
 }
+function printCustomerLedger(){
+ let id=+document.getElementById('ledgerCustomer').value;
+ let c=db.customers.find(x=>x.id===id);
+ if(!c){alert('Pehle customer select karein');return;}
 
+ let rows=[
+  ...db.sales.filter(x=>x.customerId===id).map(x=>({
+   no:x.no||'-',date:x.date||'',
+   invoiceAmount:+x.total||0,
+   credit:+x.paid||0,
+   debit:+x.total||0
+  })),
+  ...(db.payments||[]).filter(x=>x.customerId===id).map(x=>({
+   no:'-',date:x.date||'',
+   invoiceAmount:0,
+   credit:+x.amount||0,
+   debit:0
+  }))
+ ].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+
+ let running=0,totalInvoice=0,totalCredit=0,totalDebit=0;
+
+ let body=rows.map(x=>{
+  totalInvoice+=x.invoiceAmount;
+  totalCredit+=x.credit;
+  totalDebit+=x.debit;
+  running+=x.debit-x.credit;
+
+  return '<tr><td>'+esc(x.no)+'</td><td>'+esc(x.date)+'</td>'+
+  '<td>Rs '+money(x.invoiceAmount)+'</td>'+
+  '<td>Rs '+money(x.credit)+'</td>'+
+  '<td>Rs '+money(x.debit)+'</td>'+
+  '<td>Rs '+money(running)+'</td></tr>';
+ }).join('');
+
+ let content='<h2 style="text-align:center">'+esc(c.name)+'</h
 function renderExpenseInvoices(){let el=document.getElementById('eInvoice');if(!el)return;let current=el.value;el.innerHTML='<option value="">General Expense</option>'+db.sales.slice().reverse().map(x=>`<option value="${esc(x.no)}">${esc(x.no)} - ${esc(x.customer)}</option>`).join('');if([...el.options].some(o=>o.value===current))el.value=current}
 function showSampleMode(mode){
  document.getElementById('sampleSaleForm').style.display=mode==='sale'?'block':'none';
