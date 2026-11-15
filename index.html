@@ -850,18 +850,47 @@ startProductAutocomplete();
 </section>
 <section id="sample" class="tab">
 <div class="card"><h2>Sample</h2><div class="actions"><button class="primary" onclick="showSampleMode('sale')">Sample Sales Invoice</button><button class="secondary" onclick="showSampleMode('purchase')">Sample Purchase</button></div></div>
-<div class="card" id="sampleSaleForm" style="display:none"><h3>Sample Sales Invoice</h3><div class="grid">
-<div><label>Sample Sales No.</label><input id="smsNo" readonly></div><div><label>Date</label><input id="smsDate" type="date"></div><div><label>Customer</label><input id="smsCustomer" list="customerList" placeholder="Customer name"></div>
-<div><label>Product</label><input id="smsProduct" list="productList" placeholder="Type product name" onchange="sampleSaleProductChanged()" oninput="sampleSaleProductChanged()"></div>
-<div><label>Purchase T.P. (automatic)</label><select id="smsBatch" onchange="sampleSaleBatchChanged()"><option value="">Select purchase T.P.</option></select></div>
-<div><label>Available Stock</label><input id="smsStock" readonly value="0"></div><div><label>Quantity</label><input id="smsQty" type="number" min="0.01" step="0.01" value="1" oninput="calcSampleSale()"></div>
-<div><label>Sales T.P. Net Amount (manual)</label><input id="smsRate" type="number" min="0.01" step="0.01" oninput="calcSampleSale()"></div>
-</div><p><b>Net Amount: Rs <span id="smsTotal">0.00</span></b></p><div class="actions"><button class="primary" onclick="saveSampleSale()">Save Sample Sales</button><button class="secondary" onclick="printSampleSalePreview()">Print Preview</button><button class="secondary" onclick="resetSampleSale()">New Sample Sales</button></div></div>
-<div class="card" id="samplePurchaseForm" style="display:none"><h3>Sample Purchase</h3><div class="grid">
-<div><label>Sample Purchase No.</label><input id="smpNo" readonly></div><div><label>Date</label><input id="smpDate" type="date"></div><div><label>Supplier (optional)</label><input id="smpSupplier" placeholder="Supplier name"></div>
-<div><label>Product</label><input id="smpProduct" list="productList" placeholder="Type product name"></div><div><label>Quantity</label><input id="smpQty" type="number" min="0.01" step="0.01" value="1" oninput="calcSamplePurchase()"></div><div><label>T.P. Rate (manual)</label><input id="smpRate" type="number" min="0.01" step="0.01" oninput="calcSamplePurchase()"></div>
-</div><p><b>Total Amount: Rs <span id="smpTotal">0.00</span></b></p><div class="actions"><button class="primary" onclick="saveSamplePurchaseNew()">Save Sample Purchase</button><button class="secondary" onclick="printSamplePurchasePreview()">Print Preview</button><button class="secondary" onclick="resetSamplePurchaseNew()">New Sample Purchase</button></div></div>
+<div class="card" id="sampleSaleForm" style="display:none">
+<h3>Sample Sales Invoice</h3>
+<div class="grid">
+<div><label>Sample Sales No.</label><input id="smsNo" readonly></div>
+<div><label>Date</label><input id="smsDate" type="date"></div>
+<div><label>Customer</label><input id="smsCustomer" list="customerList" placeholder="Customer name"></div>
+</div>
 
+<h3>Sales Items</h3>
+<div id="smsItems"></div>
+<div class="actions no-print">
+<button class="secondary" onclick="addSampleSaleRow()">+ Add Item</button>
+</div>
+<p><b>Net Amount: Rs <span id="smsTotal">0.00</span></b></p>
+<div class="actions no-print">
+<button class="primary" onclick="saveSampleSale()">Save Sample Sales</button>
+<button class="secondary" onclick="printSampleSalePreview()">Print Preview</button>
+<button class="secondary" onclick="resetSampleSale()">New Sample Sales</button>
+</div>
+</div>
+
+<div class="card" id="samplePurchaseForm" style="display:none">
+<h3>Sample Purchase</h3>
+<div class="grid">
+<div><label>Sample Purchase No.</label><input id="smpNo" readonly></div>
+<div><label>Date</label><input id="smpDate" type="date"></div>
+<div><label>Supplier (optional)</label><input id="smpSupplier" placeholder="Supplier name"></div>
+</div>
+
+<h3>Purchase Items</h3>
+<div id="smpItems"></div>
+<div class="actions no-print">
+<button class="secondary" onclick="addSamplePurchaseRow()">+ Add Item</button>
+</div>
+<p><b>Total Amount: Rs <span id="smpTotal">0.00</span></b></p>
+<div class="actions no-print">
+<button class="primary" onclick="saveSamplePurchaseNew()">Save Sample Purchase</button>
+<button class="secondary" onclick="printSamplePurchasePreview()">Print Preview</button>
+<button class="secondary" onclick="resetSamplePurchaseNew()">New Sample Purchase</button>
+</div>
+</div>
 
 <div class="card"><h3>Sample Sales History</h3><div class="grid"><div><label>Date From</label><input id="sshFrom" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Date To</label><input id="sshTo" type="date" onchange="renderSampleHistoryNew()"></div></div><div class="actions no-print"><button class="secondary" onclick="printHistory('sampleSalesHistory','Sample Sales History')">Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>No.</th><th>Date</th><th>Customer</th><th>Product</th><th>Qty</th><th>Purchase T.P.</th><th>Sales Net T.P.</th><th>Total</th><th>Actions</th></tr></thead><tbody id="sampleSalesHistory"></tbody></table></div></div>
 <div class="card"><h3>Sample Purchase History</h3><div class="grid"><div><label>Date From</label><input id="sphFrom" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Date To</label><input id="sphTo" type="date" onchange="renderSampleHistoryNew()"></div></div><div class="actions no-print"><button class="secondary" onclick="printHistory('samplePurchaseHistory','Sample Purchase History')">Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>No.</th><th>Date</th><th>Supplier</th><th>Product</th><th>Qty</th><th>T.P.</th><th>Total</th><th>Actions</th></tr></thead><tbody id="samplePurchaseHistory"></tbody></table></div></div>
