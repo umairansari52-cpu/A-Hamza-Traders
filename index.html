@@ -1246,7 +1246,6 @@ db.productEntries ||= [];db.productEntries.unshift({date:today(),name:p.name,uni
 if(!save())return;['prName','prUnit','prPrice'].forEach(id=>document.getElementById(id).value='');document.getElementById('prStock').value=0;renderProducts();alert('Product / T.P. rate saved.');
 }
 function balance(c){return db.sales.filter(x=>x.customerId===c.id).reduce((a,x)=>a+x.due,0)-db.payments.filter(x=>x.customerId===c.id).reduce((a,x)=>a+x.amount,0)}
-function renderPaymentInvoices(){
 function recordPayment(){
  let id=+document.getElementById('payCustomer').value;
  let amount=+document.getElementById('payAmount').value;
