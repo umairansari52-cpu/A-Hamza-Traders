@@ -1270,8 +1270,6 @@ function addSampleSaleRow(){
 function sampleSaleRowChanged(el){
  let row=el.closest('.sample-row'),name=el.value.trim();
  let p=db.products.find(x=>x.name.toLowerCase()===name.toLowerCase());
- let row=el.closest('.sample-row'),name=el.value.trim();
- let p=db.products.find(x=>x.name.toLowerCase()===name.toLowerCase());
  let sel=row.querySelector('.ss-batch');
  sel.innerHTML='<option value="">Select batch</option>';
  if(p){
