@@ -1631,7 +1631,7 @@ function renderLedgerOptions(){
  let opts='<option value="">Choose customer</option>'+db.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
  document.getElementById('ledgerCustomer').innerHTML=opts;
  document.getElementById('payCustomer').innerHTML=opts;
- renderPaymentInvoices();
+ 
   }
 function fillDatalists(){let customers=db.customers.map(c=>`<option value="${esc(c.name)}">`).join(''),products=db.products.map(p=>`<option value="${esc(p.name)}">`).join('');let cl=document.getElementById('customerList'),cs=document.getElementById('customerSearchList'),pl=document.getElementById('productList');if(cl)cl.innerHTML=customers;if(cs)cs.innerHTML=customers;if(pl)pl.innerHTML=products}
 function getSalePurchaseNet(x){
