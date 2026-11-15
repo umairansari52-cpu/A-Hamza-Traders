@@ -1371,8 +1371,7 @@ function renderLedger(){
  }).join('');
  document.getElementById('ledgerBalance').textContent='Rs '+money(balance(c));
 }
-function printCustomerLedger(){
- let id=+document.getElementById('ledgerCustomer').value;
+t id=+document.getElementById('ledgerCustomer').value;
  let c=db.customers.find(x=>x.id===id);
  if(!c){alert('Pehle customer select karein');return;}
 
@@ -1393,7 +1392,7 @@ function printCustomerLedger(){
  '<h3>Remaining Payment: Rs '+money(balance(c))+'</h3>';
 
  openPrintPage('Customer Ledger',content);
-  }
+  } 
 function renderExpenseInvoices(){let el=document.getElementById('eInvoice');if(!el)return;let current=el.value;el.innerHTML='<option value="">General Expense</option>'+db.sales.slice().reverse().map(x=>`<option value="${esc(x.no)}">${esc(x.no)} - ${esc(x.customer)}</option>`).join('');if([...el.options].some(o=>o.value===current))el.value=current}
 function showSampleMode(mode){
  document.getElementById('sampleSaleForm').style.display=mode==='sale'?'block':'none';
