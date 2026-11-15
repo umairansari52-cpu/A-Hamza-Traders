@@ -1311,6 +1311,29 @@ function renderLedger(){
  }).join('');
  document.getElementById('ledgerBalance').textContent='Rs '+money(balance(c));
 }
+function printCustomerLedger(){
+ let id=+document.getElementById('ledgerCustomer').value;
+ let c=db.customers.find(x=>x.id===id);
+ if(!c){alert('Pehle customer select karein');return;}
+
+ let rows=[
+  ...db.sales.filter(x=>x.customerId===id).map(x=>({
+   no:x.no,date:x.date,amount:+x.paid||0
+  })),
+  ...(db.payments||[]).filter(x=>x.customerId===id).map(x=>({
+   no:'-',date:x.date,amount:+x.amount||0,note:x.note||''
+  }))
+ ].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+
+ let received=rows.reduce((a,x)=>a+x.amount,0);
+ let content='<h2 style="text-align:center">'+esc(c.name)+'</h2>'+
+ '<table style="width:100%;border-collapse:collapse"><tr><th>Invoice No.</th><th>Date</th><th>Received Payment</th></tr>'+
+ rows.map(x=>'<tr><td>'+esc(x.no)+(x.note?' - '+esc(x.note):'')+'</td><td>'+esc(x.date)+'</td><td>Rs '+money(x.amount)+'</td></tr>').join('')+
+ '</table><h3>Total Received: Rs '+money(received)+'</h3>'+
+ '<h3>Remaining Payment: Rs '+money(balance(c))+'</h3>';
+
+ openPrintPage('Customer Ledger',content);
+  }
 function renderExpenseInvoices(){let el=document.getElementById('eInvoice');if(!el)return;let current=el.value;el.innerHTML='<option value="">General Expense</option>'+db.sales.slice().reverse().map(x=>`<option value="${esc(x.no)}">${esc(x.no)} - ${esc(x.customer)}</option>`).join('');if([...el.options].some(o=>o.value===current))el.value=current}
 function showSampleMode(mode){
  document.getElementById('sampleSaleForm').style.display=mode==='sale'?'block':'none';
