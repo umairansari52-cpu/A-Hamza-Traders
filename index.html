@@ -1349,6 +1349,21 @@ function renderDashboard(){let d=today(),s=db.sales.filter(x=>x.date===d);docume
 function renderSupplierOptions(){let names=[...new Set([...(db.suppliers||[]).map(x=>x.name),...db.purchases.map(x=>x.supplier)])];document.getElementById('ledgerSupplier').innerHTML='<option value="">Choose supplier</option>'+names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');document.getElementById('supplierList').innerHTML=names.map(n=>`<option value="${esc(n)}">`).join('')}
 function renderLedgerOptions(){let opts='<option value="">Choose customer</option>'+db.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');document.getElementById('ledgerCustomer').innerHTML=opts;document.getElementById('payCustomer').innerHTML=opts}
 function fillDatalists(){let customers=db.customers.map(c=>`<option value="${esc(c.name)}">`).join(''),products=db.products.map(p=>`<option value="${esc(p.name)}">`).join('');let cl=document.getElementById('customerList'),cs=document.getElementById('customerSearchList'),pl=document.getElementById('productList');if(cl)cl.innerHTML=customers;if(cs)cs.innerHTML=customers;if(pl)pl.innerHTML=products}
+function getSalePurchaseNet(x){
+ return (x.items||[]).reduce((sum,it)=>{
+  let qty=+it.qty||0;
+  let b=(db.batches||[]).find(v=>String(v.id)===String(it.batchId));
+  let pur=b?(db.purchases||[]).find(v=>v.no===b.purchaseNo):null;
+  let pi=pur?(pur.items||[]).find(v=>v.name===it.name):null;
+  let unit=0;
+  if(pi){
+   let factor=(+pur.subtotal||0)>0?(+pur.total||0)/(+pur.subtotal||0):1;
+   unit=pi.netCost!=null?+pi.netCost:(+pi.rate||0)*(1-(+pi.discount||0)/100)*factor;
+  }else if(it.costRate!=null) unit=+it.costRate||0;
+  else if(b) unit=+b.netTp||+b.tp||0;
+  return sum+qty*unit;
+ },0);
+  }
 function renderReports(){let from=document.getElementById('rFrom').value||'0000',to=document.getElementById('rTo').value||'9999',s=db.sales.filter(x=>x.date>=from&&x.date<=to),p=db.purchases.filter(x=>x.date>=from&&x.date<=to),e=db.expenses.filter(x=>x.date>=from&&x.date<=to),sales=s.reduce((a,x)=>a+(+x.total||0),0),cost=s.reduce((a,x)=>a+getSalePurchaseNet(x),0),discount=s.reduce((a,x)=>a+(+x.discount||0),0),invoiceExpenses=e.filter(x=>x.saleNo).reduce((a,x)=>a+(+x.amount||0),0),otherExpenses=e.filter(x=>!x.saleNo).reduce((a,x)=>a+(+x.amount||0),0),gross=sales-cost,totalExpenses=invoiceExpenses+otherExpenses,net=gross-totalExpenses;document.getElementById('rSales').textContent='Rs '+money(sales);document.getElementById('rDiscount').textContent='Rs '+money(discount);document.getElementById('rCost').textContent='Rs '+money(cost);document.getElementById('rProfit').textContent='Rs '+money(gross);document.getElementById('rExpenses').textContent='Rs '+money(totalExpenses);document.getElementById('rNetProfit').textContent='Rs '+money(net);document.getElementById('rPurchases').textContent='Rs '+money(p.reduce((a,x)=>a+(+x.total||0),0));document.getElementById('profitInvoiceRows').innerHTML=s.slice().reverse().map(x=>{let pn=getSalePurchaseNet(x),gp=(+x.total||0)-pn,ex=e.filter(y=>y.saleNo===x.no).reduce((a,y)=>a+(+y.amount||0),0);return `<tr><td>${esc(x.date)}</td><td>${esc(x.no)}</td><td>${esc(x.customer)}</td><td>${money(x.total)}</td><td>${money(x.discount||0)}</td><td>${money(pn)}</td><td>${money(gp-ex)}</td></tr>`}).join('');let t={sales,discount,cost,gross};document.getElementById('prSalesTotal').textContent=money(t.sales);document.getElementById('prDiscountTotal').textContent=money(t.discount);document.getElementById('prCostTotal').textContent=money(t.cost);document.getElementById('prGrossTotal').textContent=money(t.gross);document.getElementById('expenseRows').innerHTML=e.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.category)}</td><td>${esc(x.description||'')}${x.saleNo?' (Invoice: '+esc(x.saleNo)+')':''}</td><td>${money(x.amount)}</td><td><button class="danger" onclick="deleteExpense(${x.id})">Delete</button></td></tr>`).join('');document.getElementById('expenseListTotal').textContent=money(totalExpenses);renderExpenseInvoices()}
  return (x.items||[]).reduce((sum,it)=>{
   let qty=+it.qty||0;
