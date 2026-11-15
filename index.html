@@ -1254,6 +1254,67 @@ if(!x)return;
 let it=x.items[0]||{};
 showPrintPreview('Sample Purchase Invoice',`<p>Purchase: ${esc(x.no)} | Date: ${esc(x.date)} | Supplier: ${esc(x.supplier)}</p><table><tr><th>Product</th><th>Qty</th><th>Rate</th><th>Total</th></tr><tr><td>${esc(it.name)}</td><td>${money(it.qty)}</td><td>${money(it.rate)}</td><td>${money(x.total)}</td></tr></table><h3>Total: Rs ${money(x.total)}</h3><p>Thank you</p>`);
   }
+function editSampleSale(no){
+let x=db.sales.find(v=>v.no==no&&v.kind==='sampleSale');
+if(!x)return;
+let it=x.items[0],q=prompt('New Quantity',it.qty);
+if(q===null)return;
+let qty=Number(q),rate=Number(prompt('New Sales Rate',it.rate));
+if(!Number.isFinite(qty)||qty<=0||!Number.isFinite(rate)||rate<=0){alert('Invalid quantity or rate');return}
+let b=db.batches.find(v=>String(v.id)===String(it.batchId));
+let p=db.products.find(v=>v.name===it.name);
+if(!b||!p){alert('Stock batch/product not found');return}
+if((+b.remaining||0)+(+it.qty||0)<qty){alert('Insufficient batch stock');return}
+b.remaining=(+b.remaining||0)+(+it.qty||0)-qty;
+p.stock=(+p.stock||0)+(+it.qty||0)-qty;
+it.qty=qty;it.rate=rate;it.net=qty*rate;
+x.total=qty*rate;x.subtotal=x.total;
+x.cost=qty*(+it.costRate||0);
+x.profit=x.total-x.cost;x.netProfit=x.profit;
+if(save())alert('Sample sale updated');
+}
+function deleteSampleSale(no){
+let i=db.sales.findIndex(v=>v.no==no&&v.kind==='sampleSale');
+if(i<0)return;
+if(!confirm('Delete this sample sale?'))return;
+let x=db.sales[i],it=x.items[0]||{};
+let b=db.batches.find(v=>String(v.id)===String(it.batchId));
+let p=db.products.find(v=>v.name===it.name);
+if(!b||!p){alert('Stock batch/product not found');return}
+b.remaining=(+b.remaining||0)+(+it.qty||0);
+p.stock=(+p.stock||0)+(+it.qty||0);
+db.sales.splice(i,1);save();
+}
+function editSamplePurchase(no){
+let x=db.purchases.find(v=>v.no==no&&(v.kind==='samplePurchase'||v.kind==='sample'));
+if(!x)return;
+let it=x.items[0],b=db.batches.find(v=>v.purchaseNo==no);
+let p=db.products.find(v=>v.name===it.name);
+if(!b||!p){alert('Purchase stock batch not found');return}
+if((+b.remaining||0)!==(+it.qty||0)){alert('Is purchase ka kuch stock sell ho chuka hai. Edit nahi ho sakta.');return}
+let q=prompt('New Quantity',it.qty);
+if(q===null)return;
+let qty=Number(q),rate=Number(prompt('New T.P. Rate',it.rate));
+if(!Number.isFinite(qty)||qty<=0||!Number.isFinite(rate)||rate<=0){alert('Invalid quantity or rate');return}
+p.stock=(+p.stock||0)-(+it.qty||0)+qty;
+b.qty=qty;b.remaining=qty;b.tp=rate;
+it.qty=qty;it.rate=rate;it.net=qty*rate;it.netCost=rate;
+x.total=qty*rate;x.subtotal=x.total;x.due=x.total;
+save();alert('Sample purchase updated');
+}
+function deleteSamplePurchase(no){
+let i=db.purchases.findIndex(v=>v.no==no&&(v.kind==='samplePurchase'||v.kind==='sample'));
+if(i<0)return;
+if(!confirm('Delete this sample purchase?'))return;
+let x=db.purchases[i],it=x.items[0]||{};
+let b=db.batches.find(v=>v.purchaseNo==no);
+let p=db.products.find(v=>v.name===it.name);
+if(!b||!p){alert('Purchase stock batch not found');return}
+if((+b.remaining||0)!==(+it.qty||0)){alert('Is purchase ka kuch stock sell ho chuka hai. Delete nahi ho sakta.');return}
+p.stock=(+p.stock||0)-(+it.qty||0);
+db.batches=db.batches.filter(v=>v!==b);
+db.purchases.splice(i,1);save();
+  }
 function filterSampleProducts(){let q=(document.getElementById('smProductSearch')?.value||'').toLowerCase(),sel=document.getElementById('smProduct');if(!sel)return;let cur=sel.value;sel.innerHTML='<option value="">Select product</option>'+(db.products||[]).filter(p=>!q||p.name.toLowerCase().includes(q)).map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');if([...sel.options].some(o=>o.value===cur))sel.value=cur}
 function resetSampleForm(){resetSamplePurchaseNew();renderSampleHistoryNew()}
 function saveSamplePurchase(){saveSamplePurchaseNew()}
