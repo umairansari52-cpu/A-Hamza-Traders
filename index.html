@@ -1244,7 +1244,36 @@ db.productEntries ||= [];db.productEntries.unshift({date:today(),name:p.name,uni
 if(!save())return;['prName','prUnit','prPrice'].forEach(id=>document.getElementById(id).value='');document.getElementById('prStock').value=0;renderProducts();alert('Product / T.P. rate saved.');
 }
 function balance(c){return db.sales.filter(x=>x.customerId===c.id).reduce((a,x)=>a+x.due,0)-db.payments.filter(x=>x.customerId===c.id).reduce((a,x)=>a+x.amount,0)}
-function recordPayment(){let id=+document.getElementById('payCustomer').value,amount=+document.getElementById('payAmount').value;if(!id||amount<=0){alert('Select customer and enter payment amount');return}db.payments.push({customerId:id,date:document.getElementById('payDate').value,amount,note:document.getElementById('payNote').value});document.getElementById('payAmount').value='';document.getElementById('payNote').value='';save()}
+function renderPaymentInvoices(){
+ let id=+document.getElementById('payCustomer').value;
+ let el=document.getElementById('payInvoice');
+ if(!el)return;
+ let rows=db.sales.filter(x=>x.customerId===id);
+ el.innerHTML='<option value="">Select Invoice</option>'+rows.map(x=>{
+  let used=(db.payments||[]).filter(p=>p.customerId===id&&String(p.invoiceNo)===String(x.no)).reduce((s,p)=>s+(+p.amount||0),0);
+  let due=Math.max(0,(+x.due||0)-used);
+  return due>0?`<option value="${esc(x.no)}">${esc(x.no)} — Remaining Rs ${money(due)}</option>`:'';
+ }).join('');
+}
+
+function recordPayment(){
+ let id=+document.getElementById('payCustomer').value;
+ let invoiceNo=document.getElementById('payInvoice').value;
+ let amount=+document.getElementById('payAmount').value;
+ if(!id||!invoiceNo||amount<=0){alert('Customer, Invoice No. aur Amount select karein');return}
+ let invoice=db.sales.find(x=>x.customerId===id&&String(x.no)===String(invoiceNo));
+ if(!invoice){alert('Invoice nahi mila');return}
+ let used=(db.payments||[]).filter(p=>p.customerId===id&&String(p.invoiceNo)===String(invoiceNo)).reduce((s,p)=>s+(+p.amount||0),0);
+ let due=Math.max(0,(+invoice.due||0)-used);
+ if(amount>due){alert('Remaining balance Rs '+money(due)+' hai');return}
+ db.payments.push({customerId:id,invoiceNo,date:document.getElementById('payDate').value,amount,note:document.getElementById('payNote').value});
+ document.getElementById('payAmount').value='';
+ document.getElementById('payNote').value='';
+ save();
+ renderPaymentInvoices();
+ renderLedger();
+ alert('Payment Invoice '+invoiceNo+' ke against save ho gayi');
+}
 function editCustomerPayment(i){let p=db.payments[i];if(!p)return;let date=prompt('Payment date (YYYY-MM-DD)',p.date);if(date===null)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){alert('Enter date as YYYY-MM-DD');return}let amount=prompt('Received amount',p.amount);if(amount===null)return;amount=+amount;if(!Number.isFinite(amount)||amount<=0){alert('Enter a valid amount');return}let note=prompt('Payment note',p.note||'');if(note===null)return;p.date=date;p.amount=amount;p.note=note;save()}
 function renderLedger(){let id=+document.getElementById('ledgerCustomer').value,c=db.customers.find(x=>x.id===id);if(!c){document.getElementById('ledgerRows').innerHTML='';document.getElementById('ledgerBalance').textContent='Rs 0.00';return}let tx=[...db.sales.filter(x=>x.customerId===id).flatMap(x=>[{date:x.date,detail:'Invoice '+x.no,debit:x.total,credit:0},...(x.paid>0?[{date:x.date,detail:'Paid with invoice '+x.no,debit:0,credit:x.paid}]:[])]),...db.payments.map((p,i)=>({p,i})).filter(x=>x.p.customerId===id).map(x=>({date:x.p.date,detail:x.p.note||'Payment received',debit:0,credit:x.p.amount,editIndex:x.i}))].sort((a,b)=>a.date.localeCompare(b.date));let bal=0;document.getElementById('ledgerRows').innerHTML=tx.map(x=>{bal+=x.debit-x.credit;return `<tr><td>${esc(x.date)}</td><td>${esc(x.detail)}${x.editIndex!==undefined?' <button class="secondary" onclick="editCustomerPayment('+x.editIndex+')">Edit</button>':''}</td><td>${money(x.debit)}</td><td>${money(x.credit)}</td><td>${money(bal)}</td></tr>`}).join('');document.getElementById('ledgerBalance').textContent='Rs '+money(balance(c))}
 function renderExpenseInvoices(){let el=document.getElementById('eInvoice');if(!el)return;let current=el.value;el.innerHTML='<option value="">General Expense</option>'+db.sales.slice().reverse().map(x=>`<option value="${esc(x.no)}">${esc(x.no)} - ${esc(x.customer)}</option>`).join('');if([...el.options].some(o=>o.value===current))el.value=current}
