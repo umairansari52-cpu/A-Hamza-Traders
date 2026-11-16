@@ -1387,6 +1387,7 @@ function printCustomerLedger(){
 }
 
 function renderExpenseInvoices(){let el=document.getElementById('eInvoice');if(!el)return;let current=el.value;el.innerHTML='<option value="">General Expense</option>'+db.sales.slice().reverse().map(x=>`<option value="${esc(x.no)}">${esc(x.no)} - ${esc(x.customer)}</option>`).join('');if([...el.options].some(o=>o.value===current))el.value=current}
+let editingSampleSaleNo=null,editingSamplePurchaseNo=null;
 function showSampleMode(mode){
  document.getElementById('sampleSaleForm').style.display=mode==='sale'?'block':'none';
  document.getElementById('samplePurchaseForm').style.display=mode==='purchase'?'block':'none';
@@ -1407,13 +1408,14 @@ function addSampleSaleRow(){
 }
 
 function sampleSaleRowChanged(el){
- let row=el.closest('.sample-row'),name=el.value.trim();
- let p=db.products.find(x=>x.name.toLowerCase()===name.toLowerCase());
- let sel=row.querySelector('.ss-batch');
+ let row=el.closest('.sample-row'),name=el.value.trim().toLowerCase();
+ let p=db.products.find(x=>x.name.toLowerCase()===name),sel=row.querySelector('.ss-batch');
  sel.innerHTML='<option value="">Select batch</option>';
  if(p){
- (db.batches||[]).filter(b=>(String(b.productId)===String(p.id)||(b.productName||'').toLowerCase()===name.toLowerCase())&&(+b.remaining||0)>0)
- .forEach(b=>sel.insertAdjacentHTML('beforeend',`<option value="${esc(b.id)}">TP Rs ${money(b.tp||0)} — Stock ${money(b.remaining)}</option>`));
+ let old=editingSampleSaleNo?db.sales.find(x=>x.no===editingSampleSaleNo):null;
+ let oldQty={};(old?.items||[]).forEach(it=>{oldQty[String(it.batchId)]=(oldQty[String(it.batchId)]||0)+(+it.qty||0)});
+ (db.batches||[]).filter(b=>(String(b.productId)===String(p.id)||(b.productName||'').toLowerCase()===name)&&((+b.remaining||0)>0||(+oldQty[String(b.id)]||0)>0))
+ .forEach(b=>{let available=(+b.remaining||0)+(+oldQty[String(b.id)]||0);sel.insertAdjacentHTML('beforeend',`<option value="${esc(b.id)}">TP Rs ${money(b.tp||0)} — Available: ${money(available)}</option>`);});
  }
  sampleSaleCalc();
 }
@@ -1449,21 +1451,25 @@ function samplePurchaseCalc(){
 }
 
 function resetSampleSale(){
+ editingSampleSaleNo=null;
  document.getElementById('smsNo').value=nextNo('SS',db.sales.filter(x=>x.kind==='sampleSale'));
  document.getElementById('smsDate').value=today();
  document.getElementById('smsCustomer').value='';
  document.getElementById('smsItems').innerHTML='';
- addSampleSaleRow();
- sampleSaleCalc();
+ addSampleSaleRow();sampleSaleCalc();
+ document.querySelector('#sampleSaleForm h3').textContent='Sample Sales Invoice';
+ document.querySelector('#sampleSaleForm button.primary').textContent='Save Sample Sales';
 }
 
 function resetSamplePurchaseNew(){
+ editingSamplePurchaseNo=null;
  document.getElementById('smpNo').value=nextNo('SP',db.purchases.filter(x=>x.kind==='samplePurchase'||x.kind==='sample'));
  document.getElementById('smpDate').value=today();
  document.getElementById('smpSupplier').value='';
  document.getElementById('smpItems').innerHTML='';
- addSamplePurchaseRow();
- samplePurchaseCalc();
+ addSamplePurchaseRow();samplePurchaseCalc();
+ document.querySelector('#samplePurchaseForm h3').textContent='Sample Purchase';
+ document.querySelector('#samplePurchaseForm button.primary').textContent='Save Sample Purchase';
 }
 
 function saveSamplePurchaseNew(){
@@ -1499,20 +1505,24 @@ function saveSampleSale(){
  editingSampleSaleNo=null;alert(old?'Sample Sales updated. Stock updated.':'Sample Sales saved. Stock updated.');renderSampleHistoryNew();resetSampleSale();
  document.querySelector('#sampleSaleForm h3').textContent='Sample Sales Invoice';document.querySelector('#sampleSaleForm button.primary').textContent='Save Sample Sales';
 }
+function sampleSaleInvoiceContent(x,title){
+ const items=Array.isArray(x.items)?x.items:[],total=Number(x.total)||items.reduce((a,it)=>a+(+it.qty||0)*(+it.rate||0),0);
+ const body=items.map((it,i)=>{let b=(db.batches||[]).find(v=>String(v.id)===String(it.batchId));return `<tr><td style="text-align:center">${i+1}</td><td>${esc(it.name||'')}</td><td style="text-align:right">${money(it.qty||0)}</td><td style="text-align:right">${money(it.costRate??b?.tp??0)}</td><td style="text-align:right">${money(it.rate||0)}</td><td style="text-align:right;font-weight:bold">${money((+it.qty||0)*(+it.rate||0))}</td></tr>`;}).join('');
+ return `<div style="font-family:Arial,sans-serif;color:#172b4d;max-width:900px;margin:auto;padding:18px;border:1px solid #d5deea">
+ <div style="text-align:center;border-bottom:3px solid #168451;padding:8px 0 14px"><h1 style="margin:0;color:#087344;font-size:27px">A.Hamza Traders</h1><b style="font-size:13px;color:#526579">Wholesaler &amp; Retailers</b><div style="font-size:11px;color:#64748b">Mirpurkhas</div></div>
+ <h2 style="text-align:center;margin:20px 0;color:#087344"><span style="background:#e8f7ef;border:1px solid #b9e3cc;border-radius:20px;padding:8px 22px">${title}</span></h2>
+ <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:15px 0"><div style="flex:1;min-width:210px;border:1px solid #dce4ed;border-radius:8px;padding:12px"><small style="color:#64748b">CUSTOMER</small><div style="font-size:16px;font-weight:bold;margin-top:6px">${esc(x.customer||'Cash Customer')}</div></div><div style="flex:1;min-width:210px;border:1px solid #dce4ed;border-radius:8px;padding:12px"><div style="display:flex;justify-content:space-between"><span>Invoice No.</span><b>${esc(x.no||'')}</b></div><div style="display:flex;justify-content:space-between;margin-top:9px"><span>Date</span><b>${esc(x.date||'')}</b></div></div></div>
+ <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#087344;color:white"><th style="padding:11px 7px">#</th><th style="padding:11px 7px;text-align:left">Product Description</th><th style="padding:11px 7px;text-align:right">Quantity</th><th style="padding:11px 7px;text-align:right">Purchase T.P.</th><th style="padding:11px 7px;text-align:right">Sales T.P.</th><th style="padding:11px 7px;text-align:right">Amount (Rs)</th></tr></thead><tbody>${body}</tbody></table>
+ <div style="display:flex;justify-content:flex-end;margin-top:16px"><div style="min-width:240px;border:1px solid #d5deea;border-radius:8px;overflow:hidden"><div style="display:flex;justify-content:space-between;padding:13px;background:#e8f7ef;color:#087344;font-size:17px"><b>Net Total</b><b>Rs ${money(total)}</b></div></div></div>
+ <div style="margin-top:12px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:12px"><b>Amount in Words:</b> ${amountWords(total)}</div>
+ <div style="display:flex;justify-content:space-between;gap:20px;margin-top:55px;font-size:12px;color:#475569"><div style="text-align:center;min-width:140px;border-top:1px solid #64748b;padding-top:7px">Prepared By</div><div style="text-align:center;min-width:160px;border-top:1px solid #64748b;padding-top:7px">Customer Signature</div></div>
+ <div style="text-align:center;margin-top:25px;padding-top:12px;border-top:1px solid #dce4ed;color:#087344;font-weight:bold">Thank you for your business</div><div style="text-align:center;color:#64748b;font-size:11px;margin-top:4px">Proprietor: M. Umair</div></div>`;
+}
 function printSampleSalePreview(){
- let rows=[...document.querySelectorAll('#smsItems .sample-row')];
- let total=0;
- let body=rows.map(row=>{
- let name=row.querySelector('.ss-product').value.trim();
- let qty=+row.querySelector('.ss-qty').value||0;
- let rate=+row.querySelector('.ss-rate').value||0;
- let b=db.batches.find(x=>String(x.id)===String(row.querySelector('.ss-batch').value));
- let amount=qty*rate;total+=amount;
- return `<tr><td>${esc(name)}</td><td>${money(qty)}</td><td>${money(b?.tp||0)}</td><td>${money(rate)}</td><td>${money(amount)}</td></tr>`;
- }).join('');
- if(!body||!total){alert('Product details enter karein.');return}
- let content=`<h2 style="text-align:center">A.Hamza Traders</h2><h3 style="text-align:center">Sample Sales Invoice</h3><p>Invoice: ${esc(document.getElementById('smsNo').value)} | Date: ${esc(document.getElementById('smsDate').value)} | Customer: ${esc(document.getElementById('smsCustomer').value)}</p><table><thead><tr><th>Product</th><th>Qty</th><th>Purchase T.P.</th><th>Sales T.P.</th><th>Amount</th></tr></thead><tbody>${body}</tbody></table><h3 style="text-align:right">Net Amount: Rs ${money(total)}</h3><p>Amount in Words: ${amountWords(total)}</p><p style="text-align:center;margin-top:40px">Thank you<br>Proprietor M.Umair</p>`;
- showPrintPreview('Sample Sales Invoice',content);
+ let rows=[...document.querySelectorAll('#smsItems .sample-row')],items=rows.map(row=>({name:row.querySelector('.ss-product').value.trim(),qty:+row.querySelector('.ss-qty').value||0,rate:+row.querySelector('.ss-rate').value||0,batchId:row.querySelector('.ss-batch').value,costRate:(db.batches||[]).find(b=>String(b.id)===String(row.querySelector('.ss-batch').value))?.tp||0}));
+ if(!items.length||items.some(it=>!it.name||it.qty<=0||it.rate<=0||!it.batchId)){alert('Product, batch, quantity aur sales rate enter karein.');return}
+ let total=items.reduce((a,it)=>a+it.qty*it.rate,0),x={no:document.getElementById('smsNo').value,date:document.getElementById('smsDate').value,customer:document.getElementById('smsCustomer').value,items,total};
+ showPrintPreview('Sample Sales Invoice',sampleSaleInvoiceContent(x,'SAMPLE SALES INVOICE'));
 }
 
 function samplePurchaseInvoiceContent(x,title){
@@ -1554,39 +1564,21 @@ b.innerHTML=sp.map(x=>(x.items||[]).map(it=>`<tr><td>${esc(x.no)}</td><td>${esc(
 }
 function printHistory(id,title){if(title==='Purchase History'||title==='Sales History')renderLists();else renderSampleHistoryNew();let el=document.getElementById(id);if(!el)return;let table=el.closest('table').cloneNode(true);table.querySelectorAll('button').forEach(b=>b.remove());let range='';if(title==='Purchase History')range=`Date From: ${document.getElementById('phFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('phTo')?.value||'All'}`;else if(title==='Sales History')range=`Date From: ${document.getElementById('shFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('shTo')?.value||'All'}`;else if(title==='Sample Sales History')range=`Date From: ${document.getElementById('sshFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('sshTo')?.value||'All'}`;else if(title==='Sample Purchase History')range=`Date From: ${document.getElementById('sphFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('sphTo')?.value||'All'}`;showPrintPreview(title,`<p>${range}</p>${table.outerHTML}`)}
 function printSampleSaleRecord(no){
-let x=db.sales.find(v=>v.no==no&&v.kind==='sampleSale');
-if(!x)return;
-let items=Array.isArray(x.items)?x.items:[];
-let body=items.map(it=>{
-let amount=(+it.qty||0)*(+it.rate||0);
-return `<tr><td>${esc(it.name||'')}</td><td>${money(it.qty||0)}</td><td>${money(it.rate||0)}</td><td>${money(amount)}</td></tr>`;
-}).join('');
-let total=Number(x.total)||items.reduce((s,it)=>s+(+it.qty||0)*(+it.rate||0),0);
-let content=`<h2 style="text-align:center">A.Hamza Traders</h2><h3 style="text-align:center">Sample Sales Invoice</h3><p>Invoice: ${esc(x.no)} | Date: ${esc(x.date)} | Customer: ${esc(x.customer)}</p><table><tr><th>Product</th><th>Qty</th><th>Rate</th><th>Total</th></tr>${body}</table><h3>Total: Rs ${money(total)}</h3><p style="text-align:center;margin-top:40px">Thank you<br>Proprietor M.Umair</p>`;
-showPrintPreview('Sample Sales Invoice',content);
-  }
+ let x=db.sales.find(v=>v.no==no&&v.kind==='sampleSale');if(!x)return;
+ showPrintPreview('Sample Sales Invoice',sampleSaleInvoiceContent(x,'SAMPLE SALES INVOICE'));
+}
 function printSamplePurchaseRecord(no){
  let x=db.purchases.find(v=>v.no==no&&(v.kind==='samplePurchase'||v.kind==='sample'));if(!x)return;
  showPrintPreview('Sample Purchase Invoice',samplePurchaseInvoiceContent(x,'SAMPLE PURCHASE INVOICE'));
 }
 function editSampleSale(no){
-let x=db.sales.find(v=>v.no==no&&v.kind==='sampleSale');
-if(!x)return;
-let it=x.items[0],q=prompt('New Quantity',it.qty);
-if(q===null)return;
-let qty=Number(q),rate=Number(prompt('New Sales Rate',it.rate));
-if(!Number.isFinite(qty)||qty<=0||!Number.isFinite(rate)||rate<=0){alert('Invalid quantity or rate');return}
-let b=db.batches.find(v=>String(v.id)===String(it.batchId));
-let p=db.products.find(v=>v.name===it.name);
-if(!b||!p){alert('Stock batch/product not found');return}
-if((+b.remaining||0)+(+it.qty||0)<qty){alert('Insufficient batch stock');return}
-b.remaining=(+b.remaining||0)+(+it.qty||0)-qty;
-p.stock=(+p.stock||0)+(+it.qty||0)-qty;
-it.qty=qty;it.rate=rate;it.net=qty*rate;
-x.total=qty*rate;x.subtotal=x.total;
-x.cost=qty*(+it.costRate||0);
-x.profit=x.total-x.cost;x.netProfit=x.profit;
-if(save())alert('Sample sale updated');
+ let x=db.sales.find(v=>v.no==no&&v.kind==='sampleSale');if(!x)return;
+ editingSampleSaleNo=no;showSampleMode('sale');
+ document.getElementById('smsNo').value=x.no;document.getElementById('smsDate').value=x.date||today();document.getElementById('smsCustomer').value=x.customer||'';
+ document.getElementById('smsItems').innerHTML='';
+ (x.items||[]).forEach(it=>{addSampleSaleRow();let row=document.querySelector('#smsItems .sample-row:last-child'),name=row.querySelector('.ss-product');name.value=it.name||'';sampleSaleRowChanged(name);row.querySelector('.ss-batch').value=String(it.batchId||'');row.querySelector('.ss-qty').value=it.qty||1;row.querySelector('.ss-rate').value=it.rate||0;});
+ sampleSaleCalc();document.querySelector('#sampleSaleForm h3').textContent='Edit Sample Sales Invoice';document.querySelector('#sampleSaleForm button.primary').textContent='Update Sample Sales';
+ document.getElementById('sampleSaleForm').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function deleteSampleSale(no){
 let i=db.sales.findIndex(v=>v.no==no&&v.kind==='sampleSale');
@@ -1601,21 +1593,15 @@ p.stock=(+p.stock||0)+(+it.qty||0);
 db.sales.splice(i,1);save();
 }
 function editSamplePurchase(no){
-let x=db.purchases.find(v=>v.no==no&&(v.kind==='samplePurchase'||v.kind==='sample'));
-if(!x)return;
-let it=x.items[0],b=db.batches.find(v=>v.purchaseNo==no);
-let p=db.products.find(v=>v.name===it.name);
-if(!b||!p){alert('Purchase stock batch not found');return}
-if((+b.remaining||0)!==(+it.qty||0)){alert('Is purchase ka kuch stock sell ho chuka hai. Edit nahi ho sakta.');return}
-let q=prompt('New Quantity',it.qty);
-if(q===null)return;
-let qty=Number(q),rate=Number(prompt('New T.P. Rate',it.rate));
-if(!Number.isFinite(qty)||qty<=0||!Number.isFinite(rate)||rate<=0){alert('Invalid quantity or rate');return}
-p.stock=(+p.stock||0)-(+it.qty||0)+qty;
-b.qty=qty;b.remaining=qty;b.tp=rate;
-it.qty=qty;it.rate=rate;it.net=qty*rate;it.netCost=rate;
-x.total=qty*rate;x.subtotal=x.total;x.due=x.total;
-save();alert('Sample purchase updated');
+ let x=db.purchases.find(v=>v.no==no&&(v.kind==='samplePurchase'||v.kind==='sample'));if(!x)return;
+ let batches=(db.batches||[]).filter(b=>b.purchaseNo==no);
+ if(batches.some(b=>(+b.remaining||0)!==(+b.qty||0))){alert('Is purchase ka kuch stock sell ho chuka hai. Edit nahi ho sakta.');return}
+ editingSamplePurchaseNo=no;showSampleMode('purchase');
+ document.getElementById('smpNo').value=x.no;document.getElementById('smpDate').value=x.date||today();document.getElementById('smpSupplier').value=x.supplier||'';
+ document.getElementById('smpItems').innerHTML='';
+ (x.items||[]).forEach(it=>{addSamplePurchaseRow();let row=document.querySelector('#smpItems .sample-row:last-child');row.querySelector('.sp-product').value=it.name||'';row.querySelector('.sp-qty').value=it.qty||1;row.querySelector('.sp-rate').value=it.rate||0;});
+ samplePurchaseCalc();document.querySelector('#samplePurchaseForm h3').textContent='Edit Sample Purchase';document.querySelector('#samplePurchaseForm button.primary').textContent='Update Sample Purchase';
+ document.getElementById('samplePurchaseForm').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function deleteSamplePurchase(no){
 let i=db.purchases.findIndex(v=>v.no==no&&(v.kind==='samplePurchase'||v.kind==='sample'));
@@ -1681,7 +1667,13 @@ function renderLedgerOptions(){
  document.getElementById('payCustomer').innerHTML=opts;
  
   }
-function fillDatalists(){let customers=db.customers.map(c=>`<option value="${esc(c.name)}">`).join(''),products=db.products.map(p=>`<option value="${esc(p.name)}">`).join('');let cl=document.getElementById('customerList'),cs=document.getElementById('customerSearchList'),pl=document.getElementById('productList');if(cl)cl.innerHTML=customers;if(cs)cs.innerHTML=customers;if(pl)pl.innerHTML=products}
+function fillDatalists(){
+ let customers=(db.customers||[]).map(c=>`<option value="${esc(c.name)}">`).join('');
+ let products=(db.products||[]).map(p=>`<option value="${esc(p.name)}">`).join('');
+ let cl=document.getElementById('customerList'),cs=document.getElementById('customerSearchList'),pl=document.getElementById('productList');
+ if(cl)cl.innerHTML=customers;if(cs)cs.innerHTML=customers;if(pl)pl.innerHTML=products;
+ document.querySelectorAll('input[list="customerList"],input[list="productList"],input[list="customerSearchList"]').forEach(el=>{el.setAttribute('autocomplete','off');el.setAttribute('aria-haspopup','listbox');});
+}
 function getSalePurchaseNet(x){
  return (x.items||[]).reduce((sum,it)=>{
   let qty=+it.qty||0;
