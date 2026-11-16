@@ -736,7 +736,7 @@ startProductAutocomplete();
 <button class="secondary" onclick="gotoTab('backup')">💾 Backup & Restore</button>
 </div>
 </details>
-<button class="danger" type="button" style="width:100%;margin-top:10px;padding:13px;font-weight:800" onclick="window.dispatchEvent(new PopStateEvent('popstate'))">🚪 Exit App</button>
+<button class="danger" type="button" style="width:100%;margin-top:10px;padding:13px;font-weight:800" onclick="window.ahtShowExitDialog()">🚪 Exit App</button>
 </div>
 <p class="dashboard-thanks">Thank you for using A.Hamza Traders | M.Umair</p></section>
 <section id="sales" class="tab">
@@ -2156,6 +2156,7 @@ function renderAll(){renderCustomerList();renderSampleHistory();if(document.getE
       setTimeout(function(){try{history.go(-2);}catch(e){}},150);
     };
   }
+  window.ahtShowExitDialog=showExitDialog;
   arm();
   window.addEventListener('popstate',function(){
     guardReady=false;
