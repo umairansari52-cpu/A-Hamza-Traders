@@ -908,8 +908,8 @@ startProductAutocomplete();
 </div>
 </div>
 
-<div class="card"><h3>Sample Sales History</h3><div class="grid"><div><label>Date From</label><input id="sshFrom" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Date To</label><input id="sshTo" type="date" onchange="renderSampleHistoryNew()"></div></div><div class="actions no-print"><button class="secondary" onclick="printHistory('sampleSalesHistory','Sample Sales History')">Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>No.</th><th>Date</th><th>Customer</th><th>Product</th><th>Qty</th><th>Purchase T.P.</th><th>Sales Net T.P.</th><th>Total</th><th>Actions</th></tr></thead><tbody id="sampleSalesHistory"></tbody></table></div></div>
-<div class="card"><h3>Sample Purchase History</h3><div class="grid"><div><label>Date From</label><input id="sphFrom" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Date To</label><input id="sphTo" type="date" onchange="renderSampleHistoryNew()"></div></div><div class="actions no-print"><button class="secondary" onclick="printHistory('samplePurchaseHistory','Sample Purchase History')">Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>No.</th><th>Date</th><th>Supplier</th><th>Product</th><th>Qty</th><th>T.P.</th><th>Total</th><th>Actions</th></tr></thead><tbody id="samplePurchaseHistory"></tbody></table></div></div>
+<div class="card"><h3>Sample Sales History</h3><div class="grid"><div><label>Date From</label><input id="sshFrom" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Date To</label><input id="sshTo" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Search Party / Invoice No.</label><input id="sshSearch" placeholder="Customer or invoice number" oninput="renderSampleHistoryNew()"></div></div><div class="actions no-print"><button class="secondary" onclick="printHistory('sampleSalesHistory','Sample Sales History')">Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Party Name</th><th>Invoice No.</th><th>Amount</th><th>Actions</th></tr></thead><tbody id="sampleSalesHistory"></tbody></table></div></div>
+<div class="card"><h3>Sample Purchase History</h3><div class="grid"><div><label>Date From</label><input id="sphFrom" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Date To</label><input id="sphTo" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Search Party / Invoice No.</label><input id="sphSearch" placeholder="Supplier or invoice number" oninput="renderSampleHistoryNew()"></div></div><div class="actions no-print"><button class="secondary" onclick="printHistory('samplePurchaseHistory','Sample Purchase History')">Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Party Name</th><th>Invoice No.</th><th>Amount</th><th>Actions</th></tr></thead><tbody id="samplePurchaseHistory"></tbody></table></div></div>
 </section>
 <section id="adjustment" class="tab">
 <div class="card">
@@ -1545,27 +1545,16 @@ function printSamplePurchasePreview(){
  showPrintPreview('Sample Purchase Invoice',samplePurchaseInvoiceContent(x,'SAMPLE PURCHASE INVOICE'));
 }
 function renderSampleHistoryNew(){
- let fromS=document.getElementById('sshFrom')?.value||'';
- let toS=document.getElementById('sshTo')?.value||'';
- let fromP=document.getElementById('sphFrom')?.value||'';
- let toP=document.getElementById('sphTo')?.value||'';
- let ss=(db.sales||[]).filter(x=>x.kind==='sampleSale'&&(!fromS||x.date>=fromS)&&(!toS||x.date<=toS)).slice().reverse();
- let sp=(db.purchases||[]).filter(x=>(x.kind==='samplePurchase'||x.kind==='sample')&&(!fromP||x.date>=fromP)&&(!toP||x.date<=toP)).slice().reverse();
- let a=document.getElementById('sampleSalesHistory');
- let b=document.getElementById('samplePurchaseHistory');
- if(a){
-  a.innerHTML=ss.map(x=>{
-   let items=x.items||[],names=items.map(it=>esc(it.name||'')).filter(Boolean).join(', '),qty=items.reduce((n,it)=>n+(+it.qty||0),0),total=Number(x.total)||items.reduce((n,it)=>n+(+it.qty||0)*(+it.rate||0),0);
-   let cost=items.map(it=>+it.costRate||0),rates=items.map(it=>+it.rate||0);
-   return `<tr><td>${esc(x.no)}</td><td>${esc(x.date)}</td><td>${esc(x.customer)}</td><td>${names}</td><td>${money(qty)}</td><td>${cost.length&&cost.every(v=>v===cost[0])?money(cost[0]):'Multiple'}</td><td>${rates.length&&rates.every(v=>v===rates[0])?money(rates[0]):'Multiple'}</td><td>${money(total)}</td><td><button onclick="printSampleSaleRecord('${esc(x.no)}')">Print</button> <button onclick="editSampleSale('${esc(x.no)}')">Edit Invoice</button> <button class="danger" onclick="deleteSampleSale('${esc(x.no)}')">Delete</button></td></tr>`;
-  }).join('')||'<tr><td colspan="9">No sample sales</td></tr>';
- }
- if(b){
-  b.innerHTML=sp.map(x=>{
-   let items=x.items||[],names=items.map(it=>esc(it.name||'')).filter(Boolean).join(', '),qty=items.reduce((n,it)=>n+(+it.qty||0),0),total=Number(x.total)||items.reduce((n,it)=>n+(+it.qty||0)*(+it.rate||0),0),rates=items.map(it=>+it.rate||0);
-   return `<tr><td>${esc(x.no)}</td><td>${esc(x.date)}</td><td>${esc(x.supplier)}</td><td>${names}</td><td>${money(qty)}</td><td>${rates.length&&rates.every(v=>v===rates[0])?money(rates[0]):'Multiple'}</td><td>${money(total)}</td><td><button onclick="printSamplePurchaseRecord('${esc(x.no)}')">Print</button> <button onclick="editSamplePurchase('${esc(x.no)}')">Edit Invoice</button> <button class="danger" onclick="deleteSamplePurchase('${esc(x.no)}')">Delete</button></td></tr>`;
-  }).join('')||'<tr><td colspan="8">No sample purchases</td></tr>';
- }
+ let fromS=document.getElementById('sshFrom')?.value||'',toS=document.getElementById('sshTo')?.value||'';
+ let fromP=document.getElementById('sphFrom')?.value||'',toP=document.getElementById('sphTo')?.value||'';
+ let qs=(document.getElementById('sshSearch')?.value||'').trim().toLowerCase();
+ let qp=(document.getElementById('sphSearch')?.value||'').trim().toLowerCase();
+ let isSample=x=>/sample/i.test(String(x.kind||''))||!!x.sampleType||!!x.isSample||x.type==='sample';
+ let ss=(db.sales||[]).filter(x=>(x.kind==='sampleSale'||isSample(x))&&(!fromS||x.date>=fromS)&&(!toS||x.date<=toS)&&(!qs||String(x.customer||'').toLowerCase().includes(qs)||String(x.no||'').toLowerCase().includes(qs))).slice().reverse();
+ let sp=(db.purchases||[]).filter(x=>(x.kind==='samplePurchase'||x.kind==='sample'||isSample(x))&&(!fromP||x.date>=fromP)&&(!toP||x.date<=toP)&&(!qp||String(x.supplier||'').toLowerCase().includes(qp)||String(x.no||'').toLowerCase().includes(qp))).slice().reverse();
+ let a=document.getElementById('sampleSalesHistory'),b=document.getElementById('samplePurchaseHistory');
+ if(a)a.innerHTML=ss.map(x=>`<tr><td>${esc(x.customer||'Cash Customer')}</td><td>${esc(x.no||'')}</td><td>${money(x.total||0)}</td><td><button onclick="printSampleSaleRecord('${esc(x.no)}')">Print Preview</button> <button onclick="editSampleSale('${esc(x.no)}')">Edit Invoice</button> <button class="danger" onclick="deleteSampleSale('${esc(x.no)}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="4">No sample sales</td></tr>';
+ if(b)b.innerHTML=sp.map(x=>`<tr><td>${esc(x.supplier||'Sample Supplier')}</td><td>${esc(x.no||'')}</td><td>${money(x.total||0)}</td><td><button onclick="printSamplePurchaseRecord('${esc(x.no)}')">Print Preview</button> <button onclick="editSamplePurchase('${esc(x.no)}')">Edit Invoice</button> <button class="danger" onclick="deleteSamplePurchase('${esc(x.no)}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="4">No sample purchases</td></tr>';
 }
 function printHistory(id,title){if(title==='Purchase History'||title==='Sales History')renderLists();else renderSampleHistoryNew();let el=document.getElementById(id);if(!el)return;let table=el.closest('table').cloneNode(true);table.querySelectorAll('button').forEach(b=>b.remove());let range='';if(title==='Purchase History')range=`Date From: ${document.getElementById('phFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('phTo')?.value||'All'}`;else if(title==='Sales History')range=`Date From: ${document.getElementById('shFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('shTo')?.value||'All'}`;else if(title==='Sample Sales History')range=`Date From: ${document.getElementById('sshFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('sshTo')?.value||'All'}`;else if(title==='Sample Purchase History')range=`Date From: ${document.getElementById('sphFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('sphTo')?.value||'All'}`;showPrintPreview(title,`<p>${range}</p>${table.outerHTML}`)}
 function printSampleSaleRecord(no){
@@ -2069,7 +2058,7 @@ let p=document.getElementById('purchaseList');
 
 let sf=document.getElementById('shFrom')?.value||'',st=document.getElementById('shTo')?.value||'',pf=document.getElementById('phFrom')?.value||'',pt=document.getElementById('phTo')?.value||'';
 let sales=(db.sales||[]).map((x,i)=>({x,i})).filter(({x})=>x.kind!=='sampleSale'&&!x.sampleType&&(!sf||x.date>=sf)&&(!st||x.date<=st)).sort((a,b)=>(b.x.date||'').localeCompare(a.x.date||'')||b.i-a.i);
-let purchases=(db.purchases||[]).map((x,i)=>({x,i})).filter(({x})=>x.kind!=='samplePurchase'&&x.kind!=='sample'&&!x.sampleType&&(!pf||x.date>=pf)&&(!pt||x.date<=pt)).sort((a,b)=>(b.x.date||'').localeCompare(a.x.date||'')||b.i-a.i);
+let purchases=(db.purchases||[]).map((x,i)=>({x,i})).filter(({x})=>x.kind!=='samplePurchase'&&x.kind!=='sample'&&x.kind!=='sampleSale'&&!x.sampleType&&!x.isSample&&x.type!=='sample'&&(!pf||x.date>=pf)&&(!pt||x.date<=pt)).sort((a,b)=>(b.x.date||'').localeCompare(a.x.date||'')||b.i-a.i);
 
 if(s)s.innerHTML=sales.map(({x,i})=>`<tr><td>${esc(x.no||'')}</td><td>${esc(x.date||'')}</td><td>${esc(x.customer||'')}</td><td>${money(x.total||0)}</td><td><button data-i="${i}" data-a="sv">View</button> <button data-i="${i}" data-a="se">Edit</button> <button data-i="${i}" data-a="sd">Delete</button></td></tr>`).join('')||'<tr><td colspan="5">No invoice</td></tr>';
 
