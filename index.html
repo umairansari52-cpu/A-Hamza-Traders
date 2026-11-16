@@ -1674,6 +1674,26 @@ function fillDatalists(){
  if(cl)cl.innerHTML=customers;if(cs)cs.innerHTML=customers;if(pl)pl.innerHTML=products;
  document.querySelectorAll('input[list="customerList"],input[list="productList"],input[list="customerSearchList"]').forEach(el=>{el.setAttribute('autocomplete','off');el.setAttribute('aria-haspopup','listbox');});
 }
+
+// Touch-friendly dropdowns for customer and product fields (including Android).
+let ahtSuggestionInput=null,ahtSuggestionBox=null;
+function closeAhtSuggestions(){if(ahtSuggestionBox)ahtSuggestionBox.remove();ahtSuggestionBox=null;ahtSuggestionInput=null;}
+function showAhtSuggestions(input){
+ const listId=input.getAttribute('list');if(!listId)return;
+ const list=document.getElementById(listId);if(!list)return;
+ const q=(input.value||'').trim().toLowerCase();
+ const values=[...list.options].map(o=>o.value).filter(v=>!q||v.toLowerCase().includes(q)).slice(0,80);
+ closeAhtSuggestions();if(!values.length)return;
+ const rect=input.getBoundingClientRect(),box=document.createElement('div');
+ box.className='aht-suggestion-box';box.style.cssText='position:fixed;z-index:1000000;left:'+Math.max(4,rect.left)+'px;top:'+Math.min(window.innerHeight-80,rect.bottom)+'px;width:'+Math.min(rect.width,window.innerWidth-8)+'px;max-height:220px;overflow:auto;background:#fff;border:1px solid #9bb8d2;border-radius:8px;box-shadow:0 5px 18px #123b5d35;padding:4px;';
+ values.forEach(value=>{let b=document.createElement('button');b.type='button';b.textContent=value;b.style.cssText='display:block;width:100%;padding:11px 10px;text-align:left;border:0;border-bottom:1px solid #edf1f5;background:#fff;color:#173b56;font-size:14px;';b.addEventListener('pointerdown',e=>{e.preventDefault();input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));closeAhtSuggestions();input.focus();});box.appendChild(b);});
+ document.body.appendChild(box);ahtSuggestionInput=input;ahtSuggestionBox=box;
+}
+document.addEventListener('focusin',e=>{if(e.target.matches('input[list]'))showAhtSuggestions(e.target);});
+document.addEventListener('input',e=>{if(e.target.matches('input[list]'))showAhtSuggestions(e.target);});
+document.addEventListener('focusout',e=>{if(e.target===ahtSuggestionInput)setTimeout(()=>{if(ahtSuggestionBox&&!ahtSuggestionBox.matches(':hover'))closeAhtSuggestions();},180);});
+document.addEventListener('pointerdown',e=>{if(ahtSuggestionBox&&!ahtSuggestionBox.contains(e.target)&&e.target!==ahtSuggestionInput)closeAhtSuggestions();});
+window.addEventListener('scroll',closeAhtSuggestions,true);
 function getSalePurchaseNet(x){
  return (x.items||[]).reduce((sum,it)=>{
   let qty=+it.qty||0;
