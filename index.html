@@ -722,7 +722,7 @@ startProductAutocomplete();
 <div class="card"><h2>Welcome to A.Hamza Traders</h2><div class="muted">Proprietor: M. Umair</div><p>Medicine Wholesaler & Retailers</p></div>
 <div class="grid">
 <div class="card"><div class="muted">Today's Sales</div><div class="metric" id="dashSales">Rs 0.00</div></div>
-<div class="card"><div class="muted">Today's Profit</div><div class="metric good" id="dashProfit">Rs 0.00</div></div>
+<div class="card"><div class="muted">Today's Sales Profit</div><div class="metric good" id="dashSalesProfit">Rs 0.00</div></div><div class="card"><div class="muted">Today's Sample Profit</div><div class="metric good" id="dashSampleProfit">Rs 0.00</div></div>
 <div class="card"><div class="muted">Total Customers</div><div class="metric" id="dashCustomers">0</div></div>
 <div class="card"><div class="muted">Products in Stock</div><div class="metric" id="dashProducts">0</div></div>
 </div>
@@ -733,7 +733,7 @@ startProductAutocomplete();
 <button class="primary" onclick="gotoTab('sales')">🧾 New Sales Invoice</button>
 <button class="secondary" onclick="gotoTab('purchase')">🛒 New Purchase</button>
 <button class="secondary" onclick="gotoTab('products')">💊 Add / View Products</button>
-<button class="secondary" onclick="gotoTab('backup')">💾 Backup & Restore</button>
+<button class="secondary" onclick="gotoTab('backup')">💾 Backup & Restore</button><button class="danger" type="button" onclick="window.dispatchEvent(new PopStateEvent('popstate'))">🚪 Exit App</button>
 </div>
 </details>
 </div>
@@ -1656,7 +1656,7 @@ function shareReportText(title,body){let msg=title+'\nA.Hamza Traders\n'+body;le
 function shareDailySummary(){let d=dailySummaryData(reportDate());shareReportText('Daily Summary','Date: '+d.date+'\nSales: Rs '+money(d.totalSales)+'\nPurchase: Rs '+money(d.totalPurchase)+'\nExpenses: Rs '+money(d.totalExpenses)+'\nRecovery: Rs '+money(d.recovery)+'\nGross Profit: Rs '+money(d.profit)+'\nProfit After Expenses: Rs '+money(d.netProfit))}
 function shareCustomerOutstanding(){let rows=db.customers.map(c=>({c,amount:balance(c)})).filter(x=>Math.abs(x.amount)>.004).sort((a,b)=>b.amount-a.amount);let body=rows.map(x=>x.c.name+': Rs '+money(x.amount)).join('\n')+'\nGrand Total: Rs '+money(rows.reduce((a,x)=>a+x.amount,0));shareReportText('Customer Outstanding',body||'No outstanding balance')}
 
-function renderDashboard(){let d=today(),s=db.sales.filter(x=>x.date===d);document.getElementById('dashSales').textContent='Rs '+money(s.reduce((a,x)=>a+(+x.total||0),0));document.getElementById('dashProfit').textContent='Rs '+money(s.reduce((a,x)=>a+(+x.profit||(+x.total||0)-(+x.cost||0)),0));document.getElementById('dashCustomers').textContent=db.customers.length;document.getElementById('dashProducts').textContent=db.products.length}
+function renderDashboard(){let d=today(),s=db.sales.filter(x=>x.date===d),normalSales=s.filter(x=>x.kind!=='sampleSale'),sampleSales=s.filter(x=>x.kind==='sampleSale');document.getElementById('dashSales').textContent='Rs '+money(s.reduce((a,x)=>a+(+x.total||0),0));document.getElementById('dashSalesProfit').textContent='Rs '+money(normalSales.reduce((a,x)=>a+(+(x.profit??x.netProfit)||(+x.total||0)-(+x.cost||0)),0));document.getElementById('dashSampleProfit').textContent='Rs '+money(sampleSales.reduce((a,x)=>a+(+(x.profit??x.netProfit)||(+x.total||0)-(+x.cost||0)),0));document.getElementById('dashCustomers').textContent=db.customers.length;document.getElementById('dashProducts').textContent=db.products.length}
 function renderSupplierOptions(){let names=[...new Set([...(db.suppliers||[]).map(x=>x.name),...db.purchases.map(x=>x.supplier)])];document.getElementById('ledgerSupplier').innerHTML='<option value="">Choose supplier</option>'+names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');document.getElementById('supplierList').innerHTML=names.map(n=>`<option value="${esc(n)}">`).join('')}
 function renderLedgerOptions(){
  let opts='<option value="">Choose customer</option>'+db.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
