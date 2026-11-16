@@ -2135,8 +2135,10 @@ function renderAll(){renderCustomerList();renderSampleHistory();if(document.getE
       if(dash)dash.click();
       arm();return;
     }
-    arm();
-    showExitDialog();
+    const leave=window.confirm('Exit A.Hamza Traders?');
+    if(!leave){arm();return;}
+    try{window.close();}catch(e){}
+    setTimeout(function(){try{history.back();}catch(e){}},100);
   });
   window.addEventListener('pageshow',function(){guardReady=false;arm();});
 })();
