@@ -2137,6 +2137,7 @@ function renderAll(){renderCustomerList();renderSampleHistory();if(document.getE
       if(dash)dash.click();
       arm();return;
     }
+    arm();
     showExitDialog();
   });
   window.addEventListener('pageshow',function(){guardReady=false;arm();});
