@@ -722,7 +722,7 @@ startProductAutocomplete();
 <div class="card"><h2>Welcome to A.Hamza Traders</h2><div class="muted">Proprietor: M. Umair</div><p>Medicine Wholesaler & Retailers</p></div>
 <div class="grid">
 <div class="card"><div class="muted">Today's Sales</div><div class="metric" id="dashSales">Rs 0.00</div></div>
-<div class="card"><div class="muted">Today's Sales Profit</div><div class="metric good" id="dashSalesProfit">Rs 0.00</div></div><div class="card"><div class="muted">Today's Sample Profit</div><div class="metric good" id="dashSampleProfit">Rs 0.00</div></div>
+<div class="card"><div class="muted">Today's Sales Profit</div><div class="metric good" id="dashSalesProfit">Rs 0.00</div></div>
 <div class="card"><div class="muted">Total Customers</div><div class="metric" id="dashCustomers">0</div></div>
 <div class="card"><div class="muted">Products in Stock</div><div class="metric" id="dashProducts">0</div></div>
 </div>
@@ -1051,7 +1051,7 @@ startProductAutocomplete();
 <div id="expenseReport"></div>
 </div></section>
 
-<section id="reports" class="tab"><div class="card"><h2>Profit Summary</h2><div class="grid"><div><label>From</label><input type="date" id="rFrom" onchange="renderReports()"></div><div><label>To</label><input type="date" id="rTo" onchange="renderReports()"></div></div><div class="grid" style="margin-top:12px"><div class="card"><div class="muted">Sales (after discount)</div><div class="metric" id="rSales">Rs 0</div></div><div class="card"><div class="muted">Cost of Goods Sold</div><div class="metric" id="rCost">Rs 0</div></div><div class="card"><div class="muted">Normal Profit</div><div class="metric good" id="rProfit">Rs 0</div></div><div class="card"><div class="muted">Total Expenses</div><div class="metric bad" id="rExpenses">Rs 0</div></div><div class="card"><div class="muted">Net Profit</div><div class="metric good" id="rNetProfit">Rs 0</div></div><div class="card"><div class="muted">Purchase Total</div><div class="metric" id="rPurchases">Rs 0</div></div></div><p class="muted">Normal Profit and Sample Profit are shown separately. Total Profit combines both; expenses remain separate.</p><div class="card"><h3>Invoice-wise Profit Details</h3><div class="actions no-print"><button class="secondary" onclick="printInvoiceWiseProfit()">Profit Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Date</th><th>Invoice</th><th>Customer</th><th>Sales (Net)</th><th>Discount Amount</th><th>Purchase Net Amount</th><th>Profit</th></tr></thead><tbody id="profitInvoiceRows"></tbody><tfoot><tr><th colspan="3">Total</th><th id="prSalesTotal">0.00</th><th id="prDiscountTotal">0.00</th><th id="prCostTotal">0.00</th><th id="prGrossTotal">0.00</th></tr></tfoot></table></div></div></div></section>
+<section id="reports" class="tab"><div class="card"><h2>Profit Summary</h2><div class="grid"><div><label>From</label><input type="date" id="rFrom" onchange="renderReports()"></div><div><label>To</label><input type="date" id="rTo" onchange="renderReports()"></div></div><div class="grid" style="margin-top:12px"><div class="card"><div class="muted">Normal Profit</div><div class="metric good" id="rProfit">Rs 0</div></div><div class="card"><div class="muted">Sample Profit</div><div class="metric good" id="rSampleProfit">Rs 0</div></div><div class="card"><div class="muted">Total Net Profit (Normal + Sample - Expenses)</div><div class="metric good" id="rTotalProfit">Rs 0</div></div></div><div class="card"><h3>Invoice-wise Profit Details</h3><div class="actions no-print"><button class="secondary" onclick="printInvoiceWiseProfit()">Profit Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Date</th><th>Invoice</th><th>Customer</th><th>Sales (Net)</th><th>Discount Amount</th><th>Purchase Net Amount</th><th>Profit</th></tr></thead><tbody id="profitInvoiceRows"></tbody><tfoot><tr><th colspan="3">Total</th><th id="prSalesTotal">0.00</th><th id="prDiscountTotal">0.00</th><th id="prCostTotal">0.00</th><th id="prGrossTotal">0.00</th></tr></tfoot></table></div></div></div></section>
 
 <section id="detailReports" class="tab">
 <div class="card"><h2>Date-wise Reports</h2>
@@ -1708,7 +1708,31 @@ function getSalePurchaseNet(x){
   return sum+qty*unit;
  },0);
   }
-function renderReports(){let from=document.getElementById('rFrom').value||'0000',to=document.getElementById('rTo').value||'9999',s=db.sales.filter(x=>x.date>=from&&x.date<=to),p=db.purchases.filter(x=>x.date>=from&&x.date<=to),e=db.expenses.filter(x=>x.date>=from&&x.date<=to),sales=s.reduce((a,x)=>a+(+x.total||0),0),cost=s.reduce((a,x)=>a+getSalePurchaseNet(x),0),discount=s.reduce((a,x)=>a+(+x.discount||0),0),invoiceExpenses=e.filter(x=>x.saleNo).reduce((a,x)=>a+(+x.amount||0),0),otherExpenses=e.filter(x=>!x.saleNo).reduce((a,x)=>a+(+x.amount||0),0),gross=sales-cost,totalExpenses=invoiceExpenses+otherExpenses,net=gross-totalExpenses;document.getElementById('rSales').textContent='Rs '+money(sales);document.getElementById('rDiscount').textContent='Rs '+money(discount);document.getElementById('rCost').textContent='Rs '+money(cost);document.getElementById('rProfit').textContent='Rs '+money(gross);document.getElementById('rExpenses').textContent='Rs '+money(totalExpenses);document.getElementById('rNetProfit').textContent='Rs '+money(net);document.getElementById('rPurchases').textContent='Rs '+money(p.reduce((a,x)=>a+(+x.total||0),0));document.getElementById('profitInvoiceRows').innerHTML=s.slice().reverse().map(x=>{let pn=getSalePurchaseNet(x),gp=(+x.total||0)-pn,ex=e.filter(y=>y.saleNo===x.no).reduce((a,y)=>a+(+y.amount||0),0);return `<tr><td>${esc(x.date)}</td><td>${esc(x.no)}</td><td>${esc(x.customer)}</td><td>${money(x.total)}</td><td>${money(x.discount||0)}</td><td>${money(pn)}</td><td>${money(gp-ex)}</td></tr>`}).join('');let t={sales,discount,cost,gross};document.getElementById('prSalesTotal').textContent=money(t.sales);document.getElementById('prDiscountTotal').textContent=money(t.discount);document.getElementById('prCostTotal').textContent=money(t.cost);document.getElementById('prGrossTotal').textContent=money(t.gross);document.getElementById('expenseRows').innerHTML=e.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.category)}</td><td>${esc(x.description||'')}${x.saleNo?' (Invoice: '+esc(x.saleNo)+')':''}</td><td>${money(x.amount)}</td><td><button class="danger" onclick="deleteExpense(${x.id})">Delete</button></td></tr>`).join('');document.getElementById('expenseListTotal').textContent=money(totalExpenses);renderExpenseInvoices()}
+function renderReports(){
+ let from=document.getElementById('rFrom').value||'0000',to=document.getElementById('rTo').value||'9999';
+ let isSample=x=>/sample/i.test(String(x.kind||''))||!!x.sampleType||!!x.isSample||x.type==='sample';
+ let allSales=(db.sales||[]).filter(x=>x.date>=from&&x.date<=to);
+ let normalSales=allSales.filter(x=>!isSample(x)),sampleSales=allSales.filter(isSample);
+ let e=(db.expenses||[]).filter(x=>x.date>=from&&x.date<=to);
+ let normalSalesTotal=normalSales.reduce((a,x)=>a+(+x.total||0),0);
+ let normalCost=normalSales.reduce((a,x)=>a+getSalePurchaseNet(x),0);
+ let normalProfit=normalSalesTotal-normalCost;
+ let sampleProfit=sampleSales.reduce((a,x)=>a+(+x.total||0)-getSalePurchaseNet(x),0);
+ let totalExpenses=e.reduce((a,x)=>a+(+x.amount||0),0);
+ let totalNet=normalProfit+sampleProfit-totalExpenses;
+ document.getElementById('rProfit').textContent='Rs '+money(normalProfit);
+ document.getElementById('rSampleProfit').textContent='Rs '+money(sampleProfit);
+ document.getElementById('rTotalProfit').textContent='Rs '+money(totalNet);
+ document.getElementById('profitInvoiceRows').innerHTML=normalSales.slice().reverse().map(x=>{let pn=getSalePurchaseNet(x),gp=(+x.total||0)-pn,ex=e.filter(y=>y.saleNo===x.no).reduce((a,y)=>a+(+y.amount||0),0);return `<tr><td>${esc(x.date)}</td><td>${esc(x.no)}</td><td>${esc(x.customer)}</td><td>${money(x.total)}</td><td>${money(x.discount||0)}</td><td>${money(pn)}</td><td>${money(gp-ex)}</td></tr>`}).join('');
+ let t={sales:normalSalesTotal,discount:normalSales.reduce((a,x)=>a+(+x.discount||0),0),cost:normalCost,gross:normalProfit};
+ document.getElementById('prSalesTotal').textContent=money(t.sales);
+ document.getElementById('prDiscountTotal').textContent=money(t.discount);
+ document.getElementById('prCostTotal').textContent=money(t.cost);
+ document.getElementById('prGrossTotal').textContent=money(t.gross);
+ document.getElementById('expenseRows').innerHTML=e.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.category)}</td><td>${esc(x.description||'')}${x.saleNo?' (Invoice: '+esc(x.saleNo)+')':''}</td><td>${money(x.amount)}</td><td><button class="danger" onclick="deleteExpense(${x.id})">Delete</button></td></tr>`).join('');
+ document.getElementById('expenseListTotal').textContent=money(totalExpenses);
+ renderExpenseInvoices();
+}
 function printInvoiceWiseProfit(){
  renderReports();
  let from=document.getElementById('rFrom').value||'All',to=document.getElementById('rTo').value||'All';
@@ -2178,94 +2202,7 @@ width:100%!important;
 
 <script>
 /* Per-product entry staging for the four existing invoice types. */
-(function(){
- const configs=[
-  {key:'normalSale',box:'salesRows',form:'sales',kind:'sale',save:'saveSale',label:'Normal Sales'},
-  {key:'normalPurchase',box:'purchaseRows',form:'purchase',kind:'purchase',save:'savePurchase',label:'Normal Purchase'},
-  {key:'sampleSale',box:'smsItems',form:'sampleSaleForm',kind:'sampleSale',save:'saveSampleSale',label:'Sample Sales'},
-  {key:'samplePurchase',box:'smpItems',form:'samplePurchaseForm',kind:'samplePurchase',save:'saveSamplePurchaseNew',label:'Sample Purchase'}
- ];
- const staged={};
- function rowName(row,c){return row.querySelector(c.kind==='sale'?'.item-product':c.kind==='purchase'?'.item-product':c.kind==='sampleSale'?'.ss-product':'.sp-product')?.value?.trim()||''}
- function rowInfo(row,c){
-  const get=sel=>row.querySelector(sel)?.value||'';
-  if(c.kind==='sale'||c.kind==='purchase')return {name:get('.item-product'),qty:get('.item-qty'),rate:get('.item-rate'),discount:get('.item-disc')};
-  if(c.kind==='sampleSale')return {name:get('.ss-product'),qty:get('.ss-qty'),rate:get('.ss-rate'),batch:get('.ss-batch')};
-  return {name:get('.sp-product'),qty:get('.sp-qty'),rate:get('.sp-rate')};
- }
- function amount(x){return ((+x.qty||0)*(+x.rate||0)).toFixed(2)}
- function refresh(c){
-  const list=staged[c.key]||[],hist=document.getElementById(c.key+'History');
-  if(!hist)return;
-  hist.innerHTML=list.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+String(x.info.name).replace(/[&<>"]/g,z=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[z]))+'</td><td>'+x.info.qty+'</td><td>Rs '+amount(x.info)+'</td><td><button type="button" class="danger" data-remove="'+i+'">Remove</button></td></tr>').join('')||'<tr><td colspan="5">No saved product entries yet.</td></tr>';
-  hist.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{const item=list.splice(+b.dataset.remove,1)[0];document.getElementById(c.box).appendChild(item.row);refresh(c)});
-  const total=list.reduce((a,x)=>a+(+x.info.qty||0)*(+x.info.rate||0),0);
-  document.getElementById(c.key+'Total').textContent='Rs '+total.toFixed(2);
- }
- function stage(c){
-  const box=document.getElementById(c.box),rows=[...box.children].filter(r=>r.classList.contains(c.kind==='sale'||c.kind==='purchase'?'itemrow':'sample-row'));
-  const valid=rows.filter(r=>rowName(r,c));
-  if(!valid.length){alert('Pehle product ki entry karein.');return}
-  staged[c.key]||=[];
-  valid.forEach(row=>{staged[c.key].push({row,info:rowInfo(row,c)});row.remove()});
-  if(c.kind==='sale')addRow(c.box,'sale');
-  else if(c.kind==='purchase')addRow(c.box,'purchase');
-  else if(c.kind==='sampleSale')addSampleSaleRow();
-  else addSamplePurchaseRow();
-  refresh(c);
- }
- function finalSave(c){
-  const box=document.getElementById(c.box),list=staged[c.key]||[];
-  const current=[...box.children].filter(r=>r.classList.contains(c.kind==='sale'||c.kind==='purchase'?'itemrow':'sample-row'));
-  const validCurrent=current.filter(r=>rowName(r,c));
-  if(!list.length&&!validCurrent.length){alert('Invoice mein kam az kam aik product entry zaroori hai.');return}
-  current.filter(r=>!rowName(r,c)).forEach(r=>r.remove());
-  list.forEach(x=>box.appendChild(x.row));
-  const saveFn=window[c.save];
-  if(typeof saveFn!=='function'){alert('Save function nahi mili.');return}
-  saveFn();
-  staged[c.key]=[];
-  refresh(c);
- }
- function setup(c){
-  const box=document.getElementById(c.box);if(!box)return;
-  const host=document.createElement('div');host.className='card no-print';host.style.marginTop='12px';
-  host.innerHTML='<h3>'+c.label+' — Product Entry Save</h3><p class="muted">Har product ki entry kar ke Save Item Entry dabayein. Tamam products ke baad Save Total Invoice dabayein.</p><div class="actions"><button type="button" class="secondary" data-stage>Save Item Entry</button><button type="button" class="primary" data-final>Save Total Invoice</button></div><h3 style="margin-top:14px">Saved Product Entry History</h3><div class="tablewrap"><table><thead><tr><th>#</th><th>Product</th><th>Qty</th><th>Amount</th><th>Action</th></tr></thead><tbody id="'+c.key+'History"></tbody></table></div><p><b>Total Saved Entries: <span id="'+c.key+'Total">Rs 0.00</span></b></p>';
-  box.insertAdjacentElement('afterend',host);
-  host.querySelector('[data-stage]').onclick=()=>stage(c);
-  host.querySelector('[data-final]').onclick=()=>finalSave(c);
-  staged[c.key]=[];
-  refresh(c);
- }
- configs.forEach(setup);
-})();
-</script>
-<script>
-/* Move sample profit off Dashboard and into Profit Summary as a separate figure. */
-(function(){
- const sampleCard=document.getElementById('dashSampleProfit')?.closest('.card');
- if(sampleCard)sampleCard.remove();
- const grid=document.querySelector('#reports .grid[style*="margin-top:12px"]');
- if(grid&&!document.getElementById('rSampleProfitCard')){
-  const card=document.createElement('div');card.className='card';card.id='rSampleProfitCard';
-  card.innerHTML='<div class="muted">Sample Profit</div><div class="metric good" id="rSampleProfit">Rs 0.00</div>';
-  grid.appendChild(card);
-  const total=document.createElement('div');total.className='card';total.id='rTotalProfitCard';
-  total.innerHTML='<div class="muted">Total Profit (Normal + Sample)</div><div class="metric good" id="rTotalProfit">Rs 0.00</div>';
-  grid.appendChild(total);
- }
- const original=window.renderReports;
- if(typeof original==='function')window.renderReports=function(){
-  original();
-  const from=document.getElementById('rFrom')?.value||'0000',to=document.getElementById('rTo')?.value||'9999';
-  const samples=(db.sales||[]).filter(x=>x.kind==='sampleSale'&&x.date>=from&&x.date<=to);
-  const profit=samples.reduce((a,x)=>a+((+x.total||0)-getSalePurchaseNet(x)),0);
-  const el=document.getElementById('rSampleProfit');if(el)el.textContent='Rs '+money(profit);
-  const normal=Number(document.getElementById('rProfit')?.textContent.replace(/[^0-9.-]/g,'')||0);
-  const total=document.getElementById('rTotalProfit');if(total)total.textContent='Rs '+money(normal+profit);
- };
- if(typeof window.renderReports==='function')window.renderReports();
-})();
+;
 </script>
 </body>
 </html>
