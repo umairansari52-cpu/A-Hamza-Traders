@@ -2219,6 +2219,7 @@ width:100%!important;
   const current=[...box.children].filter(r=>r.classList.contains(c.kind==='sale'||c.kind==='purchase'?'itemrow':'sample-row'));
   const validCurrent=current.filter(r=>rowName(r,c));
   if(!list.length&&!validCurrent.length){alert('Invoice mein kam az kam aik product entry zaroori hai.');return}
+  current.filter(r=>!rowName(r,c)).forEach(r=>r.remove());
   list.forEach(x=>box.appendChild(x.row));
   const saveFn=window[c.save];
   if(typeof saveFn!=='function'){alert('Save function nahi mili.');return}
