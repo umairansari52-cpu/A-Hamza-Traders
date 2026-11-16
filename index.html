@@ -908,8 +908,8 @@ startProductAutocomplete();
 </div>
 </div>
 
-<div class="card"><h3>Sample Sales History</h3><div class="grid"><div><label>Date From</label><input id="sshFrom" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Date To</label><input id="sshTo" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Search Party / Invoice No.</label><input id="sshSearch" placeholder="Customer or invoice number" oninput="renderSampleHistoryNew()"></div></div><div class="actions no-print"><button class="secondary" onclick="printHistory('sampleSalesHistory','Sample Sales History')">Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Party Name</th><th>Invoice No.</th><th>Amount</th><th>Actions</th></tr></thead><tbody id="sampleSalesHistory"></tbody></table></div></div>
-<div class="card"><h3>Sample Purchase History</h3><div class="grid"><div><label>Date From</label><input id="sphFrom" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Date To</label><input id="sphTo" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Search Party / Invoice No.</label><input id="sphSearch" placeholder="Supplier or invoice number" oninput="renderSampleHistoryNew()"></div></div><div class="actions no-print"><button class="secondary" onclick="printHistory('samplePurchaseHistory','Sample Purchase History')">Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Party Name</th><th>Invoice No.</th><th>Amount</th><th>Actions</th></tr></thead><tbody id="samplePurchaseHistory"></tbody></table></div></div>
+<div class="card" id="sampleSalesHistoryCard"><h3>Sample Sales History</h3><div class="grid"><div><label>Date From</label><input id="sshFrom" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Date To</label><input id="sshTo" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Search Party / Invoice No.</label><input id="sshSearch" placeholder="Customer or invoice number" oninput="renderSampleHistoryNew()"></div></div><div class="actions no-print"><button class="secondary" onclick="printHistory('sampleSalesHistory','Sample Sales History')">Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Party Name</th><th>Invoice No.</th><th>Amount</th><th>Actions</th></tr></thead><tbody id="sampleSalesHistory"></tbody></table></div></div>
+<div class="card" id="samplePurchaseHistoryCard"><h3>Sample Purchase History</h3><div class="grid"><div><label>Date From</label><input id="sphFrom" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Date To</label><input id="sphTo" type="date" onchange="renderSampleHistoryNew()"></div><div><label>Search Party / Invoice No.</label><input id="sphSearch" placeholder="Supplier or invoice number" oninput="renderSampleHistoryNew()"></div></div><div class="actions no-print"><button class="secondary" onclick="printHistory('samplePurchaseHistory','Sample Purchase History')">Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Party Name</th><th>Invoice No.</th><th>Amount</th><th>Actions</th></tr></thead><tbody id="samplePurchaseHistory"></tbody></table></div></div>
 </section>
 <section id="adjustment" class="tab">
 <div class="card">
@@ -1391,8 +1391,11 @@ let editingSampleSaleNo=null,editingSamplePurchaseNo=null;
 function showSampleMode(mode){
  document.getElementById('sampleSaleForm').style.display=mode==='sale'?'block':'none';
  document.getElementById('samplePurchaseForm').style.display=mode==='purchase'?'block':'none';
+ document.getElementById('sampleSalesHistoryCard').style.display=mode==='sale'?'block':'none';
+ document.getElementById('samplePurchaseHistoryCard').style.display=mode==='purchase'?'block':'none';
  if(mode==='sale'&&!document.getElementById('smsNo').value)resetSampleSale();
  if(mode==='purchase'&&!document.getElementById('smpNo').value)resetSamplePurchaseNew();
+ renderSampleHistoryNew();
 }
 
 function addSampleSaleRow(){
