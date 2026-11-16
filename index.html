@@ -2058,7 +2058,7 @@ let p=document.getElementById('purchaseList');
 
 let sf=document.getElementById('shFrom')?.value||'',st=document.getElementById('shTo')?.value||'',pf=document.getElementById('phFrom')?.value||'',pt=document.getElementById('phTo')?.value||'';
 let sales=(db.sales||[]).map((x,i)=>({x,i})).filter(({x})=>x.kind!=='sampleSale'&&!x.sampleType&&(!sf||x.date>=sf)&&(!st||x.date<=st)).sort((a,b)=>(b.x.date||'').localeCompare(a.x.date||'')||b.i-a.i);
-let purchases=(db.purchases||[]).map((x,i)=>({x,i})).filter(({x})=>x.kind!=='samplePurchase'&&x.kind!=='sample'&&x.kind!=='sampleSale'&&!x.sampleType&&!x.isSample&&x.type!=='sample'&&(!pf||x.date>=pf)&&(!pt||x.date<=pt)).sort((a,b)=>(b.x.date||'').localeCompare(a.x.date||'')||b.i-a.i);
+let purchases=(db.purchases||[]).map((x,i)=>({x,i})).filter(({x})=>{const k=String(x.kind||'').toLowerCase(),t=String(x.type||'').toLowerCase();const sample=/sample/.test(k)||/sample/.test(t)||!!x.sampleType||!!x.isSample;const sale=!!x.customer||!!x.customerId||k.includes('sale')||t.includes('sale');return !sample&&!sale&&!!x.supplier&&(!pf||x.date>=pf)&&(!pt||x.date<=pt)}).sort((a,b)=>(b.x.date||'').localeCompare(a.x.date||'')||b.i-a.i);
 
 if(s)s.innerHTML=sales.map(({x,i})=>`<tr><td>${esc(x.no||'')}</td><td>${esc(x.date||'')}</td><td>${esc(x.customer||'')}</td><td>${money(x.total||0)}</td><td><button data-i="${i}" data-a="sv">View</button> <button data-i="${i}" data-a="se">Edit</button> <button data-i="${i}" data-a="sd">Delete</button></td></tr>`).join('')||'<tr><td colspan="5">No invoice</td></tr>';
 
