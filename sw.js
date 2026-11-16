@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hamza-traders-v3';
+const CACHE_NAME = 'hamza-traders-v4';
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -8,6 +8,10 @@ self.addEventListener('install', event => {
 });
 
 
+
+self.addEventListener('activate', event => {
+  event.waitUntil(self.clients.claim());
+});
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
