@@ -652,8 +652,26 @@ function selectProductSuggestion(input,name){
  input.dispatchEvent(new Event('input',{bubbles:true}));
  input.focus();
 }
+function setupSampleCustomerAutocomplete(){
+ const input=document.getElementById('smsCustomer');
+ if(!input||input.dataset.customerAuto==='1')return;
+ input.dataset.customerAuto='1';input.removeAttribute('list');input.setAttribute('autocomplete','off');
+ const host=input.parentElement;host.classList.add('product-auto-host');
+ const box=document.createElement('div');box.className='product-suggestions';host.appendChild(box);
+ function update(){
+  const q=(input.value||'').trim().toLocaleLowerCase();
+  const names=(db.customers||[]).map(c=>String(c.name||'')).filter(Boolean);
+  const matches=q?names.filter(n=>n.toLocaleLowerCase().startsWith(q)).concat(names.filter(n=>!n.toLocaleLowerCase().startsWith(q)&&n.toLocaleLowerCase().includes(q))):names;
+  const unique=[...new Set(matches)].slice(0,40);
+  box.innerHTML=unique.length?unique.map(n=>'<button type="button" class="product-suggestion" data-customer-name="'+esc(n)+'">'+esc(n)+'</button>').join(''):'<div class="product-suggestion" style="color:#7b8792">No customer found</div>';
+  box.classList.toggle('show',unique.length>0);
+ }
+ input.addEventListener('focus',update);input.addEventListener('input',update);
+ box.addEventListener('click',e=>{const b=e.target.closest('[data-customer-name]');if(!b)return;e.preventDefault();input.value=b.dataset.customerName;box.classList.remove('show');input.dispatchEvent(new Event('change',{bubbles:true}));input.focus();});
+ input.addEventListener('blur',()=>setTimeout(()=>box.classList.remove('show'),180));
+}
 function setupProductAutocomplete(){
- const selector='.item-product,#prName,#smsProduct,#smpProduct';
+ const selector='.item-product,#prName,#smsProduct,#smpProduct,.ss-product,.sp-product';
  document.querySelectorAll(selector).forEach(input=>{
   if(input.dataset.productAuto==='1')return;
   input.dataset.productAuto='1';input.removeAttribute('list');input.setAttribute('autocomplete','off');
@@ -661,14 +679,14 @@ function setupProductAutocomplete(){
   const box=document.createElement('div');box.className='product-suggestions';host.appendChild(box);
   input.addEventListener('focus',()=>productInputChanged(input));
   input.addEventListener('input',()=>productInputChanged(input));
-  box.addEventListener('mousedown',e=>{const b=e.target.closest('[data-product-name]');if(!b)return;e.preventDefault();selectProductSuggestion(input,b.dataset.productName)});
+  box.addEventListener('click',e=>{const b=e.target.closest('[data-product-name]');if(!b)return;e.preventDefault();selectProductSuggestion(input,b.dataset.productName)});
   input.addEventListener('blur',()=>setTimeout(()=>box.classList.remove('show'),160));
  });
 }
 document.addEventListener('click',e=>{if(!e.target.closest('.product-auto-host'))closeProductSuggest()});
 const productAutoObserver=new MutationObserver(()=>setupProductAutocomplete());
 function startProductAutocomplete(){
- const begin=()=>{setupProductAutocomplete();if(document.body&&!productAutoObserverStarted){productAutoObserver.observe(document.body,{childList:true,subtree:true});productAutoObserverStarted=true;}};
+ const begin=()=>{setupProductAutocomplete();setupSampleCustomerAutocomplete();if(document.body&&!productAutoObserverStarted){productAutoObserver.observe(document.body,{childList:true,subtree:true});productAutoObserverStarted=true;}};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',begin,{once:true});else begin();
 }
 let productAutoObserverStarted=false;
