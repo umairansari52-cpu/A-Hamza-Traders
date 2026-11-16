@@ -1051,7 +1051,7 @@ startProductAutocomplete();
 <div id="expenseReport"></div>
 </div></section>
 
-<section id="reports" class="tab"><div class="card"><h2>Profit Summary</h2><div class="grid"><div><label>From</label><input type="date" id="rFrom" onchange="renderReports()"></div><div><label>To</label><input type="date" id="rTo" onchange="renderReports()"></div></div><div class="grid" style="margin-top:12px"><div class="card"><div class="muted">Normal Profit</div><div class="metric good" id="rProfit">Rs 0</div></div><div class="card"><div class="muted">Sample Profit</div><div class="metric good" id="rSampleProfit">Rs 0</div></div><div class="card"><div class="muted">Total Net Profit (Normal + Sample - Expenses)</div><div class="metric good" id="rTotalProfit">Rs 0</div></div></div><div class="card"><h3>Invoice-wise Profit Details</h3><div class="actions no-print"><button class="secondary" onclick="printInvoiceWiseProfit()">Profit Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Date</th><th>Invoice</th><th>Customer</th><th>Sales (Net)</th><th>Discount Amount</th><th>Purchase Net Amount</th><th>Profit</th></tr></thead><tbody id="profitInvoiceRows"></tbody><tfoot><tr><th colspan="3">Total</th><th id="prSalesTotal">0.00</th><th id="prDiscountTotal">0.00</th><th id="prCostTotal">0.00</th><th id="prGrossTotal">0.00</th></tr></tfoot></table></div></div></div></section>
+<section id="reports" class="tab"><div class="card"><h2>Profit Summary</h2><div class="grid"><div><label>From</label><input type="date" id="rFrom" onchange="renderReports()"></div><div><label>To</label><input type="date" id="rTo" onchange="renderReports()"></div></div><div class="grid" style="margin-top:12px"><div class="card"><div class="muted">Normal Profit</div><div class="metric good" id="rProfit">Rs 0</div></div><div class="card"><div class="muted">Sample Profit</div><div class="metric good" id="rSampleProfit">Rs 0</div></div><div class="card"><div class="muted">Expense Amount</div><div class="metric bad" id="rExpenses">Rs 0</div></div><div class="card"><div class="muted">Total Net Profit (Normal + Sample - Expenses)</div><div class="metric good" id="rTotalProfit">Rs 0</div></div></div><div class="card"><h3>Invoice-wise Profit Details</h3><div class="actions no-print"><button class="secondary" onclick="printInvoiceWiseProfit()">Profit Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Date</th><th>Invoice</th><th>Customer</th><th>Sales (Net)</th><th>Discount Amount</th><th>Purchase Net Amount</th><th>Profit</th></tr></thead><tbody id="profitInvoiceRows"></tbody><tfoot><tr><th colspan="3">Total</th><th id="prSalesTotal">0.00</th><th id="prDiscountTotal">0.00</th><th id="prCostTotal">0.00</th><th id="prGrossTotal">0.00</th></tr></tfoot></table></div></div></div></section>
 
 <section id="detailReports" class="tab">
 <div class="card"><h2>Date-wise Reports</h2>
@@ -1723,6 +1723,7 @@ function renderReports(){
  document.getElementById('rProfit').textContent='Rs '+money(normalProfit);
  document.getElementById('rSampleProfit').textContent='Rs '+money(sampleProfit);
  document.getElementById('rTotalProfit').textContent='Rs '+money(totalNet);
+ document.getElementById('rExpenses').textContent='Rs '+money(totalExpenses);
  document.getElementById('profitInvoiceRows').innerHTML=normalSales.slice().reverse().map(x=>{let pn=getSalePurchaseNet(x),gp=(+x.total||0)-pn,ex=e.filter(y=>y.saleNo===x.no).reduce((a,y)=>a+(+y.amount||0),0);return `<tr><td>${esc(x.date)}</td><td>${esc(x.no)}</td><td>${esc(x.customer)}</td><td>${money(x.total)}</td><td>${money(x.discount||0)}</td><td>${money(pn)}</td><td>${money(gp-ex)}</td></tr>`}).join('');
  let t={sales:normalSalesTotal,discount:normalSales.reduce((a,x)=>a+(+x.discount||0),0),cost:normalCost,gross:normalProfit};
  document.getElementById('prSalesTotal').textContent=money(t.sales);
@@ -1737,7 +1738,13 @@ function printInvoiceWiseProfit(){
  renderReports();
  let from=document.getElementById('rFrom').value||'All',to=document.getElementById('rTo').value||'All';
  let table=document.getElementById('profitInvoiceRows').closest('table');
- openPrintPage('Invoice-wise Profit','<p>Date From: '+esc(from)+' &nbsp; Date To: '+esc(to)+'</p><table>'+table.innerHTML+'</table>');
+ let summary='<h3>Profit Summary</h3><table><tbody>'+
+ '<tr><th>Normal Profit</th><td>'+esc(document.getElementById('rProfit').textContent)+'</td></tr>'+
+ '<tr><th>Sample Profit</th><td>'+esc(document.getElementById('rSampleProfit').textContent)+'</td></tr>'+
+ '<tr><th>Expense Amount</th><td>'+esc(document.getElementById('rExpenses').textContent)+'</td></tr>'+
+ '<tr><th>Total Net Profit</th><td><b>'+esc(document.getElementById('rTotalProfit').textContent)+'</b></td></tr>'+
+ '</tbody></table>';
+ openPrintPage('Profit Summary','<p>Date From: '+esc(from)+' &nbsp; Date To: '+esc(to)+'</p>'+summary+'<h3>Invoice-wise Profit Details</h3><table>'+table.innerHTML+'</table>');
 }
 function addExpense(){let date=document.getElementById('eDate').value||today(),category=document.getElementById('eCategory').value.trim(),description=document.getElementById('eDescription').value.trim(),amount=+document.getElementById('eAmount').value,saleNo=document.getElementById('eInvoice').value||'';if(!category||amount<=0){alert('Expense category and valid amount are required.');return}db.expenses.push({id:Date.now()+Math.random(),date,category,description,amount,saleNo});document.getElementById('eCategory').value='';document.getElementById('eDescription').value='';document.getElementById('eAmount').value='';document.getElementById('eInvoice').value='';save();alert('Expense saved.')}
 function addAdjustmentRow(){
