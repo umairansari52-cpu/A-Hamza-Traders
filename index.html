@@ -1051,7 +1051,7 @@ startProductAutocomplete();
 <div id="expenseReport"></div>
 </div></section>
 
-<section id="reports" class="tab"><div class="card"><h2>Profit Summary</h2><div class="grid"><div><label>From</label><input type="date" id="rFrom" onchange="renderReports()"></div><div><label>To</label><input type="date" id="rTo" onchange="renderReports()"></div></div><div class="grid" style="margin-top:12px"><div class="card"><div class="muted">Sales (after discount)</div><div class="metric" id="rSales">Rs 0</div></div><div class="card"><div class="muted">Discount Amount</div><div class="metric" id="rDiscount">Rs 0</div></div><div class="card"><div class="muted">Cost of Goods Sold</div><div class="metric" id="rCost">Rs 0</div></div><div class="card"><div class="muted">Profit (before expenses)</div><div class="metric good" id="rProfit">Rs 0</div></div><div class="card"><div class="muted">Total Expenses</div><div class="metric bad" id="rExpenses">Rs 0</div></div><div class="card"><div class="muted">Net Profit</div><div class="metric good" id="rNetProfit">Rs 0</div></div><div class="card"><div class="muted">Purchase Total</div><div class="metric" id="rPurchases">Rs 0</div></div></div><p class="muted">Discount and Profit are shown in separate columns. Expenses are recorded separately and deducted from total profit in the summary.</p><div class="card"><h3>Invoice-wise Profit Details</h3><div class="actions no-print"><button class="secondary" onclick="printInvoiceWiseProfit()">Profit Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Date</th><th>Invoice</th><th>Customer</th><th>Sales (Net)</th><th>Discount Amount</th><th>Purchase Net Amount</th><th>Profit</th></tr></thead><tbody id="profitInvoiceRows"></tbody><tfoot><tr><th colspan="3">Total</th><th id="prSalesTotal">0.00</th><th id="prDiscountTotal">0.00</th><th id="prCostTotal">0.00</th><th id="prGrossTotal">0.00</th></tr></tfoot></table></div></div></div></section>
+<section id="reports" class="tab"><div class="card"><h2>Profit Summary</h2><div class="grid"><div><label>From</label><input type="date" id="rFrom" onchange="renderReports()"></div><div><label>To</label><input type="date" id="rTo" onchange="renderReports()"></div></div><div class="grid" style="margin-top:12px"><div class="card"><div class="muted">Sales (after discount)</div><div class="metric" id="rSales">Rs 0</div></div><div class="card"><div class="muted">Cost of Goods Sold</div><div class="metric" id="rCost">Rs 0</div></div><div class="card"><div class="muted">Normal Profit</div><div class="metric good" id="rProfit">Rs 0</div></div><div class="card"><div class="muted">Total Expenses</div><div class="metric bad" id="rExpenses">Rs 0</div></div><div class="card"><div class="muted">Net Profit</div><div class="metric good" id="rNetProfit">Rs 0</div></div><div class="card"><div class="muted">Purchase Total</div><div class="metric" id="rPurchases">Rs 0</div></div></div><p class="muted">Normal Profit and Sample Profit are shown separately. Total Profit combines both; expenses remain separate.</p><div class="card"><h3>Invoice-wise Profit Details</h3><div class="actions no-print"><button class="secondary" onclick="printInvoiceWiseProfit()">Profit Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Date</th><th>Invoice</th><th>Customer</th><th>Sales (Net)</th><th>Discount Amount</th><th>Purchase Net Amount</th><th>Profit</th></tr></thead><tbody id="profitInvoiceRows"></tbody><tfoot><tr><th colspan="3">Total</th><th id="prSalesTotal">0.00</th><th id="prDiscountTotal">0.00</th><th id="prCostTotal">0.00</th><th id="prGrossTotal">0.00</th></tr></tfoot></table></div></div></div></section>
 
 <section id="detailReports" class="tab">
 <div class="card"><h2>Date-wise Reports</h2>
@@ -2250,14 +2250,19 @@ width:100%!important;
   const card=document.createElement('div');card.className='card';card.id='rSampleProfitCard';
   card.innerHTML='<div class="muted">Sample Profit</div><div class="metric good" id="rSampleProfit">Rs 0.00</div>';
   grid.appendChild(card);
+  const total=document.createElement('div');total.className='card';total.id='rTotalProfitCard';
+  total.innerHTML='<div class="muted">Total Profit (Normal + Sample)</div><div class="metric good" id="rTotalProfit">Rs 0.00</div>';
+  grid.appendChild(total);
  }
  const original=window.renderReports;
  if(typeof original==='function')window.renderReports=function(){
   original();
   const from=document.getElementById('rFrom')?.value||'0000',to=document.getElementById('rTo')?.value||'9999';
   const samples=(db.sales||[]).filter(x=>x.kind==='sampleSale'&&x.date>=from&&x.date<=to);
-  const profit=samples.reduce((a,x)=>a+(+(x.profit??x.netProfit)||((+x.total||0)-getSalePurchaseNet(x))),0);
+  const profit=samples.reduce((a,x)=>a+((+x.total||0)-getSalePurchaseNet(x)),0);
   const el=document.getElementById('rSampleProfit');if(el)el.textContent='Rs '+money(profit);
+  const normal=Number(document.getElementById('rProfit')?.textContent.replace(/[^0-9.-]/g,'')||0);
+  const total=document.getElementById('rTotalProfit');if(total)total.textContent='Rs '+money(normal+profit);
  };
  if(typeof window.renderReports==='function')window.renderReports();
 })();
