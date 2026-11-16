@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hamza-traders-v4';
+const CACHE_NAME = 'hamza-traders-v5';
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -10,7 +10,11 @@ self.addEventListener('install', event => {
 
 
 self.addEventListener('activate', event => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil((async () => {
+    const names = await caches.keys();
+    await Promise.all(names.filter(name => name.startsWith('hamza-traders-') && name !== CACHE_NAME).map(name => caches.delete(name)));
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener('fetch', event => {
@@ -27,8 +31,8 @@ self.addEventListener('fetch', event => {
         }
         return response;
       })
-      .catch(() => caches.match(event.request).then(
-        cached => cached || caches.match('./')
+      .catch(() => caches.open(CACHE_NAME).then(cache => cache.match(event.request)).then(
+        cached => cached || caches.open(CACHE_NAME).then(cache => cache.match('./'))
       ))
   );
 });
