@@ -2150,5 +2150,28 @@ grid-column:1/-1!important;
 width:100%!important;
 }
 </style>
+
+<script>
+/* Independent login fallback: keeps login usable even if another app script fails. */
+(function(){
+  window.loginApp=function(){
+    try{
+      var user=document.getElementById('loginUser');
+      var pass=document.getElementById('loginPass');
+      var error=document.getElementById('loginError');
+      if(!user||!pass||!error){alert('Login screen load nahi hui. App refresh karein.');return;}
+      if(user.value.trim()==='umair' && pass.value==='hamzaa'){
+        document.body.classList.add('authenticated');
+        var screen=document.getElementById('loginScreen');
+        if(screen)screen.style.display='none';
+        try{sessionStorage.setItem('aht_logged_in','1')}catch(storageError){}
+        error.textContent='';
+      }else{
+        error.textContent='Incorrect username or password.';
+      }
+    }catch(e){alert('Login mein masla: '+e.message);}
+  };
+})();
+</script>
 </body>
 </html>
