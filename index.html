@@ -2095,7 +2095,6 @@ function renderAll(){renderCustomerList();renderSampleHistory();if(document.getE
 (function(){
   let guardReady=false, exitDialogOpen=false;
   function arm(){
-    if(guardReady)return;
     try{history.pushState({ahtBackGuard:true},'',location.href);guardReady=true;}catch(e){}
   }
   function showExitDialog(){
@@ -2105,16 +2104,19 @@ function renderAll(){renderCustomerList();renderSampleHistory();if(document.getE
     if(!box){
       box=document.createElement('div');
       box.id='ahtExitDialog';
-      box.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;';
-      box.innerHTML='<div style="background:#fff;border-radius:12px;padding:22px;width:min(320px,100%);text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.3);"><div style="font-size:18px;font-weight:700;margin-bottom:10px;">Exit A.Hamza Traders?</div><div style="font-size:14px;margin-bottom:20px;">Kya aap app band karna chahte hain?</div><button id="ahtStayBtn" type="button" style="padding:10px 22px;margin:4px;border:0;border-radius:7px;background:#e5e7eb;color:#111;font-weight:700;">No</button><button id="ahtExitBtn" type="button" style="padding:10px 22px;margin:4px;border:0;border-radius:7px;background:#1565c0;color:#fff;font-weight:700;">Yes, Exit</button></div>';
+      box.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px;';
+      box.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;width:min(320px,100%);text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.3);"><div style="font-size:19px;font-weight:700;margin-bottom:10px;">Exit A.Hamza Traders?</div><div style="font-size:14px;margin-bottom:20px;">Kya aap app band karna chahte hain?</div><button id="ahtStayBtn" type="button" style="padding:11px 25px;margin:4px;border:0;border-radius:7px;background:#e5e7eb;color:#111;font-weight:700;">No</button><button id="ahtExitBtn" type="button" style="padding:11px 25px;margin:4px;border:0;border-radius:7px;background:#1565c0;color:#fff;font-weight:700;">Yes, Exit</button></div>';
       document.body.appendChild(box);
-      document.getElementById('ahtStayBtn').addEventListener('click',function(){box.remove();exitDialogOpen=false;arm();});
-      document.getElementById('ahtExitBtn').addEventListener('click',function(){
-        box.remove();exitDialogOpen=false;
-        try{window.close();}catch(e){}
-        setTimeout(function(){try{history.back();}catch(e){}},100);
-      });
     }
+    box.style.display='flex';
+    document.getElementById('ahtStayBtn').onclick=function(){
+      box.style.display='none';exitDialogOpen=false;guardReady=false;arm();
+    };
+    document.getElementById('ahtExitBtn').onclick=function(){
+      box.style.display='none';exitDialogOpen=false;
+      try{window.close();}catch(e){}
+      setTimeout(function(){try{history.go(-2);}catch(e){}},150);
+    };
   }
   arm();
   window.addEventListener('popstate',function(){
@@ -2125,14 +2127,10 @@ function renderAll(){renderCustomerList();renderSampleHistory();if(document.getE
       if(dash)dash.click();
       arm();return;
     }
-    const leave=window.confirm('Exit A.Hamza Traders?');
-    if(!leave){arm();return;}
-    try{window.close();}catch(e){}
-    setTimeout(function(){try{history.back();}catch(e){}},100);
+    showExitDialog();
   });
   window.addEventListener('pageshow',function(){guardReady=false;arm();});
-})();
-</script>
+})();</script>
 <style>
 #nav>div:first-child{
 display:grid!important;
