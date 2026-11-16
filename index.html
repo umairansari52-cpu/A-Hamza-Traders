@@ -961,7 +961,7 @@ startProductAutocomplete();
 <select id="ledgerCustomer" onchange="renderLedger()">
 <option value="">Choose customer</option>
 </select>
-<div class="metric" id="ledgerBalance">Rs 0.00</div>
+<div class="grid" style="margin-top:12px"><div><label>Date From</label><input type="date" id="ledgerFrom" onchange="renderLedger()"></div><div><label>Date To</label><input type="date" id="ledgerTo" onchange="renderLedger()"></div></div><div class="metric" id="ledgerBalance">Rs 0.00</div>
 <div class="muted">Outstanding Balance</div>
 </div>
 
@@ -1034,7 +1034,7 @@ startProductAutocomplete();
 <div id="expenseReport"></div>
 </div></section>
 
-<section id="reports" class="tab"><div class="card"><h2>Profit Summary</h2><div class="grid"><div><label>From</label><input type="date" id="rFrom" onchange="renderReports()"></div><div><label>To</label><input type="date" id="rTo" onchange="renderReports()"></div></div><div class="grid" style="margin-top:12px"><div class="card"><div class="muted">Sales (after discount)</div><div class="metric" id="rSales">Rs 0</div></div><div class="card"><div class="muted">Discount Amount</div><div class="metric" id="rDiscount">Rs 0</div></div><div class="card"><div class="muted">Cost of Goods Sold</div><div class="metric" id="rCost">Rs 0</div></div><div class="card"><div class="muted">Profit (before expenses)</div><div class="metric good" id="rProfit">Rs 0</div></div><div class="card"><div class="muted">Total Expenses</div><div class="metric bad" id="rExpenses">Rs 0</div></div><div class="card"><div class="muted">Net Profit</div><div class="metric good" id="rNetProfit">Rs 0</div></div><div class="card"><div class="muted">Purchase Total</div><div class="metric" id="rPurchases">Rs 0</div></div></div><p class="muted">Discount and Profit are shown in separate columns. Expenses are recorded separately and deducted from total profit in the summary.</p><div class="card"><h3>Invoice-wise Profit Details</h3><div class="tablewrap"><table><thead><tr><th>Date</th><th>Invoice</th><th>Customer</th><th>Sales (Net)</th><th>Discount Amount</th><th>Purchase Net Amount</th><th>Profit</th></tr></thead><tbody id="profitInvoiceRows"></tbody><tfoot><tr><th colspan="3">Total</th><th id="prSalesTotal">0.00</th><th id="prDiscountTotal">0.00</th><th id="prCostTotal">0.00</th><th id="prGrossTotal">0.00</th></tr></tfoot></table></div></div></div></section>
+<section id="reports" class="tab"><div class="card"><h2>Profit Summary</h2><div class="grid"><div><label>From</label><input type="date" id="rFrom" onchange="renderReports()"></div><div><label>To</label><input type="date" id="rTo" onchange="renderReports()"></div></div><div class="grid" style="margin-top:12px"><div class="card"><div class="muted">Sales (after discount)</div><div class="metric" id="rSales">Rs 0</div></div><div class="card"><div class="muted">Discount Amount</div><div class="metric" id="rDiscount">Rs 0</div></div><div class="card"><div class="muted">Cost of Goods Sold</div><div class="metric" id="rCost">Rs 0</div></div><div class="card"><div class="muted">Profit (before expenses)</div><div class="metric good" id="rProfit">Rs 0</div></div><div class="card"><div class="muted">Total Expenses</div><div class="metric bad" id="rExpenses">Rs 0</div></div><div class="card"><div class="muted">Net Profit</div><div class="metric good" id="rNetProfit">Rs 0</div></div><div class="card"><div class="muted">Purchase Total</div><div class="metric" id="rPurchases">Rs 0</div></div></div><p class="muted">Discount and Profit are shown in separate columns. Expenses are recorded separately and deducted from total profit in the summary.</p><div class="card"><h3>Invoice-wise Profit Details</h3><div class="actions no-print"><button class="secondary" onclick="printInvoiceWiseProfit()">Profit Print Preview / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Date</th><th>Invoice</th><th>Customer</th><th>Sales (Net)</th><th>Discount Amount</th><th>Purchase Net Amount</th><th>Profit</th></tr></thead><tbody id="profitInvoiceRows"></tbody><tfoot><tr><th colspan="3">Total</th><th id="prSalesTotal">0.00</th><th id="prDiscountTotal">0.00</th><th id="prCostTotal">0.00</th><th id="prGrossTotal">0.00</th></tr></tfoot></table></div></div></div></section>
 
 <section id="detailReports" class="tab">
 <div class="card"><h2>Date-wise Reports</h2>
@@ -1044,7 +1044,7 @@ startProductAutocomplete();
 </div>
 <div class="actions">
 <button class="secondary" onclick="document.getElementById('drFrom').value='';document.getElementById('drTo').value='';renderDetailReports()">All Dates</button>
-<button class="primary" onclick="renderDetailReports()">Show Reports</button>
+<button class="primary" onclick="renderDetailReports()">Show Reports</button><button class="secondary" onclick="printDetailReports()">Print Preview / PDF</button>
 </div></div>
 <div class="card"><h3>Item-wise Sales Report</h3><div class="tablewrap"><table><thead><tr><th>Item</th><th>Quantity</th><th>Sales Amount</th></tr></thead><tbody id="drSalesItems"></tbody></table></div></div>
 <div class="card"><h3>Item-wise Purchase Report</h3><div class="tablewrap"><table><thead><tr><th>Item</th><th>Quantity</th><th>Purchase Amount</th></tr></thead><tbody id="drPurchaseItems"></tbody></table></div></div>
@@ -1342,79 +1342,34 @@ function editCustomerPayment(i){
  p.note=note;
  if(save()){renderLedger();renderCustomerList();}
 }
-function renderLedger(){
- let id=+document.getElementById('ledgerCustomer').value;
- let c=db.customers.find(x=>x.id===id);
- if(!c){
-  document.getElementById('ledgerRows').innerHTML='';
-  document.getElementById('ledgerBalance').textContent='Rs 0.00';
-  return;
- }
- let tx=[
+function getCustomerLedgerRows(id){
+ return [
   ...db.sales.filter(x=>x.customerId===id).flatMap(x=>[
-   {date:x.date,detail:'Invoice '+x.no,debit:x.total,credit:0},
-   ...(x.paid>0?[{date:x.date,detail:'Paid with invoice '+x.no,debit:0,credit:x.paid}]:[])
+   {date:x.date,detail:'Invoice '+x.no,debit:+x.total||0,credit:0,no:x.no||'-',invoiceAmount:+x.total||0},
+   ...(x.paid>0?[{date:x.date,detail:'Paid with invoice '+x.no,debit:0,credit:+x.paid,no:x.no||'-',invoiceAmount:0}]:[])
   ]),
-  ...db.payments.map((p,i)=>({p,i}))
-   .filter(x=>x.p.customerId===id)
-   .map(x=>({
-    date:x.p.date,
-    detail:(x.p.invoiceNo?'Payment against Invoice '+x.p.invoiceNo+' — ':'')+(x.p.note||'Payment received'),
-    debit:0,credit:x.p.amount,editIndex:x.i
-   }))
- ].sort((a,b)=>a.date.localeCompare(b.date));
-
- let bal=0;
- document.getElementById('ledgerRows').innerHTML=tx.map(x=>{
-  bal+=x.debit-x.credit;
-  return `<tr><td>${esc(x.date)}</td><td>${esc(x.detail)}${x.editIndex!==undefined?' <button class="secondary" onclick="editCustomerPayment('+x.editIndex+')">Edit</button>':''}</td><td>${money(x.debit)}</td><td>${money(x.credit)}</td><td>${money(bal)}</td></tr>`;
- }).join('');
- document.getElementById('ledgerBalance').textContent='Rs '+money(balance(c));
+  ...db.payments.map((p,i)=>({p,i})).filter(x=>x.p.customerId===id).map(x=>({date:x.p.date,detail:(x.p.invoiceNo?'Payment against Invoice '+x.p.invoiceNo+' — ':'')+(x.p.note||'Payment received'),debit:0,credit:+x.p.amount||0,editIndex:x.i,no:x.p.invoiceNo||'-',invoiceAmount:0}))
+ ].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+}
+function renderLedger(){
+ let id=+document.getElementById('ledgerCustomer').value,c=db.customers.find(x=>x.id===id),body=document.getElementById('ledgerRows');
+ if(!c){body.innerHTML='';document.getElementById('ledgerBalance').textContent='Rs 0.00';return}
+ let from=document.getElementById('ledgerFrom')?.value||'',to=document.getElementById('ledgerTo')?.value||'';
+ let tx=getCustomerLedgerRows(id).filter(x=>(!from||x.date>=from)&&(!to||x.date<=to)),bal=0;
+ body.innerHTML=tx.map(x=>{bal+=x.debit-x.credit;return `<tr><td>${esc(x.date)}</td><td>${esc(x.detail)}${x.editIndex!==undefined?' <button class="secondary" onclick="editCustomerPayment('+x.editIndex+')">Edit</button>':''}</td><td>${money(x.debit)}</td><td>${money(x.credit)}</td><td>${money(bal)}</td></tr>`}).join('');
+ document.getElementById('ledgerBalance').textContent='Rs '+money(bal);
 }
 function printCustomerLedger(){
- let id=+document.getElementById('ledgerCustomer').value;
- let c=db.customers.find(x=>x.id===id);
- if(!c){alert('Pehle customer select karein');return;}
-
- let rows=[
-  ...db.sales.filter(x=>x.customerId===id).map(x=>({
-   no:x.no||'-',date:x.date||'',
-   invoiceAmount:+x.total||0,
-   credit:+x.paid||0,
-   debit:+x.total||0
-  })),
-  ...(db.payments||[]).filter(x=>x.customerId===id).map(x=>({
-   no:'-',date:x.date||'',
-   invoiceAmount:0,
-   credit:+x.amount||0,
-   debit:0
-  }))
- ].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-
- let running=0,totalInvoice=0,totalCredit=0,totalDebit=0;
-
- let body=rows.map(x=>{
-  totalInvoice+=x.invoiceAmount;
-  totalCredit+=x.credit;
-  totalDebit+=x.debit;
-  running+=x.debit-x.credit;
-
-  return '<tr><td>'+esc(x.no)+'</td><td>'+esc(x.date)+'</td>'+
-  '<td>Rs '+money(x.invoiceAmount)+'</td>'+
-  '<td>Rs '+money(x.credit)+'</td>'+
-  '<td>Rs '+money(x.debit)+'</td>'+
-  '<td>Rs '+money(running)+'</td></tr>';
- }).join('');
-
-  let content='<h2 style="text-align:center">'+esc(c.name)+'</h2>'+
- '<table style="width:100%;border-collapse:collapse;font-size:12px" border="1" cellpadding="6">'+
- '<tr><th>Invoice No.</th><th>Date</th><th>Invoice Amount</th><th>Credit</th><th>Debit Amount</th><th>Remaining Amount</th></tr>'+
- body+
- '<tr><th colspan="2">Total</th><th>Rs '+money(totalInvoice)+'</th><th>Rs '+money(totalCredit)+'</th><th>Rs '+money(totalDebit)+'</th><th>Rs '+money(running)+'</th></tr>'+
- '</table><h3>Final Remaining Amount: Rs '+money(balance(c))+'</h3>';
-
+ let id=+document.getElementById('ledgerCustomer').value,c=db.customers.find(x=>x.id===id);
+ if(!c){alert('Pehle customer select karein');return}
+ let from=document.getElementById('ledgerFrom')?.value||'',to=document.getElementById('ledgerTo')?.value||'';
+ let rows=getCustomerLedgerRows(id).filter(x=>(!from||x.date>=from)&&(!to||x.date<=to));
+ let running=0,totalDebit=0,totalCredit=0;
+ let body=rows.map(x=>{running+=x.debit-x.credit;totalDebit+=x.debit;totalCredit+=x.credit;return '<tr><td>'+esc(x.no||'-')+'</td><td>'+esc(x.date)+'</td><td>Rs '+money(x.invoiceAmount||0)+'</td><td>Rs '+money(x.credit)+'</td><td>Rs '+money(x.debit)+'</td><td>Rs '+money(running)+'</td></tr>'}).join('');
+ let content='<h2 style="text-align:center">'+esc(c.name)+'</h2><p>Date From: '+esc(from||'All')+' &nbsp; Date To: '+esc(to||'All')+'</p><table style="width:100%;border-collapse:collapse;font-size:12px" border="1" cellpadding="6"><tr><th>Invoice No.</th><th>Date</th><th>Invoice Amount</th><th>Credit</th><th>Debit Amount</th><th>Remaining Amount</th></tr>'+body+'<tr><th colspan="2">Total</th><th>—</th><th>Rs '+money(totalCredit)+'</th><th>Rs '+money(totalDebit)+'</th><th>Rs '+money(running)+'</th></tr></table><h3>Final Remaining Amount: Rs '+money(running)+'</h3>';
  openPrintPage('Customer Ledger',content);
-  }
+}
+
 function renderExpenseInvoices(){let el=document.getElementById('eInvoice');if(!el)return;let current=el.value;el.innerHTML='<option value="">General Expense</option>'+db.sales.slice().reverse().map(x=>`<option value="${esc(x.no)}">${esc(x.no)} - ${esc(x.customer)}</option>`).join('');if([...el.options].some(o=>o.value===current))el.value=current}
 function showSampleMode(mode){
  document.getElementById('sampleSaleForm').style.display=mode==='sale'?'block':'none';
@@ -1613,7 +1568,7 @@ if(b){
 b.innerHTML=sp.map(x=>(x.items||[]).map(it=>`<tr><td>${esc(x.no)}</td><td>${esc(x.date)}</td><td>${esc(x.supplier)}</td><td>${esc(it.name||'')}</td><td>${money(it.qty||0)}</td><td>${money(it.rate||0)}</td><td>${money((+it.qty||0)*(+it.rate||0))}</td><td><button onclick="printSamplePurchaseRecord('${esc(x.no)}')">Print</button> <button onclick="editSamplePurchase('${esc(x.no)}')">Edit</button> <button class="danger" onclick="deleteSamplePurchase('${esc(x.no)}')">Delete</button></td></tr>`).join('')).join('')||'<tr><td colspan="8">No sample purchases</td></tr>';
 }
 }
-function printHistory(id,title){if(title==='Purchase History'||title==='Sales History')renderLists();else renderSampleHistoryNew();let el=document.getElementById(id);if(!el)return;let table=el.closest('table');let range='';if(title==='Purchase History')range=`Date From: ${document.getElementById('phFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('phTo')?.value||'All'}`;else if(title==='Sales History')range=`Date From: ${document.getElementById('shFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('shTo')?.value||'All'}`;else if(title==='Sample Sales History')range=`Date From: ${document.getElementById('sshFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('sshTo')?.value||'All'}`;else if(title==='Sample Purchase History')range=`Date From: ${document.getElementById('sphFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('sphTo')?.value||'All'}`;showPrintPreview(title,`<p>${range}</p><table>${table.innerHTML}</table>`)}
+function printHistory(id,title){if(title==='Purchase History'||title==='Sales History')renderLists();else renderSampleHistoryNew();let el=document.getElementById(id);if(!el)return;let table=el.closest('table').cloneNode(true);table.querySelectorAll('button').forEach(b=>b.remove());let range='';if(title==='Purchase History')range=`Date From: ${document.getElementById('phFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('phTo')?.value||'All'}`;else if(title==='Sales History')range=`Date From: ${document.getElementById('shFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('shTo')?.value||'All'}`;else if(title==='Sample Sales History')range=`Date From: ${document.getElementById('sshFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('sshTo')?.value||'All'}`;else if(title==='Sample Purchase History')range=`Date From: ${document.getElementById('sphFrom')?.value||'All'} &nbsp; Date To: ${document.getElementById('sphTo')?.value||'All'}`;showPrintPreview(title,`<p>${range}</p>${table.outerHTML}`)}
 function printSampleSaleRecord(no){
 let x=db.sales.find(v=>v.no==no&&v.kind==='sampleSale');
 if(!x)return;
@@ -1703,10 +1658,23 @@ function filterSampleProducts(){let q=(document.getElementById('smProductSearch'
 function resetSampleForm(){resetSamplePurchaseNew();renderSampleHistoryNew()}
 function saveSamplePurchase(){saveSamplePurchaseNew()}
 function renderSampleHistory(){renderSampleHistoryNew()}
+function printAllCustomerLedger(){
+ let rows=(db.customers||[]).map(c=>{let debit=(db.sales||[]).filter(x=>x.customerId===c.id).reduce((a,x)=>a+(+x.total||0),0),credit=(db.payments||[]).filter(x=>x.customerId===c.id).reduce((a,x)=>a+(+x.amount||0),0);return {name:c.name,phone:c.phone||'',debit,credit,balance:debit-credit}}).filter(x=>x.debit||x.credit);
+ let td=rows.reduce((a,x)=>a+x.debit,0),tc=rows.reduce((a,x)=>a+x.credit,0),tb=td-tc;
+ let body=rows.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+esc(x.phone)+'</td><td>'+money(x.debit)+'</td><td>'+money(x.credit)+'</td><td>'+money(x.balance)+'</td></tr>').join('');
+ openPrintPage('Total Customer Ledger','<table><thead><tr><th>Customer</th><th>Phone</th><th>Total Debit</th><th>Total Credit</th><th>Balance</th></tr></thead><tbody>'+body+'</tbody><tfoot><tr><th colspan="2">Grand Total</th><th>'+money(td)+'</th><th>'+money(tc)+'</th><th>'+money(tb)+'</th></tr></tfoot></table>');
+}
 function renderCustomerList(){let body=document.getElementById('customerRows');if(!body)return;let q=(document.getElementById('customerSearch')?.value||'').trim().toLowerCase(),rows=(db.customers||[]).filter(c=>!q||String(c.name||'').toLowerCase().includes(q)||String(c.phone||'').toLowerCase().includes(q));let td=0,tc=0,tb=0;body.innerHTML=rows.map(c=>{let debit=db.sales.filter(x=>x.customerId===c.id).reduce((a,x)=>a+(+x.total||0),0),credit=db.payments.filter(x=>x.customerId===c.id).reduce((a,x)=>a+(+x.amount||0),0),bal=debit-credit;td+=debit;tc+=credit;tb+=bal;return `<tr><td>${esc(c.name)}</td><td>${esc(c.phone||'')}</td><td>${money(debit)}</td><td>${money(credit)}</td><td>${money(bal)}</td><td></td></tr>`}).join('')||'<tr><td colspan="6">No customers found</td></tr>';document.getElementById('customerDebitTotal').textContent=money(td);document.getElementById('customerCreditTotal').textContent=money(tc);document.getElementById('customerBalanceTotal').textContent=money(tb)}
 function renderAll(){renderCustomerList();renderSampleHistoryNew();if(document.getElementById('smProduct'))filterSampleProducts();renderExpenseInvoices();renderLists();renderProducts();renderLedgerOptions();renderSupplierOptions();renderReports();renderDetailReports();fillDatalists();renderDashboard();renderAdjustmentHistory();renderDebitCredit();if(document.getElementById("dailyReportDate")&&!document.getElementById("dailyReportDate").value)document.getElementById("dailyReportDate").value=today();renderBusinessReports()}
 
 function renderDetailReports(){let from=document.getElementById('drFrom').value||'0000-01-01',to=document.getElementById('drTo').value||'9999-12-31',sales=db.sales.filter(x=>x.date>=from&&x.date<=to),purchases=db.purchases.filter(x=>x.date>=from&&x.date<=to);let aggregate=(rows,amount)=>{let m={};rows.forEach(x=>(x.items||[]).forEach(it=>{let n=it.name||'Unknown',v=m[n]||(m[n]={qty:0,total:0});v.qty+=(+it.qty||0);v.total+=(+amount(it)||0)}));return Object.keys(m).sort().map(n=>`<tr><td>${esc(n)}</td><td>${money(m[n].qty)}</td><td>${money(m[n].total)}</td></tr>`).join('')||'<tr><td colspan="3">No records</td></tr>'};let groups=(rows,key)=>{let m={};rows.forEach(x=>{let n=x[key]||'Unknown',v=m[n]||(m[n]={count:0,total:0});v.count++;v.total+=(+x.total||0)});return Object.keys(m).sort().map(n=>`<tr><td>${esc(n)}</td><td>${m[n].count}</td><td>${money(m[n].total)}</td></tr>`).join('')||'<tr><td colspan="3">No records</td></tr>'};document.getElementById('drSalesItems').innerHTML=aggregate(sales,it=>it.net);document.getElementById('drPurchaseItems').innerHTML=aggregate(purchases,it=>it.netCost??it.net);document.getElementById('drCustomers').innerHTML=groups(sales,'customer');document.getElementById('drSuppliers').innerHTML=groups(purchases,'supplier')}
+function printDetailReports(){
+ renderDetailReports();
+ let from=document.getElementById('drFrom').value||'All',to=document.getElementById('drTo').value||'All';
+ let sections=[['Item-wise Sales Report','drSalesItems'],['Item-wise Purchase Report','drPurchaseItems'],['Customer-wise Sales Report','drCustomers'],['Supplier-wise Purchase Report','drSuppliers']];
+ let content='<p>Date From: '+esc(from)+' &nbsp; Date To: '+esc(to)+'</p>'+sections.map(([title,id])=>'<h3>'+title+'</h3><table>'+document.getElementById(id).closest('table').innerHTML+'</table>').join('');
+ openPrintPage('Date-wise Reports',content);
+}
 
 function reportDate(){return document.getElementById('dailyReportDate')?.value||today()}
 function dailySummaryData(date){
@@ -1754,6 +1722,12 @@ function getSalePurchaseNet(x){
  },0);
   }
 function renderReports(){let from=document.getElementById('rFrom').value||'0000',to=document.getElementById('rTo').value||'9999',s=db.sales.filter(x=>x.date>=from&&x.date<=to),p=db.purchases.filter(x=>x.date>=from&&x.date<=to),e=db.expenses.filter(x=>x.date>=from&&x.date<=to),sales=s.reduce((a,x)=>a+(+x.total||0),0),cost=s.reduce((a,x)=>a+getSalePurchaseNet(x),0),discount=s.reduce((a,x)=>a+(+x.discount||0),0),invoiceExpenses=e.filter(x=>x.saleNo).reduce((a,x)=>a+(+x.amount||0),0),otherExpenses=e.filter(x=>!x.saleNo).reduce((a,x)=>a+(+x.amount||0),0),gross=sales-cost,totalExpenses=invoiceExpenses+otherExpenses,net=gross-totalExpenses;document.getElementById('rSales').textContent='Rs '+money(sales);document.getElementById('rDiscount').textContent='Rs '+money(discount);document.getElementById('rCost').textContent='Rs '+money(cost);document.getElementById('rProfit').textContent='Rs '+money(gross);document.getElementById('rExpenses').textContent='Rs '+money(totalExpenses);document.getElementById('rNetProfit').textContent='Rs '+money(net);document.getElementById('rPurchases').textContent='Rs '+money(p.reduce((a,x)=>a+(+x.total||0),0));document.getElementById('profitInvoiceRows').innerHTML=s.slice().reverse().map(x=>{let pn=getSalePurchaseNet(x),gp=(+x.total||0)-pn,ex=e.filter(y=>y.saleNo===x.no).reduce((a,y)=>a+(+y.amount||0),0);return `<tr><td>${esc(x.date)}</td><td>${esc(x.no)}</td><td>${esc(x.customer)}</td><td>${money(x.total)}</td><td>${money(x.discount||0)}</td><td>${money(pn)}</td><td>${money(gp-ex)}</td></tr>`}).join('');let t={sales,discount,cost,gross};document.getElementById('prSalesTotal').textContent=money(t.sales);document.getElementById('prDiscountTotal').textContent=money(t.discount);document.getElementById('prCostTotal').textContent=money(t.cost);document.getElementById('prGrossTotal').textContent=money(t.gross);document.getElementById('expenseRows').innerHTML=e.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.category)}</td><td>${esc(x.description||'')}${x.saleNo?' (Invoice: '+esc(x.saleNo)+')':''}</td><td>${money(x.amount)}</td><td><button class="danger" onclick="deleteExpense(${x.id})">Delete</button></td></tr>`).join('');document.getElementById('expenseListTotal').textContent=money(totalExpenses);renderExpenseInvoices()}
+function printInvoiceWiseProfit(){
+ renderReports();
+ let from=document.getElementById('rFrom').value||'All',to=document.getElementById('rTo').value||'All';
+ let table=document.getElementById('profitInvoiceRows').closest('table');
+ openPrintPage('Invoice-wise Profit','<p>Date From: '+esc(from)+' &nbsp; Date To: '+esc(to)+'</p><table>'+table.innerHTML+'</table>');
+}
 function addExpense(){let date=document.getElementById('eDate').value||today(),category=document.getElementById('eCategory').value.trim(),description=document.getElementById('eDescription').value.trim(),amount=+document.getElementById('eAmount').value,saleNo=document.getElementById('eInvoice').value||'';if(!category||amount<=0){alert('Expense category and valid amount are required.');return}db.expenses.push({id:Date.now()+Math.random(),date,category,description,amount,saleNo});document.getElementById('eCategory').value='';document.getElementById('eDescription').value='';document.getElementById('eAmount').value='';document.getElementById('eInvoice').value='';save();alert('Expense saved.')}
 function addAdjustmentRow(){
 document.getElementById('adjustmentRows').insertAdjacentHTML('beforeend',`
