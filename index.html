@@ -1467,75 +1467,38 @@ function resetSamplePurchaseNew(){
 }
 
 function saveSamplePurchaseNew(){
- let rows=[...document.querySelectorAll('#smpItems .sample-row')];
- let items=rows.map(row=>{
- let name=row.querySelector('.sp-product').value.trim();
- let qty=+row.querySelector('.sp-qty').value||0;
- let rate=+row.querySelector('.sp-rate').value||0;
- return {name,qty,rate,discount:0,net:qty*rate,netCost:rate};
- });
+ let rows=[...document.querySelectorAll('#smpItems .sample-row')],items=rows.map(row=>{let name=row.querySelector('.sp-product').value.trim(),qty=+row.querySelector('.sp-qty').value||0,rate=+row.querySelector('.sp-rate').value||0;return {name,qty,rate,discount:0,net:qty*rate,netCost:rate};});
  if(!items.length||items.some(it=>!it.name||it.qty<=0||it.rate<=0)){alert('Har product ka naam, quantity aur rate enter karein.');return}
- let products=items.map(it=>db.products.find(p=>p.name.toLowerCase()===it.name.toLowerCase()));
- if(products.some(p=>!p)){alert('Pehle tamam products Products mein add karein.');return}
- let total=items.reduce((a,it)=>a+it.net,0);
- let no=document.getElementById('smpNo').value;
- let rec={no,date:document.getElementById('smpDate').value,supplier:document.getElementById('smpSupplier').value.trim()||'Sample',kind:'samplePurchase',items,subtotal:total,total,discount:0,paid:0,due:total};
- let old=products.map(p=>({p,stock:+p.stock||0,cost:+p.cost||0}));
- db.purchases.push(rec);
- db.batches||=[];
- items.forEach((it,i)=>{
- let p=products[i],oldStock=+p.stock||0,oldCost=+p.cost||0;
- p.stock=oldStock+it.qty;
- p.cost=p.stock?((oldStock*oldCost)+(it.qty*it.rate))/p.stock:it.rate;
- db.batches.push({id:'sample-purchase-'+Date.now()+'-'+Math.random(),purchaseNo:no,productId:p.id,productName:p.name,tp:it.rate,qty:it.qty,remaining:it.qty,kind:'sample'});
- });
- if(!save()){
- db.purchases.pop();
- old.forEach(v=>{v.p.stock=v.stock;v.p.cost=v.cost});
- db.batches=db.batches.filter(b=>b.purchaseNo!==no);
- return;
- }
- alert('Sample Purchase saved. Stock updated.');
- renderSampleHistoryNew();
- resetSamplePurchaseNew();
+ let products=items.map(it=>db.products.find(p=>p.name.toLowerCase()===it.name.toLowerCase()));if(products.some(p=>!p)){alert('Pehle tamam products Products mein add karein.');return}
+ let no=document.getElementById('smpNo').value,old=editingSamplePurchaseNo?db.purchases.find(x=>x.no===editingSamplePurchaseNo):null;if(editingSamplePurchaseNo&&!old){alert('Original sample purchase nahi mili.');return}
+ let oldBatches=old?(db.batches||[]).filter(b=>b.purchaseNo===no):[];
+ if(oldBatches.some(b=>(+b.remaining||0)!==(+b.qty||0))){alert('Is purchase ka kuch stock sell ho chuka hai. Edit nahi ho sakta.');return}
+ let oldProducts=(old?.items||[]).map(it=>({p:db.products.find(p=>p.name.toLowerCase()===it.name.toLowerCase()),qty:+it.qty||0}));
+ let total=items.reduce((a,it)=>a+it.net,0),rec={no,date:document.getElementById('smpDate').value,supplier:document.getElementById('smpSupplier').value.trim()||'Sample',kind:'samplePurchase',items,subtotal:total,total,discount:0,paid:0,due:total};
+ if(old){oldProducts.forEach(v=>{if(v.p)v.p.stock=Math.max(0,(+v.p.stock||0)-v.qty)});db.batches=db.batches.filter(b=>b.purchaseNo!==no);Object.assign(old,rec)}else db.purchases.push(rec);
+ db.batches||=[];items.forEach((it,i)=>{let p=products[i],oldStock=+p.stock||0,oldCost=+p.cost||0;p.stock=oldStock+it.qty;p.cost=p.stock?((oldStock*oldCost)+(it.qty*it.rate))/p.stock:it.rate;db.batches.push({id:'sample-purchase-'+Date.now()+'-'+Math.random(),purchaseNo:no,productId:p.id,productName:p.name,tp:it.rate,qty:it.qty,remaining:it.qty,kind:'sample'});});
+ if(!save()){if(old){items.forEach((it,i)=>{products[i].stock=Math.max(0,(+products[i].stock||0)-it.qty)});oldProducts.forEach(v=>{if(v.p)v.p.stock=(+v.p.stock||0)+v.qty});db.batches=db.batches.filter(b=>b.purchaseNo!==no);db.batches.push(...oldBatches);}else{db.purchases.pop();items.forEach((it,i)=>products[i].stock=Math.max(0,(+products[i].stock||0)-it.qty));db.batches=db.batches.filter(b=>b.purchaseNo!==no);}return}
+ editingSamplePurchaseNo=null;alert(old?'Sample Purchase updated. Stock updated.':'Sample Purchase saved. Stock updated.');renderSampleHistoryNew();resetSamplePurchaseNew();
+ document.querySelector('#samplePurchaseForm h3').textContent='Sample Purchase';document.querySelector('#samplePurchaseForm button.primary').textContent='Save Sample Purchase';
 }
-
 function saveSampleSale(){
  let rows=[...document.querySelectorAll('#smsItems .sample-row')];
- let items=rows.map(row=>{
- let name=row.querySelector('.ss-product').value.trim();
- let qty=+row.querySelector('.ss-qty').value||0;
- let rate=+row.querySelector('.ss-rate').value||0;
- let batchId=row.querySelector('.ss-batch').value;
- let b=db.batches.find(x=>String(x.id)===String(batchId));
- let p=db.products.find(x=>x.name.toLowerCase()===name.toLowerCase());
- return {name,qty,rate,discount:0,net:qty*rate,batchId,costRate:b?(b.kind==='existing'?(+p?.cost||0):(+b.tp||0)):0,_batch:b,_product:p};
- });
+ let items=rows.map(row=>{let name=row.querySelector('.ss-product').value.trim(),qty=+row.querySelector('.ss-qty').value||0,rate=+row.querySelector('.ss-rate').value||0,batchId=row.querySelector('.ss-batch').value,b=db.batches.find(x=>String(x.id)===String(batchId)),p=db.products.find(x=>x.name.toLowerCase()===name.toLowerCase());return {name,qty,rate,discount:0,net:qty*rate,batchId,costRate:b?(b.kind==='existing'?(+p?.cost||0):(+b.tp||0)):0,_batch:b,_product:p};});
  let customer=document.getElementById('smsCustomer').value.trim();
  if(!customer||!items.length||items.some(it=>!it.name||!it._product||!it._batch||it.qty<=0||it.rate<=0)){alert('Customer aur har product ki quantity, batch aur rate enter karein.');return}
- let required={};
- items.forEach(it=>required[it.batchId]=(required[it.batchId]||0)+it.qty);
- for(let id in required){
- let b=db.batches.find(x=>String(x.id)===String(id));
- if(!b||(+b.remaining||0)<required[id]){alert('Selected batch mein stock kam hai.');return}
- }
- let total=items.reduce((a,it)=>a+it.net,0);
- let cost=items.reduce((a,it)=>a+it.qty*it.costRate,0);
- let c=ensureCustomer(customer,'');
- let no=document.getElementById('smsNo').value;
+ let old=editingSampleSaleNo?db.sales.find(x=>x.no===editingSampleSaleNo):null;if(editingSampleSaleNo&&!old){alert('Original sample sale nahi mili.');return}
+ let oldQty={};(old?.items||[]).forEach(it=>oldQty[it.batchId]=(oldQty[it.batchId]||0)+(+it.qty||0));
+ let required={};items.forEach(it=>required[it.batchId]=(required[it.batchId]||0)+it.qty);
+ for(let id in required){let b=db.batches.find(x=>String(x.id)===String(id));if(!b||(+b.remaining||0)+(+oldQty[id]||0)<required[id]){alert('Selected batch mein stock kam hai.');return}}
+ let total=items.reduce((a,it)=>a+it.qty*it.rate,0),cost=items.reduce((a,it)=>a+it.qty*it.costRate,0),c=ensureCustomer(customer,''),no=document.getElementById('smsNo').value;
+ if(old){(old.items||[]).forEach(it=>{let b=db.batches.find(x=>String(x.id)===String(it.batchId)),p=db.products.find(x=>x.name===it.name);if(b)b.remaining=(+b.remaining||0)+(+it.qty||0);if(p)p.stock=(+p.stock||0)+(+it.qty||0);});}
+ items.forEach(it=>{it._batch.remaining=(+it._batch.remaining||0)-it.qty;it._product.stock=(+it._product.stock||0)-it.qty;});
  let rec={no,date:document.getElementById('smsDate').value,customer:c.name,customerId:c.id,kind:'sampleSale',items:items.map(({_batch,_product,...it})=>it),subtotal:total,total,discount:0,paid:0,due:total,cost,profit:total-cost,netProfit:total-cost};
- items.forEach(it=>{it._batch.remaining-=it.qty;it._product.stock-=it.qty});
- db.sales.push(rec);
- if(!save()){
- db.sales.pop();
- items.forEach(it=>{it._batch.remaining+=it.qty;it._product.stock+=it.qty});
- return;
- }
- alert('Sample Sales saved. Stock updated.');
- renderSampleHistoryNew();
- resetSampleSale();
+ if(old){Object.assign(old,rec)}else db.sales.push(rec);
+ if(!save()){if(old){items.forEach(it=>{it._batch.remaining+=it.qty;it._product.stock-=it.qty});(old.items||[]).forEach(it=>{let b=db.batches.find(x=>String(x.id)===String(it.batchId)),p=db.products.find(x=>x.name===it.name);if(b)b.remaining-=it.qty;if(p)p.stock-=it.qty;});}else{db.sales.pop();items.forEach(it=>{it._batch.remaining+=it.qty;it._product.stock+=it.qty;});}return}
+ editingSampleSaleNo=null;alert(old?'Sample Sales updated. Stock updated.':'Sample Sales saved. Stock updated.');renderSampleHistoryNew();resetSampleSale();
+ document.querySelector('#sampleSaleForm h3').textContent='Sample Sales Invoice';document.querySelector('#sampleSaleForm button.primary').textContent='Save Sample Sales';
 }
-
 function printSampleSalePreview(){
  let rows=[...document.querySelectorAll('#smsItems .sample-row')];
  let total=0;
