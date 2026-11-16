@@ -2105,27 +2105,39 @@ function renderAll(){renderCustomerList();renderSampleHistory();if(document.getE
 </script>
 <script>
 (function(){
-  let promptOpen=false, guardReady=false;
+  let guardReady=false, exitDialogOpen=false;
   function arm(){
     if(guardReady)return;
     try{history.pushState({ahtBackGuard:true},'',location.href);guardReady=true;}catch(e){}
   }
+  function showExitDialog(){
+    if(exitDialogOpen)return;
+    exitDialogOpen=true;
+    let box=document.getElementById('ahtExitDialog');
+    if(!box){
+      box=document.createElement('div');
+      box.id='ahtExitDialog';
+      box.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;';
+      box.innerHTML='<div style="background:#fff;border-radius:12px;padding:22px;width:min(320px,100%);text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.3);"><div style="font-size:18px;font-weight:700;margin-bottom:10px;">Exit A.Hamza Traders?</div><div style="font-size:14px;margin-bottom:20px;">Kya aap app band karna chahte hain?</div><button id="ahtStayBtn" type="button" style="padding:10px 22px;margin:4px;border:0;border-radius:7px;background:#e5e7eb;color:#111;font-weight:700;">No</button><button id="ahtExitBtn" type="button" style="padding:10px 22px;margin:4px;border:0;border-radius:7px;background:#1565c0;color:#fff;font-weight:700;">Yes, Exit</button></div>';
+      document.body.appendChild(box);
+      document.getElementById('ahtStayBtn').addEventListener('click',function(){box.remove();exitDialogOpen=false;arm();});
+      document.getElementById('ahtExitBtn').addEventListener('click',function(){
+        box.remove();exitDialogOpen=false;
+        try{window.close();}catch(e){}
+        setTimeout(function(){try{history.back();}catch(e){}},100);
+      });
+    }
+  }
   arm();
   window.addEventListener('popstate',function(){
     guardReady=false;
-    if(promptOpen){arm();return;}
     const active=document.querySelector('.tab.active');
     if(active&&active.id!=='dashboard'){
       const dash=document.querySelector('nav button[data-tab="dashboard"]');
       if(dash)dash.click();
       arm();return;
     }
-    promptOpen=true;
-    let exit=false;
-    try{exit=window.confirm('Do you want to exit A.Hamza Traders?');}catch(e){}
-    promptOpen=false;
-    if(!exit)arm();
-    // On Yes, leave history unarmed so Android/browser can close or navigate back.
+    showExitDialog();
   });
   window.addEventListener('pageshow',function(){guardReady=false;arm();});
 })();
