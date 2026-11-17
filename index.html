@@ -1677,7 +1677,7 @@ function filterSampleProducts(){let q=(document.getElementById('smProductSearch'
 function resetSampleForm(){resetSamplePurchaseNew();renderSampleHistoryNew()}
 function saveSamplePurchase(){saveSamplePurchaseNew()}
 function renderSampleHistory(){renderSampleHistoryNew()}
-function printAllCustomerLedger(){
+function legacyPrintAllCustomerLedger(){
  let rows=(db.customers||[]).map(c=>{let debit=(db.sales||[]).filter(x=>x.customerId===c.id).reduce((a,x)=>a+(+x.total||0),0),credit=(db.payments||[]).filter(x=>x.customerId===c.id).reduce((a,x)=>a+(+x.amount||0),0);return {name:c.name,phone:c.phone||'',debit,credit,balance:debit-credit}}).filter(x=>x.debit||x.credit);
  let td=rows.reduce((a,x)=>a+x.debit,0),tc=rows.reduce((a,x)=>a+x.credit,0),tb=td-tc;
  let body=rows.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+esc(x.phone)+'</td><td>'+money(x.debit)+'</td><td>'+money(x.credit)+'</td><td>'+money(x.balance)+'</td></tr>').join('');
