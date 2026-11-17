@@ -1316,11 +1316,15 @@ function supplierBalance(name){return db.purchases.filter(x=>x.supplier===name).
 function recordSupplierPayment(){let name=document.getElementById('spName').value.trim(),amount=+document.getElementById('spAmount').value;if(!name||amount<=0){alert('Enter supplier and payment amount');return}if(!db.suppliers.some(x=>x.name.toLowerCase()===name.toLowerCase()))db.suppliers.push({name});db.supplierPayments.push({supplier:name,date:document.getElementById('spDate').value,amount,note:document.getElementById('spNote').value});document.getElementById('spAmount').value='';document.getElementById('spNote').value='';save()}
 function getAllSupplierLedgerData(){
  const from=document.getElementById('supplierLedgerFrom').value||'',to=document.getElementById('supplierLedgerTo').value||'';
+ const inRange=x=>(!from||x.date>=from)&&(!to||x.date<=to);
  const names=[...new Set([...(db.suppliers||[]).map(x=>x.name),...(db.purchases||[]).map(x=>x.supplier),...(db.supplierPayments||[]).map(x=>x.supplier)].filter(Boolean))];
  return names.map(name=>{
-  const purchases=(db.purchases||[]).filter(x=>x.supplier===name&&(!from||x.date>=from)&&(!to||x.date<=to)).reduce((s,x)=>s+(+x.total||0),0);
-  const paid=(db.supplierPayments||[]).filter(x=>x.supplier===name&&(!from||x.date>=from)&&(!to||x.date<=to)).reduce((s,x)=>s+(+x.amount||0),0);
-  return {name,purchases,paid,balance:purchases-paid};
+  const purchases=(db.purchases||[]).filter(x=>x.supplier===name&&inRange(x));
+  const purchaseTotal=purchases.reduce((s,x)=>s+(+x.total||0),0);
+  const invoicePaid=purchases.reduce((s,x)=>s+(+x.paid||0),0);
+  const outstanding=purchases.reduce((s,x)=>s+(Number.isFinite(+x.due)?(+x.due):Math.max(0,(+x.total||0)-(+x.paid||0))),0);
+  const extraPaid=(db.supplierPayments||[]).filter(x=>x.supplier===name&&inRange(x)).reduce((s,x)=>s+(+x.amount||0),0);
+  return {name,purchases:purchaseTotal,paid:invoicePaid+extraPaid,balance:outstanding-extraPaid};
  }).sort((a,b)=>a.name.localeCompare(b.name));
 }
 function renderAllSupplierLedger(){
