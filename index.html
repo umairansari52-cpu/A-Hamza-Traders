@@ -2214,60 +2214,51 @@ function renderAll(){renderCustomerList();renderSampleHistory();if(document.getE
 </script>
 <script>
 (function(){
-  let guardReady=false, exitDialogOpen=false;
+  let exitDialogOpen=false,arming=false;
   function arm(){
-    try{history.pushState({ahtBackGuard:true},'',location.href);guardReady=true;}catch(e){}
+    if(arming)return;arming=true;
+    try{history.pushState({ahtBackGuard:true,stamp:Date.now()},'',location.href)}catch(e){}
+    setTimeout(()=>arming=false,80);
   }
   function showExitDialog(){
     if(exitDialogOpen)return;
     exitDialogOpen=true;
     let box=document.getElementById('ahtExitDialog');
     if(!box){
-      box=document.createElement('div');
-      box.id='ahtExitDialog';
-      box.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px;';
-      box.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;width:min(320px,100%);text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.3);"><div style="font-size:19px;font-weight:700;margin-bottom:10px;">Exit A.Hamza Traders?</div><div style="font-size:14px;margin-bottom:20px;">Kya aap app band karna chahte hain?</div><button id="ahtStayBtn" type="button" style="padding:11px 25px;margin:4px;border:0;border-radius:7px;background:#e5e7eb;color:#111;font-weight:700;">No</button><button id="ahtExitBtn" type="button" style="padding:11px 25px;margin:4px;border:0;border-radius:7px;background:#1565c0;color:#fff;font-weight:700;">Yes, Exit</button></div>';
+      box=document.createElement('div');box.id='ahtExitDialog';
+      box.style.cssText='position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:20px';
+      box.innerHTML='<div style="background:#fff;border-radius:16px;padding:24px;width:min(330px,100%);text-align:center;box-shadow:0 8px 30px #0005"><div style="font-size:20px;font-weight:800;margin-bottom:10px">Exit A.Hamza Traders?</div><div style="font-size:14px;margin-bottom:20px">Kya aap app band karna chahte hain?</div><button id="ahtStayBtn" type="button" style="padding:12px 28px;margin:4px;border:0;border-radius:8px;background:#e5e7eb;color:#111;font-weight:700">No</button><button id="ahtExitBtn" type="button" style="padding:12px 28px;margin:4px;border:0;border-radius:8px;background:#1565c0;color:#fff;font-weight:700">Yes, Exit</button></div>';
       document.body.appendChild(box);
     }
     box.style.display='flex';
-    document.getElementById('ahtStayBtn').onclick=function(){
-      box.style.display='none';exitDialogOpen=false;guardReady=false;arm();
-    };
+    document.getElementById('ahtStayBtn').onclick=function(){box.style.display='none';exitDialogOpen=false;arm()};
     document.getElementById('ahtExitBtn').onclick=function(){
       box.style.display='none';exitDialogOpen=false;
-      try{window.close();}catch(e){}
-      setTimeout(function(){try{history.go(-2);}catch(e){}},150);
+      // A standalone PWA cannot always be closed by window.close(); return to the
+      // launcher's previous history entry as the best supported exit behavior.
+      try{history.go(-2)}catch(e){}
+      setTimeout(()=>{try{window.close()}catch(e){}},250);
     };
   }
   window.ahtShowExitDialog=showExitDialog;
-  function currentTabIsDashboard(){
+  function isDashboard(){
     const active=document.querySelector('.tab.active');
-    if(active)return active.id==='dashboard';
-    const dash=document.getElementById('dashboard');
-    return !!(dash && getComputedStyle(dash).display!=='none');
+    return active ? active.id==='dashboard' : !!document.getElementById('dashboard') && getComputedStyle(document.getElementById('dashboard')).display!=='none';
   }
-  function handleAppBack(){
-    if(exitDialogOpen){arm();return;}
-    if(!currentTabIsDashboard()){
-      const dash=document.querySelector('nav button[data-tab="dashboard"]') ||
-        Array.from(document.querySelectorAll('nav button')).find(b=>/dashboard/i.test(b.textContent||''));
-      if(dash)dash.click();
-      else if(typeof window.showTab==='function')window.showTab('dashboard');
-      setTimeout(arm,80);
-      return;
+  function handleBack(){
+    if(exitDialogOpen){arm();return}
+    if(!isDashboard()){
+      if(typeof window.gotoTab==='function')window.gotoTab('dashboard');
+      else {const d=document.querySelector('[data-tab="dashboard"]');if(d)d.click()}
+      setTimeout(arm,120);return;
     }
-    showExitDialog();
-    setTimeout(arm,80);
+    showExitDialog();setTimeout(arm,120);
   }
   arm();
-  window.addEventListener('popstate',function(){
-    guardReady=false;
-    handleAppBack();
-  });
-  window.addEventListener('pageshow',function(){guardReady=false;setTimeout(arm,100);});
-  window.addEventListener('hashchange',function(){setTimeout(arm,50);});
-  document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(arm,100);});
-  window.ahtHandleBack=handleAppBack;
+  window.addEventListener('popstate',function(){handleBack()});
+  window.addEventListener('pageshow',function(){setTimeout(arm,150)});
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(arm,150)});
+  window.ahtHandleBack=handleBack;
 })();</script>
 <style>
 #nav>div:first-child{
