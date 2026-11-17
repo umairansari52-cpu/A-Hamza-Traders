@@ -2205,18 +2205,34 @@ function renderAll(){renderCustomerList();renderSampleHistory();if(document.getE
     };
   }
   window.ahtShowExitDialog=showExitDialog;
+  function currentTabIsDashboard(){
+    const active=document.querySelector('.tab.active');
+    if(active)return active.id==='dashboard';
+    const dash=document.getElementById('dashboard');
+    return !!(dash && getComputedStyle(dash).display!=='none');
+  }
+  function handleAppBack(){
+    if(exitDialogOpen){arm();return;}
+    if(!currentTabIsDashboard()){
+      const dash=document.querySelector('nav button[data-tab="dashboard"]') ||
+        Array.from(document.querySelectorAll('nav button')).find(b=>/dashboard/i.test(b.textContent||''));
+      if(dash)dash.click();
+      else if(typeof window.showTab==='function')window.showTab('dashboard');
+      setTimeout(arm,80);
+      return;
+    }
+    showExitDialog();
+    setTimeout(arm,80);
+  }
   arm();
   window.addEventListener('popstate',function(){
     guardReady=false;
-    const active=document.querySelector('.tab.active');
-    if(active&&active.id!=='dashboard'){
-      const dash=document.querySelector('nav button[data-tab="dashboard"]');
-      if(dash)dash.click();
-      arm();return;
-    }
-    showExitDialog();
+    handleAppBack();
   });
-  window.addEventListener('pageshow',function(){guardReady=false;arm();});
+  window.addEventListener('pageshow',function(){guardReady=false;setTimeout(arm,100);});
+  window.addEventListener('hashchange',function(){setTimeout(arm,50);});
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(arm,100);});
+  window.ahtHandleBack=handleAppBack;
 })();</script>
 <style>
 #nav>div:first-child{
