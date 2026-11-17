@@ -1353,11 +1353,20 @@ function renderSupplierLedger(){
  if(!name){body.innerHTML='';document.getElementById('supplierBalance').textContent='Rs 0.00';['supplierLedgerDebit','supplierLedgerCredit','supplierLedgerClosing'].forEach(id=>document.getElementById(id).textContent='0.00');return}
  const tx=getSupplierLedgerTransactions(name);let bal=0,totalDebit=0,totalCredit=0;
  body.innerHTML=tx.map(x=>{bal+=x.credit-x.debit;totalDebit+=x.debit;totalCredit+=x.credit;
- const action=x.type==='payment'?'<button class="secondary" onclick="editSupplierPayment('+x.index+')">Edit</button> <button class="danger" onclick="deleteSupplierPayment('+x.index+')">Delete</button>':'<button class="secondary" onclick="reprintPurchase(\''+String(x.no).replace(/'/g,"\\\\'")+'\')">Print</button>';
+ const action=x.type==='payment'?'<button class="secondary" onclick="editSupplierPayment('+x.index+')">Edit</button> <button class="danger" onclick="deleteSupplierPayment('+x.index+')">Delete</button>':'<button class="secondary" onclick="editSupplierInvoicePaid('+x.index+')">Edit Paid</button> <button class="secondary" onclick=\'reprintPurchase('+JSON.stringify(x.no)+')\'>Print</button>'
  return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.detail)+'</td><td>'+money(x.debit)+'</td><td>'+money(x.credit)+'</td><td>'+money(bal)+'</td><td>'+action+'</td></tr>';
  }).join('');
  document.getElementById('supplierBalance').textContent='Rs '+money(supplierBalance(name));
  document.getElementById('supplierLedgerDebit').textContent=money(totalDebit);document.getElementById('supplierLedgerCredit').textContent=money(totalCredit);document.getElementById('supplierLedgerClosing').textContent=money(bal);
+}
+function editSupplierInvoicePaid(index){
+ const p=db.purchases[index];if(!p)return;
+ const paid=prompt('Purchase invoice paid amount (0 se '+money(+p.total||0)+' tak)',String(+p.paid||0));
+ if(paid===null)return;
+ const amount=Number(paid);
+ if(!Number.isFinite(amount)||amount<0||amount>(+p.total||0)){alert('Paid amount total purchase se zyada ya negative nahi ho sakti.');return}
+ p.paid=amount;p.due=Math.max(0,(+p.total||0)-amount);
+ if(save()){renderSupplierLedger();if(document.getElementById('allSupplierLedgerCard')?.style.display!=='none')renderAllSupplierLedger();alert('Purchase invoice paid amount update ho gayi.');}
 }
 function editSupplierPayment(index){
  const p=db.supplierPayments[index];if(!p)return;
