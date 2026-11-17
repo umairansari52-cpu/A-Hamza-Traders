@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hamza-traders-v33';
+const CACHE_NAME = 'hamza-traders-v34';
 
 self.addEventListener('install', event => {
   event.waitUntil(
