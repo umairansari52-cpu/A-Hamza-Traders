@@ -917,7 +917,7 @@ startProductAutocomplete();
 <h2>Adjustment Entry</h2>
 <div class="grid">
 <div><label>Date</label><input type="date" id="adjDate"></div>
-<div><label>Customer Name</label><input id="adjCustomer" placeholder="Enter customer name"></div>
+<div><label>Customer Name</label><input id="adjCustomer" list="customerList" placeholder="Search / Select Customer" autocomplete="off"></div>
 </div>
 <h3>Products</h3>
 <div id="adjustmentRows"></div>
@@ -937,7 +937,8 @@ startProductAutocomplete();
 </div>
 </div>
 <div class="card">
-<h3>Adjustment History</h3>
+<h3>Adjustment History — Separate Account</h3>
+<label>Customer-wise Invoice / Ledger Search</label><input id="adjHistoryCustomer" list="customerList" placeholder="Customer ka naam search karein" autocomplete="off" oninput="renderAdjustmentHistory()">
 <div class="actions no-print">
 <button class="primary" onclick="printAdjustmentCustomerHistory()">Customer-wise History / PDF</button>
 <button class="secondary" onclick="printAllAdjustmentHistory()">All Customers History / PDF</button>
@@ -1755,11 +1756,8 @@ function addExpense(){let date=document.getElementById('eDate').value||today(),c
 function addAdjustmentRow(){
 document.getElementById('adjustmentRows').insertAdjacentHTML('beforeend',`
 <div class="adjustment-row card">
-<label>Product Name</label>
-<select class="adj-product" onchange="updateAdjustmentRate(this)">
-<option value="">Select Product</option>
-${(db.products||[]).map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('')}
-</select>
+<label>Product Search</label>
+<input class="adj-product" list="productList" placeholder="Product name likhein" autocomplete="off" onchange="updateAdjustmentRate(this)" oninput="updateAdjustmentRate(this)">
 <label>Quantity</label>
 <input class="adj-qty" type="number" min="1" value="1" oninput="calcAdjustmentRow(this)">
 <label>T.P Rate (Rs)</label>
@@ -1772,9 +1770,10 @@ ${(db.products||[]).map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</optio
 <input class="adj-discount" type="number" value="0" readonly><button class="danger" onclick="this.parentElement.remove();calcAdjustment()">Remove</button>
 </div>`);
 }
-function updateAdjustmentRate(select){
-let p=(db.products||[]).find(x=>x.name===select.value);
-let row=select.closest('.adjustment-row');
+function updateAdjustmentRate(input){
+let name=(input.value||'').trim().toLowerCase();
+let p=(db.products||[]).find(x=>(x.name||'').toLowerCase()===name);
+let row=input.closest('.adjustment-row');
 row.querySelector('.adj-rate').value=p?(+p.price||0):0;
 calcAdjustmentRow(row);
 }
@@ -1803,6 +1802,8 @@ let customer=document.getElementById('adjCustomer').value.trim();
 let rows=[...document.querySelectorAll('.adjustment-row')];
 let items=rows.map(row=>({
 name:row.querySelector('.adj-product').value.trim(),
+qty:+row.querySelector('.adj-qty').value||0,
+rate:+row.querySelector('.adj-rate').value||0,
 amount:+row.querySelector('.adj-amount').value||0,
 discountPercent:+row.querySelector('.adj-discount-percent').value||0,
 discount:+row.querySelector('.adj-discount').value||0
@@ -1846,31 +1847,25 @@ alert('Adjustment saved successfully');
 }
   }
 function renderAdjustmentHistory(){
-let rows=(db.adjustments||[]).slice().reverse();
-document.getElementById('adjustmentHistory').innerHTML=rows.map(x=>{
+let filter=(document.getElementById('adjHistoryCustomer')?.value||'').trim().toLowerCase();
+let all=(db.adjustments||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+let rows=filter?all.filter(x=>(x.customer||'').toLowerCase().includes(filter)):all;
+let customerGroups={};
+rows.forEach(x=>(customerGroups[x.customer]||(customerGroups[x.customer]=[])).push(x));
+document.getElementById('adjustmentHistory').innerHTML=Object.keys(customerGroups).map(customer=>{
+let invoices=customerGroups[customer],oldRemaining=invoices.reduce((s,x)=>s+(+x.discount||0)-(x.payments||[]).reduce((a,p)=>a+(+p.amount||0),0)-((x.payments||[]).length?0:(+x.received||0)),0);
+let invoiceHtml=invoices.map(x=>{
 let payments=x.payments||[];
 let received=payments.length?payments.reduce((a,p)=>a+(+p.amount||0),0):(+x.received||0);
 let remaining=(+x.discount||0)-received;
-return `
-<div class="card">
-<strong>${esc(x.customer)}</strong>
-<p>Date: ${esc(x.date)}</p>
-<p>Products: ${x.items.map(i=>esc(i.name)).join(', ')}</p>
-
-<p>Received Payment: Rs ${money(received)}</p>
-<strong>Remaining Payment: Rs ${money(remaining)}</strong>
-<h4>Payment Entry</h4>
-<label>Payment Date</label>
-<input type="date" id="adjPayDate${x.id}" value="${today()}">
-<label>Payment Amount</label>
-<input type="number" id="adjPayAmount${x.id}" min="0" step=".01">
-<button class="primary" onclick="receiveAdjustmentPayment('${x.id}')">Receive Payment</button>
-<h4>Payment History</h4>
-${payments.map(p=>`<p>${esc(p.date)} — Rs ${money(p.amount)}</p>`).join('')}
-<br>
-<button class="secondary" onclick="editAdjustment('${x.id}')">Edit</button>
-</div>`;
-}).join('')||'<p>No Adjustment Records</p>';
+let items=(x.items||[]).map(i=>{
+let qty=+(i.qty??((+i.amount||0)/(+i.rate||1)))||0,rate=+(i.rate??((+i.amount||0)/(qty||1)))||0,amount=+(i.amount||qty*rate)||0;
+return '<tr><td>'+esc(i.name)+'</td><td>'+money(qty)+'</td><td>'+money(rate)+'</td><td>'+money(i.discountPercent||0)+'%</td><td>'+money(i.discount||0)+'</td></tr>';
+}).join('');
+return '<div class="card"><h4>Adjustment Invoice — '+esc(x.date)+'</h4><div class="tablewrap"><table><thead><tr><th>Product</th><th>Qty</th><th>T.P. Rate</th><th>Discount %</th><th>Discount Amount</th></tr></thead><tbody>'+items+'</tbody></table></div><p><b>Total Discount:</b> Rs '+money(x.discount)+'</p><p><b>Received:</b> Rs '+money(received)+'</p><p><b>Remaining:</b> Rs '+money(remaining)+'</p><h4>Payment Receiving Ledger (Date-wise)</h4><div class="tablewrap"><table><thead><tr><th>Date</th><th>Description</th><th>Received Amount</th></tr></thead><tbody>'+(payments.length?payments.map(p=>'<tr><td>'+esc(p.date)+'</td><td>Payment Received</td><td>'+money(p.amount)+'</td></tr>').join(''):(received?'<tr><td>'+esc(x.date)+'</td><td>Opening / Previous Received</td><td>'+money(received)+'</td></tr>':'<tr><td colspan="3">No payment received</td></tr>'))+'</tbody></table></div><label>Payment Date</label><input type="date" id="adjPayDate'+x.id+'" value="'+today()+'"><label>Payment Amount</label><input type="number" id="adjPayAmount'+x.id+'" min="0" step=".01"><button class="primary" onclick="receiveAdjustmentPayment(\''+x.id+'\')">Receive Payment</button><button class="secondary" onclick="editAdjustment(\''+x.id+'\')">Edit Invoice</button></div>';
+}).join('');
+return '<div class="card"><h3>Customer: '+esc(customer)+'</h3><p><b>Old / Total Remaining Amount:</b> Rs '+money(oldRemaining)+'</p>'+invoiceHtml+'</div>';
+}).join('')||'<p>No Adjustment Records for this customer.</p>';
 }
 function receiveAdjustmentPayment(id){
 let x=(db.adjustments||[]).find(a=>String(a.id)===String(id));
@@ -1920,7 +1915,8 @@ let row=document.querySelector('#adjustmentRows .adjustment-row:last-child');
 let select=row.querySelector('.adj-product');
 select.value=item.name;
 updateAdjustmentRate(select);
-row.querySelector('.adj-qty').value=(+item.amount||0)/(+row.querySelector('.adj-rate').value||1);
+row.querySelector('.adj-qty').value=item.qty!==undefined?item.qty:((+item.amount||0)/(+item.rate||+row.querySelector('.adj-rate').value||1));
+if(item.rate!==undefined)row.querySelector('.adj-rate').value=item.rate;
 row.querySelector('.adj-discount-percent').value=item.discountPercent!==undefined?item.discountPercent:((+item.discount||0)/(+item.amount||1)*100);
 calcAdjustmentRow(row);
 });
