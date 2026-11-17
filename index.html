@@ -1312,7 +1312,7 @@ function savePurchase(){try{let supplier=document.getElementById('pSupplier').va
 function requireInvoicePassword(){let entered=prompt('Invoice Edit/Delete Password:');if(entered===null)return false;if(entered!=='9487'){alert('Wrong password.');return false}return true}
 function editSale(no){if(!requireInvoicePassword())return;let x=db.sales.find(a=>a.no===no);if(!x)return;if((x.items||[]).some(it=>!it.batchId)){alert('Is purane invoice mein T.P. batch record nahi hai, is liye safe edit possible nahi.');return}if(!confirm('Edit this sales invoice? Stock will remain unchanged until you save the revised invoice.'))return;editingSaleNo=no;document.getElementById('sNo').value=x.no;document.getElementById('sDate').value=x.date;document.getElementById('sCustomer').value=x.customer;document.getElementById('sDiscount').value=x.billDiscountPercent||0;document.getElementById('sPaid').value=x.paid;document.getElementById('sNote').value=x.note||'';document.getElementById('salesRows').innerHTML='';x.items.forEach(it=>{addRow('salesRows','sale');let r=document.querySelector('#salesRows .itemrow:last-child');r.querySelector('.item-product').value=it.name;rowCalc(r.querySelector('.item-product'),'sale');let bs=r.querySelector('.item-batch');bs.value=String(it.batchId);r.querySelector('.item-qty').value=it.qty;rowCalc(bs,'sale');r.querySelector('.item-rate').value=it.rate;r.querySelector('.item-disc').value=it.discount;let gross=(+it.qty||0)*(+it.rate||0),net=gross*(1-(+it.discount||0)/100);r.querySelector('.item-total').value=money(gross);r.querySelector('.item-net').value=money(net)});calcInvoice('sale');gotoTab('sales')}
 function editPurchase(index){if(!requireInvoicePassword())return;let x=db.purchases[index];if(!x)return;if(!confirm('Edit this purchase invoice?'))return;let oldBatches=(db.batches||[]).filter(b=>b.purchaseNo===x.no);if(oldBatches.some(b=>(+b.remaining||0)<(+b.qty||0))){alert('Is purchase ke kuch products sell ho chuke hain. Is liye purchase edit nahi ho sakti.');return}if(oldBatches.length){oldBatches.forEach(b=>{let pr=db.products.find(p=>p.id===b.productId);if(pr)pr.stock=Math.max(0,(+pr.stock||0)-(+b.remaining||0))});db.batches=db.batches.filter(b=>b.purchaseNo!==x.no)}else{x.items.forEach(it=>{let pr=db.products.find(p=>p.name.toLowerCase()===it.name.toLowerCase());if(pr)pr.stock=Math.max(0,pr.stock-it.qty)})}editingPurchaseNo=x.no;document.getElementById('pNo').value=x.no;document.getElementById('pDate').value=x.date;document.getElementById('pSupplier').value=x.supplier;document.getElementById('pDiscount').value=x.billDiscountPercent||0;document.getElementById('pPaid').value=x.paid;document.getElementById('purchaseRows').innerHTML='';x.items.forEach(it=>{addRow('purchaseRows','purchase');let r=document.querySelector('#purchaseRows .itemrow:last-child');r.querySelector('.item-product').value=it.name;rowCalc(r.querySelector('.item-product'),'purchase');let tpSel=r.querySelector('.purchase-tp-select'),savedRate=Number(it.rate)||0;if(tpSel&&savedRate>0&&!Array.from(tpSel.options).some(o=>Math.abs((+o.value||0)-savedRate)<.005)){let opt=document.createElement('option');opt.value=String(savedRate);opt.textContent='Invoice T.P. Rs '+money(savedRate);tpSel.appendChild(opt)}if(tpSel)tpSel.value=String(savedRate);r.querySelector('.item-qty').value=it.qty;r.querySelector('.item-rate').value=savedRate;r.querySelector('.item-rate').dataset.edited='1';r.querySelector('.item-disc').value=it.discount;let gross=(+it.qty||0)*savedRate,net=gross*(1-(+it.discount||0)/100);r.querySelector('.item-total').value=money(gross);r.querySelector('.item-net').value=money(net)});calcInvoice('purchase');gotoTab('purchase')}
-function supplierKey(name){return String(name||'').trim().replace(/\\s+/g,' ').toLocaleLowerCase()}
+function supplierKey(name){return String(name||'').trim().replace(/\s+/g,' ').toLocaleLowerCase()}
 function supplierBalance(name){const key=supplierKey(name);return db.purchases.filter(x=>supplierKey(x.supplier)===key).reduce((a,x)=>a+(Number.isFinite(+x.due)?(+x.due):Math.max(0,(+x.total||0)-(+x.paid||0))),0)-db.supplierPayments.filter(x=>supplierKey(x.supplier)===key).reduce((a,x)=>a+(+x.amount||0),0)}
 function recordSupplierPayment(){let typed=document.getElementById('spName').value.trim(),key=supplierKey(typed),amount=+document.getElementById('spAmount').value;if(!typed||amount<=0){alert('Enter supplier and payment amount');return}let existing=[...(db.suppliers||[]).map(x=>x.name),...(db.purchases||[]).map(x=>x.supplier)].find(n=>supplierKey(n)===key);let name=existing||typed.replace(/\\s+/g,' ');if(!db.suppliers.some(x=>supplierKey(x.name)===key))db.suppliers.push({name});db.supplierPayments.push({supplier:name,date:document.getElementById('spDate').value,amount,note:document.getElementById('spNote').value});document.getElementById('spAmount').value='';document.getElementById('spNote').value='';save();renderSupplierOptions();if(document.getElementById('ledgerSupplier').value)renderSupplierLedger();}
 function getAllSupplierLedgerData(){
@@ -1362,25 +1362,26 @@ function renderSupplierLedger(){
  document.getElementById('supplierLedgerDebit').textContent=money(totalDebit);document.getElementById('supplierLedgerCredit').textContent=money(totalCredit);document.getElementById('supplierLedgerClosing').textContent=money(bal);
 }
 function editSelectedSupplierPaid(){
- const name=document.getElementById('ledgerSupplier').value;
+ const name=document.getElementById('ledgerSupplier').value,key=supplierKey(name);
  if(!name){alert('Pehle supplier select karein');return}
- const list=(db.purchases||[]).map((p,i)=>({p,i})).filter(x=>supplierKey(x.p.supplier)===supplierKey(name));
+ const list=(db.purchases||[]).map((p,i)=>({p,i})).filter(x=>supplierKey(x.p.supplier)===key);
  if(!list.length){alert('Is supplier ki purchase invoice nahi mili');return}
- const choices=list.map((x,n)=>(n+1)+'. Invoice '+(x.p.no||'')+' | Total Rs '+money(+x.p.total||0)+' | Paid Rs '+money(+x.p.paid||0)).join('\n');
- const choice=prompt('Kis invoice ka Paid amount edit karna hai? Number enter karein:\n'+choices,'1');
+ const choices=list.map((x,n)=>(n+1)+'. '+(x.p.supplier||'')+' | '+(x.p.date||'')+' | Invoice '+(x.p.no||'')+' | Total Rs '+money(+x.p.total||0)+' | Paid Rs '+money(+x.p.paid||0)).join('\n');
+ const choice=prompt('Sirf '+name+' ki invoice select karein. Number enter karein:\n'+choices,'1');
  if(choice===null)return;
  const selected=list[Number(choice)-1];
- if(!selected){alert('Sahi invoice number select karein');return}
- editSupplierInvoicePaid(selected.i);
+ if(!selected||supplierKey(selected.p.supplier)!==key){alert('Selected invoice is not for '+name);return}
+ editSupplierInvoicePaid(selected.i,name);
 }
-function editSupplierInvoicePaid(index){
+function editSupplierInvoicePaid(index,expectedSupplier){
  const p=db.purchases[index];if(!p)return;
- const paid=prompt('Purchase invoice paid amount (0 se '+money(+p.total||0)+' tak)',String(+p.paid||0));
+ if(expectedSupplier&&supplierKey(p.supplier)!==supplierKey(expectedSupplier)){alert('Supplier mismatch. Paid amount change nahi hui.');return}
+ const paid=prompt('Supplier: '+(p.supplier||'')+'\nInvoice: '+(p.no||'')+'\nPurchase invoice paid amount (0 se '+money(+p.total||0)+' tak)',String(+p.paid||0));
  if(paid===null)return;
  const amount=Number(paid);
  if(!Number.isFinite(amount)||amount<0||amount>(+p.total||0)){alert('Paid amount total purchase se zyada ya negative nahi ho sakti.');return}
  p.paid=amount;p.due=Math.max(0,(+p.total||0)-amount);
- if(save()){renderSupplierLedger();if(document.getElementById('allSupplierLedgerCard')?.style.display!=='none')renderAllSupplierLedger();alert('Purchase invoice paid amount update ho gayi.');}
+ if(save()){renderSupplierLedger();if(document.getElementById('allSupplierLedgerCard')?.style.display!=='none')renderAllSupplierLedger();alert((p.supplier||'Supplier')+' ki invoice paid amount update ho gayi.');}
 }
 function editSupplierPayment(index){
  const p=db.supplierPayments[index];if(!p)return;
