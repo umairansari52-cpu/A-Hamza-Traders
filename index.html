@@ -986,8 +986,14 @@ startProductAutocomplete();
 <div class="card">
 <div class="actions no-print">
 <button class="primary" onclick="printCustomerLedger()">Print Customer Ledger / PDF</button>
+<button class="secondary" onclick="renderAllCustomerLedger()">All Customers Ledger</button>
+<button class="secondary" onclick="printAllCustomerLedger()">Print All Customers / PDF</button>
 </div>
 
+<div class="card" id="allCustomerLedgerCard" style="display:none">
+<h3>All Customers Ledger</h3>
+<div class="tablewrap"><table><thead><tr><th>Customer</th><th>Total Sales / Debit</th><th>Total Paid / Credit</th><th>Remaining Balance</th></tr></thead><tbody id="allCustomerLedgerRows"></tbody><tfoot><tr><th>Grand Total</th><th id="allLedgerDebit">0.00</th><th id="allLedgerCredit">0.00</th><th id="allLedgerBalance">0.00</th></tr></tfoot></table></div>
+</div>
 <div class="tablewrap">
 <table>
 <thead>
@@ -1403,6 +1409,31 @@ function renderLedger(){
  let tx=getCustomerLedgerRows(id).filter(x=>(!from||x.date>=from)&&(!to||x.date<=to)),bal=0;
  body.innerHTML=tx.map(x=>{bal+=x.debit-x.credit;return `<tr><td>${esc(x.date)}</td><td>${esc(x.detail)}${x.editIndex!==undefined?' <button class="secondary" onclick="editCustomerPayment('+x.editIndex+')">Edit</button>':''}</td><td>${money(x.debit)}</td><td>${money(x.credit)}</td><td>${money(bal)}</td></tr>`}).join('');
  document.getElementById('ledgerBalance').textContent='Rs '+money(bal);
+}
+function getAllCustomerLedgerData(){
+let from=document.getElementById('ledgerFrom')?.value||'',to=document.getElementById('ledgerTo')?.value||'';
+let rows=(db.customers||[]).map(customer=>{
+let tx=getCustomerLedgerRows(customer.id).filter(x=>(!from||x.date>=from)&&(!to||x.date<=to));
+let debit=tx.reduce((s,x)=>s+(+x.debit||0),0),credit=tx.reduce((s,x)=>s+(+x.credit||0),0);
+return {customer,debit,credit,balance:debit-credit};
+});
+return rows;
+}
+function renderAllCustomerLedger(){
+let rows=getAllCustomerLedgerData(),el=document.getElementById('allCustomerLedgerRows');
+document.getElementById('allCustomerLedgerCard').style.display='block';
+el.innerHTML=rows.map(x=>'<tr><td>'+esc(x.customer.name)+'</td><td>'+money(x.debit)+'</td><td>'+money(x.credit)+'</td><td>'+money(x.balance)+'</td></tr>').join('')||'<tr><td colspan="4">No customers</td></tr>';
+let d=rows.reduce((s,x)=>s+x.debit,0),cr=rows.reduce((s,x)=>s+x.credit,0);
+document.getElementById('allLedgerDebit').textContent=money(d);
+document.getElementById('allLedgerCredit').textContent=money(cr);
+document.getElementById('allLedgerBalance').textContent=money(d-cr);
+}
+function printAllCustomerLedger(){
+let rows=getAllCustomerLedgerData(),from=document.getElementById('ledgerFrom')?.value||'',to=document.getElementById('ledgerTo')?.value||'';
+let d=rows.reduce((s,x)=>s+x.debit,0),cr=rows.reduce((s,x)=>s+x.credit,0);
+let body=rows.map(x=>'<tr><td>'+esc(x.customer.name)+'</td><td>'+money(x.debit)+'</td><td>'+money(x.credit)+'</td><td>'+money(x.balance)+'</td></tr>').join('');
+let html='<h2>All Customers Ledger</h2><p>Date From: '+esc(from||'All')+' &nbsp; Date To: '+esc(to||'All')+'</p><table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse"><thead><tr><th>Customer</th><th>Total Sales / Debit</th><th>Total Paid / Credit</th><th>Remaining Balance</th></tr></thead><tbody>'+body+'</tbody><tfoot><tr><th>Grand Total</th><th>'+money(d)+'</th><th>'+money(cr)+'</th><th>'+money(d-cr)+'</th></tr></tfoot></table>';
+openPrintPage('All Customers Ledger',html);
 }
 function printCustomerLedger(){
  let id=+document.getElementById('ledgerCustomer').value,c=db.customers.find(x=>x.id===id);
