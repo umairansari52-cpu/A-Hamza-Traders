@@ -1341,7 +1341,7 @@ if(opening>0){p.stock=(+p.stock||0)+opening;db.batches ||= [];let existing=db.ba
 db.productEntries ||= [];db.productEntries.unshift({date:today(),name:p.name,unit:p.unit,tp,opening});
 if(!save())return;['prName','prUnit','prPrice'].forEach(id=>document.getElementById(id).value='');document.getElementById('prStock').value=0;renderProducts();alert('Product / T.P. rate saved.');
 }
-function balance(c){return db.sales.filter(x=>x.customerId===c.id).reduce((a,x)=>a+x.due,0)-db.payments.filter(x=>x.customerId===c.id).reduce((a,x)=>a+x.amount,0)}
+function balance(c){return db.sales.filter(x=>String(x.customerId)===String(c.id)).reduce((a,x)=>a+x.due,0)-db.payments.filter(x=>String(x.customerId)===String(c.id)).reduce((a,x)=>a+x.amount,0)}
 function recordPayment(){
  let id=+document.getElementById('payCustomer').value;
  let amount=+document.getElementById('payAmount').value;
@@ -1353,7 +1353,8 @@ function recordPayment(){
   return;
  }
 
- db.payments.push({customerId:id,date:date,amount:amount,note:note});
+ db.payments ||= [];
+  db.payments.push({customerId:id,date:date,amount:amount,note:note});
 
  if(!save())return;
 
@@ -1380,12 +1381,12 @@ function editCustomerPayment(i){
 }
 function getCustomerLedgerRows(id){
  return [
-  ...db.sales.filter(x=>x.customerId===id).flatMap(x=>[
+  ...db.sales.filter(x=>String(x.customerId)===String(id)).flatMap(x=>[
    {date:x.date,detail:'Invoice '+x.no,debit:+x.total||0,credit:0,no:x.no||'-',invoiceAmount:+x.total||0},
    ...(x.paid>0?[{date:x.date,detail:'Paid with invoice '+x.no,debit:0,credit:+x.paid,no:x.no||'-',invoiceAmount:0}]:[])
   ]),
-  ...db.payments.map((p,i)=>({p,i})).filter(x=>x.p.customerId===id).map(x=>({date:x.p.date,detail:(x.p.invoiceNo?'Payment against Invoice '+x.p.invoiceNo+' — ':'')+(x.p.note||'Payment received'),debit:0,credit:+x.p.amount||0,editIndex:x.i,no:x.p.invoiceNo||'-',invoiceAmount:0})),
- ...(db.customerLedgerRemarks||[]).filter(x=>x.customerId===id).map(x=>({date:x.date,detail:'REMARK: '+x.remark,debit:0,credit:0,no:'-',invoiceAmount:0,isRemark:true}))
+  ...db.payments.map((p,i)=>({p,i})).filter(x=>String(x.p.customerId)===String(id)).map(x=>({date:x.p.date,detail:(x.p.invoiceNo?'Payment against Invoice '+x.p.invoiceNo+' — ':'')+(x.p.note||'Payment received'),debit:0,credit:+x.p.amount||0,editIndex:x.i,no:x.p.invoiceNo||'-',invoiceAmount:0})),
+ ...(db.customerLedgerRemarks||[]).filter(x=>String(x.customerId)===String(id)).map(x=>({date:x.date,detail:'REMARK: '+x.remark,debit:0,credit:0,no:'-',invoiceAmount:0,isRemark:true}))
  ].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
 }
 function saveCustomerLedgerRemark(){
