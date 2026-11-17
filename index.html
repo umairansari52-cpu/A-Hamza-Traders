@@ -1005,6 +1005,17 @@ startProductAutocomplete();
 </div>
 
 <div class="card">
+<h3>Add Customer Ledger Remarks</h3>
+<div class="grid">
+<div><label>Customer</label><select id="ledgerRemarkCustomer"><option value="">Choose customer</option></select></div>
+<div><label>Date</label><input id="ledgerRemarkDate" type="date"></div>
+<div><label>Remarks</label><input id="ledgerRemarkText" placeholder="Enter customer remarks"></div>
+</div>
+<div class="actions"><button class="primary" onclick="saveCustomerLedgerRemark()">Save Remarks</button></div>
+<p class="muted">Remarks sirf ledger note hain; customer balance par koi asar nahi hoga.</p>
+</div>
+
+<div class="card">
 <h3>Record Customer Payment</h3>
 <div class="grid">
 
@@ -1367,8 +1378,23 @@ function getCustomerLedgerRows(id){
    {date:x.date,detail:'Invoice '+x.no,debit:+x.total||0,credit:0,no:x.no||'-',invoiceAmount:+x.total||0},
    ...(x.paid>0?[{date:x.date,detail:'Paid with invoice '+x.no,debit:0,credit:+x.paid,no:x.no||'-',invoiceAmount:0}]:[])
   ]),
-  ...db.payments.map((p,i)=>({p,i})).filter(x=>x.p.customerId===id).map(x=>({date:x.p.date,detail:(x.p.invoiceNo?'Payment against Invoice '+x.p.invoiceNo+' — ':'')+(x.p.note||'Payment received'),debit:0,credit:+x.p.amount||0,editIndex:x.i,no:x.p.invoiceNo||'-',invoiceAmount:0}))
+  ...db.payments.map((p,i)=>({p,i})).filter(x=>x.p.customerId===id).map(x=>({date:x.p.date,detail:(x.p.invoiceNo?'Payment against Invoice '+x.p.invoiceNo+' — ':'')+(x.p.note||'Payment received'),debit:0,credit:+x.p.amount||0,editIndex:x.i,no:x.p.invoiceNo||'-',invoiceAmount:0})),
+ ...(db.customerLedgerRemarks||[]).filter(x=>x.customerId===id).map(x=>({date:x.date,detail:'REMARK: '+x.remark,debit:0,credit:0,no:'-',invoiceAmount:0,isRemark:true}))
  ].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+}
+function saveCustomerLedgerRemark(){
+let customerId=+document.getElementById('ledgerRemarkCustomer').value;
+let date=document.getElementById('ledgerRemarkDate').value||today();
+let remark=document.getElementById('ledgerRemarkText').value.trim();
+if(!customerId||!remark){alert('Customer aur remarks enter karein');return}
+db.customerLedgerRemarks ||= [];
+db.customerLedgerRemarks.push({id:Date.now(),customerId,date,remark});
+if(save()){
+document.getElementById('ledgerRemarkText').value='';
+document.getElementById('ledgerCustomer').value=String(customerId);
+renderLedger();
+alert('Customer ledger remarks saved');
+}
 }
 function renderLedger(){
  let id=+document.getElementById('ledgerCustomer').value,c=db.customers.find(x=>x.id===id),body=document.getElementById('ledgerRows');
@@ -1384,8 +1410,8 @@ function printCustomerLedger(){
  let from=document.getElementById('ledgerFrom')?.value||'',to=document.getElementById('ledgerTo')?.value||'';
  let rows=getCustomerLedgerRows(id).filter(x=>(!from||x.date>=from)&&(!to||x.date<=to));
  let running=0,totalDebit=0,totalCredit=0;
- let body=rows.map(x=>{running+=x.debit-x.credit;totalDebit+=x.debit;totalCredit+=x.credit;return '<tr><td>'+esc(x.no||'-')+'</td><td>'+esc(x.date)+'</td><td>Rs '+money(x.invoiceAmount||0)+'</td><td>Rs '+money(x.credit)+'</td><td>Rs '+money(x.debit)+'</td><td>Rs '+money(running)+'</td></tr>'}).join('');
- let content='<h2 style="text-align:center">'+esc(c.name)+'</h2><p>Date From: '+esc(from||'All')+' &nbsp; Date To: '+esc(to||'All')+'</p><table style="width:100%;border-collapse:collapse;font-size:12px" border="1" cellpadding="6"><tr><th>Invoice No.</th><th>Date</th><th>Invoice Amount</th><th>Credit</th><th>Debit Amount</th><th>Remaining Amount</th></tr>'+body+'<tr><th colspan="2">Total</th><th>—</th><th>Rs '+money(totalCredit)+'</th><th>Rs '+money(totalDebit)+'</th><th>Rs '+money(running)+'</th></tr></table><h3>Final Remaining Amount: Rs '+money(running)+'</h3>';
+ let body=rows.map(x=>{running+=x.debit-x.credit;totalDebit+=x.debit;totalCredit+=x.credit;return '<tr><td>'+esc(x.no||'-')+'</td><td>'+esc(x.date)+'</td><td>'+esc(x.detail||'')+'</td><td>Rs '+money(x.invoiceAmount||0)+'</td><td>Rs '+money(x.credit)+'</td><td>Rs '+money(x.debit)+'</td><td>Rs '+money(running)+'</td></tr>'}).join('');
+ let content='<h2 style="text-align:center">'+esc(c.name)+'</h2><p>Date From: '+esc(from||'All')+' &nbsp; Date To: '+esc(to||'All')+'</p><table style="width:100%;border-collapse:collapse;font-size:12px" border="1" cellpadding="6"><tr><th>Invoice No.</th><th>Date</th><th>Details / Remarks</th><th>Invoice Amount</th><th>Credit</th><th>Debit Amount</th><th>Remaining Amount</th></tr>'+body+'<tr><th colspan="2">Total</th><th>—</th><th>Rs '+money(totalCredit)+'</th><th>Rs '+money(totalDebit)+'</th><th>Rs '+money(running)+'</th></tr></table><h3>Final Remaining Amount: Rs '+money(running)+'</h3>';
  openPrintPage('Customer Ledger',content);
 }
 
@@ -1673,6 +1699,7 @@ function fillDatalists(){
  let cl=document.getElementById('customerList'),cs=document.getElementById('customerSearchList'),pl=document.getElementById('productList');
  if(cl)cl.innerHTML=customers;if(cs)cs.innerHTML=customers;if(pl)pl.innerHTML=products;
  document.querySelectorAll('input[list="customerList"],input[list="productList"],input[list="customerSearchList"]').forEach(el=>{el.setAttribute('autocomplete','off');el.setAttribute('aria-haspopup','listbox');});
+ let remarkSel=document.getElementById('ledgerRemarkCustomer');if(remarkSel){let current=remarkSel.value;remarkSel.innerHTML='<option value="">Choose customer</option>'+db.customers.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('');if([...remarkSel.options].some(o=>o.value===current))remarkSel.value=current;}
 }
 
 // Touch-friendly dropdowns for customer and product fields (including Android).
