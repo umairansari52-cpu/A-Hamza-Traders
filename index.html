@@ -1846,26 +1846,39 @@ renderAdjustmentHistory();
 alert('Adjustment saved successfully');
 }
   }
+function adjustmentItemValues(i){
+let product=(db.products||[]).find(p=>(p.name||'').toLowerCase()===(i.name||'').toLowerCase());
+let rate=+(i.rate??i.tpRate??i.tp??i.price??product?.price??0)||0;
+let qty=+(i.qty??i.quantity??i.qtyValue??0)||0;
+let amount=+(i.amount??i.totalAmount??0)||0;
+if(!qty&&amount>0&&rate>0)qty=amount/rate;
+if(!amount&&qty>0&&rate>0)amount=qty*rate;
+return {qty,rate,amount,discountPercent:+(i.discountPercent??i.discountPct??0)||0,discount:+(i.discount??i.discountAmount??0)||0};
+}
 function renderAdjustmentHistory(){
 let filter=(document.getElementById('adjHistoryCustomer')?.value||'').trim().toLowerCase();
 let all=(db.adjustments||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-let from=document.getElementById('adjFrom')?.value||'',to=document.getElementById('adjTo')?.value||'';let rows=all.filter(x=>(!filter||(x.customer||'').toLowerCase().includes(filter))&&(!from||x.date>=from)&&(!to||x.date<=to));
-let customerGroups={};
-rows.forEach(x=>(customerGroups[x.customer]||(customerGroups[x.customer]=[])).push(x));
+let from=document.getElementById('adjFrom')?.value||'',to=document.getElementById('adjTo')?.value||'';
+let rows=all.filter(x=>(!filter||(x.customer||'').toLowerCase().includes(filter))&&(!from||x.date>=from)&&(!to||x.date<=to));
+let customerGroups={};rows.forEach(x=>(customerGroups[x.customer]||(customerGroups[x.customer]=[])).push(x));
 document.getElementById('adjustmentHistory').innerHTML=Object.keys(customerGroups).map(customer=>{
-let invoices=customerGroups[customer],oldRemaining=invoices.reduce((s,x)=>s+(+x.discount||0)-(x.payments||[]).reduce((a,p)=>a+(+p.amount||0),0)-((x.payments||[]).length?0:(+x.received||0)),0);
+let invoices=customerGroups[customer];
+let oldRemaining=invoices.reduce((s,x)=>s+(+x.discount||0)-((x.payments||[]).length?(x.payments||[]).reduce((a,p)=>a+(+p.amount||0),0):(+x.received||0)),0);
 let invoiceHtml=invoices.map(x=>{
-let payments=x.payments||[];
-let received=payments.length?payments.reduce((a,p)=>a+(+p.amount||0),0):(+x.received||0);
-let remaining=(+x.discount||0)-received;
-let items=(x.items||[]).map(i=>{
-let qty=+(i.qty??((+i.amount||0)/(+i.rate||1)))||0,rate=+(i.rate??((+i.amount||0)/(qty||1)))||0,amount=+(i.amount||qty*rate)||0;
-return '<tr><td>'+esc(i.name)+'</td><td>'+money(qty)+'</td><td>'+money(rate)+'</td><td>'+money(i.discountPercent||0)+'%</td><td>'+money(i.discount||0)+'</td></tr>';
+let payments=x.payments||[],received=payments.length?payments.reduce((a,p)=>a+(+p.amount||0),0):(+x.received||0),remaining=(+x.discount||0)-received;
+let items=(x.items||[]).map(i=>{let v=adjustmentItemValues(i);return '<tr><td>'+esc(i.name)+'</td><td>'+Number(v.qty.toFixed(3))+'</td><td>'+money(v.rate)+'</td><td>'+money(v.amount)+'</td><td>'+money(v.discountPercent)+'%</td><td>'+money(v.discount)+'</td></tr>'}).join('');
+let invNo='ADJ-'+String(x.id||'');
+return '<div class="card"><h4>Adjustment Invoice No: '+esc(invNo)+' | '+esc(x.date||'')+'</h4><div class="tablewrap"><table><thead><tr><th>Product</th><th>Quantity</th><th>T.P. Rate</th><th>Amount</th><th>Discount %</th><th>Discount Amount</th></tr></thead><tbody>'+items+'</tbody></table></div><p><b>Total Discount:</b> Rs '+money(x.discount)+'</p><p><b>Received:</b> Rs '+money(received)+' &nbsp; <b>Remaining:</b> Rs '+money(remaining)+'</p><button class="secondary no-print" onclick="printAdjustmentRecord(\''+String(x.id)+'\')">Print Preview</button> <button class="secondary no-print" onclick="editAdjustment(\''+String(x.id)+'\')">Edit</button> <button class="danger no-print" onclick="deleteAdjustment(\''+String(x.id)+'\')">Delete</button><h4>Payment Receiving Ledger (Date-wise)</h4><div class="tablewrap"><table><thead><tr><th>Date</th><th>Description</th><th>Received Amount</th></tr></thead><tbody>'+(payments.length?payments.map(p=>'<tr><td>'+esc(p.date||'')+'</td><td>Payment Received</td><td>'+money(p.amount)+'</td></tr>').join(''):(received?'<tr><td>'+esc(x.date||'')+'</td><td>Opening / Previous Received</td><td>'+money(received)+'</td></tr>':'<tr><td colspan="3">No payment received</td></tr>'))+'</tbody></table></div><label>Payment Date</label><input type="date" id="adjPayDate'+x.id+'" value="'+today()+'"><label>Payment Amount</label><input type="number" id="adjPayAmount'+x.id+'" min="0" step=".01"><button class="primary" onclick="receiveAdjustmentPayment(\''+String(x.id)+'\')">Receive Payment</button></div>';
 }).join('');
-return '<div class="card"><h4>Adjustment Invoice — '+esc(x.date)+'</h4><div class="tablewrap"><table><thead><tr><th>Product</th><th>Qty</th><th>T.P. Rate</th><th>Discount %</th><th>Discount Amount</th></tr></thead><tbody>'+items+'</tbody></table></div><p><b>Total Discount:</b> Rs '+money(x.discount)+'</p><p><b>Received:</b> Rs '+money(received)+'</p><p><b>Remaining:</b> Rs '+money(remaining)+'</p><button class="secondary no-print" onclick="printAdjustmentRecord("${x.id}")">Print This Adjustment Invoice</button><h4>Payment Receiving Ledger (Date-wise)</h4><div class="tablewrap"><table><thead><tr><th>Date</th><th>Description</th><th>Received Amount</th></tr></thead><tbody>'+(payments.length?payments.map(p=>'<tr><td>'+esc(p.date)+'</td><td>Payment Received</td><td>'+money(p.amount)+'</td></tr>').join(''):(received?'<tr><td>'+esc(x.date)+'</td><td>Opening / Previous Received</td><td>'+money(received)+'</td></tr>':'<tr><td colspan="3">No payment received</td></tr>'))+'</tbody></table></div><label>Payment Date</label><input type="date" id="adjPayDate'+x.id+'" value="'+today()+'"><label>Payment Amount</label><input type="number" id="adjPayAmount'+x.id+'" min="0" step=".01"><button class="primary" onclick="receiveAdjustmentPayment(\''+x.id+'\')">Receive Payment</button><button class="secondary" onclick="editAdjustment(\''+x.id+'\')">Edit Invoice</button></div>';
-}).join('');
-return '<div class="card"><h3>Customer: '+esc(customer)+'</h3><p><b>Old / Total Remaining Amount:</b> Rs '+money(oldRemaining)+'</p>'+invoiceHtml+'</div>';
+return '<div class="card"><h3>Customer: '+esc(customer)+'</h3><p><b>Total Remaining Amount:</b> Rs '+money(oldRemaining)+'</p>'+invoiceHtml+'</div>';
 }).join('')||'<p>No Adjustment Records for this customer.</p>';
+}
+function deleteAdjustment(id){
+let index=(db.adjustments||[]).findIndex(x=>String(x.id)===String(id));
+if(index<0){alert('Adjustment invoice nahi mili');return}
+if(!confirm('Is Adjustment invoice ko delete karna hai?'))return;
+db.adjustments.splice(index,1);
+if(save()){renderAdjustmentHistory();alert('Adjustment invoice deleted');}
 }
 function receiveAdjustmentPayment(id){
 let x=(db.adjustments||[]).find(a=>String(a.id)===String(id));
@@ -1926,12 +1939,9 @@ alert('Adjustment opened for editing');
 }
 function adjustmentInvoiceContent(x){
 let payments=x.payments||[],received=payments.length?payments.reduce((a,p)=>a+(+p.amount||0),0):(+x.received||0),remaining=(+x.discount||0)-received;
-let items=(x.items||[]).map(i=>{
-let qty=+(i.qty??((+i.amount||0)/(+i.rate||1)))||0,rate=+(i.rate??((+i.amount||0)/(qty||1)))||0,amount=+(i.amount||qty*rate)||0;
-return '<tr><td>'+esc(i.name)+'</td><td>'+money(qty)+'</td><td>'+money(rate)+'</td><td>'+money(amount)+'</td><td>'+money(i.discountPercent||0)+'%</td><td>'+money(i.discount||0)+'</td></tr>';
-}).join('');
+let items=(x.items||[]).map(i=>{let v=adjustmentItemValues(i);return '<tr><td>'+esc(i.name)+'</td><td>'+Number(v.qty.toFixed(3))+'</td><td>'+money(v.rate)+'</td><td>'+money(v.amount)+'</td><td>'+money(v.discountPercent)+'%</td><td>'+money(v.discount)+'</td></tr>'}).join('');
 let payRows=payments.length?payments.map(p=>'<tr><td>'+esc(p.date||'-')+'</td><td>Payment Received</td><td>'+money(p.amount)+'</td></tr>').join(''):(received?'<tr><td>'+esc(x.date||'-')+'</td><td>Previous Received</td><td>'+money(received)+'</td></tr>':'<tr><td colspan="3">No payment received</td></tr>');
-return '<h2>Adjustment Invoice</h2><p><b>Date:</b> '+esc(x.date||'-')+' &nbsp; <b>Customer:</b> '+esc(x.customer||'-')+' &nbsp; <b>Invoice ID:</b> '+esc(x.id||'-')+'</p><table><thead><tr><th>Product</th><th>Quantity</th><th>T.P. Rate</th><th>Amount</th><th>Discount %</th><th>Discount Amount</th></tr></thead><tbody>'+items+'</tbody><tfoot><tr><th colspan="5">Total Discount</th><th>'+money(x.discount)+'</th></tr></tfoot></table><p><b>Received Payment:</b> Rs '+money(received)+' &nbsp; <b>Remaining Amount:</b> Rs '+money(remaining)+'</p><h3>Payment Receiving Ledger</h3><table><thead><tr><th>Date</th><th>Description</th><th>Received Amount</th></tr></thead><tbody>'+payRows+'</tbody></table><p style="text-align:center;margin-top:25px">Thank you</p>';
+return '<h2>Adjustment Invoice</h2><p><b>Invoice No:</b> ADJ-'+esc(x.id||'-')+' &nbsp; <b>Date:</b> '+esc(x.date||'-')+' &nbsp; <b>Customer:</b> '+esc(x.customer||'-')+'</p><table><thead><tr><th>Product</th><th>Quantity</th><th>T.P. Rate</th><th>Amount</th><th>Discount %</th><th>Discount Amount</th></tr></thead><tbody>'+items+'</tbody><tfoot><tr><th colspan="5">Total Discount</th><th>'+money(x.discount)+'</th></tr></tfoot></table><p><b>Received Payment:</b> Rs '+money(received)+' &nbsp; <b>Remaining Amount:</b> Rs '+money(remaining)+'</p><h3>Payment Receiving Ledger</h3><table><thead><tr><th>Date</th><th>Description</th><th>Received Amount</th></tr></thead><tbody>'+payRows+'</tbody></table><p style="text-align:center;margin-top:25px">Thank you</p>';
 }
 function printAdjustment(){
 calcAdjustment();
