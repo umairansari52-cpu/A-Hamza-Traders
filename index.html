@@ -1041,7 +1041,7 @@ startProductAutocomplete();
 </div>
 
 </section>
-  <section id="supplierLedger" class="tab"><div class="card"><h2>Supplier Ledger</h2><label>Select supplier</label><select id="ledgerSupplier" onchange="renderSupplierLedger()"><option value="">Choose supplier</option></select><div class="metric" id="supplierBalance">Rs 0.00</div><div class="muted">Outstanding balance payable to supplier</div><div class="grid" style="margin-top:12px"><div><label>Date From</label><input type="date" id="supplierLedgerFrom" onchange="renderSupplierLedger()"></div><div><label>Date To</label><input type="date" id="supplierLedgerTo" onchange="renderSupplierLedger()"></div></div><div class="actions"><button class="secondary" onclick="printSupplierLedger()">Print Preview / PDF</button></div></div><div class="card"><div class="tablewrap"><table><thead><tr><th>Date</th><th>Details</th><th>Debit / Paid</th><th>Credit / Purchase</th><th>Balance</th><th>Action</th></tr></thead><tbody id="supplierLedgerRows"></tbody><tfoot><tr><th colspan="2">Total</th><th id="supplierLedgerDebit">0.00</th><th id="supplierLedgerCredit">0.00</th><th id="supplierLedgerClosing">0.00</th><th></th></tr></tfoot></table></div></div><div class="card"><h3>Record Supplier Payment</h3><div class="grid"><div><label>Supplier</label><input id="spName" list="supplierList" placeholder="Supplier name"><datalist id="supplierList"></datalist></div><div><label>Date</label><input id="spDate" type="date"></div><div><label>Amount (Rs)</label><input id="spAmount" type="number" min=".01" step=".01"></div><div><label>Note</label><input id="spNote" placeholder="Payment note"></div></div><div class="actions"><button class="primary" onclick="recordSupplierPayment()">Save Supplier Payment</button></div></div><div class="card">
+  <section id="supplierLedger" class="tab"><div class="card"><h2>Supplier Ledger</h2><label>Select supplier</label><select id="ledgerSupplier" onchange="renderSupplierLedger()"><option value="">Choose supplier</option></select><div class="metric" id="supplierBalance">Rs 0.00</div><div class="muted">Outstanding balance payable to supplier</div><div class="grid" style="margin-top:12px"><div><label>Date From</label><input type="date" id="supplierLedgerFrom" onchange="renderSupplierLedger()"></div><div><label>Date To</label><input type="date" id="supplierLedgerTo" onchange="renderSupplierLedger()"></div></div><div class="actions"><button class="secondary" onclick="renderAllSupplierLedger()">Total Supplier Ledger</button><button class="secondary" onclick="printAllSupplierLedger()">Print Total Ledger / PDF</button><button class="secondary" onclick="printSupplierLedger()">Print Selected Supplier</button></div><div id="allSupplierLedgerCard" style="display:none;margin-top:14px"></div></div><div class="card"><div class="tablewrap"><table><thead><tr><th>Date</th><th>Details</th><th>Debit / Paid</th><th>Credit / Purchase</th><th>Balance</th><th>Action</th></tr></thead><tbody id="supplierLedgerRows"></tbody><tfoot><tr><th colspan="2">Total</th><th id="supplierLedgerDebit">0.00</th><th id="supplierLedgerCredit">0.00</th><th id="supplierLedgerClosing">0.00</th><th></th></tr></tfoot></table></div></div><div class="card"><h3>Record Supplier Payment</h3><div class="grid"><div><label>Supplier</label><input id="spName" list="supplierList" placeholder="Supplier name"><datalist id="supplierList"></datalist></div><div><label>Date</label><input id="spDate" type="date"></div><div><label>Amount (Rs)</label><input id="spAmount" type="number" min=".01" step=".01"></div><div><label>Note</label><input id="spNote" placeholder="Payment note"></div></div><div class="actions"><button class="primary" onclick="recordSupplierPayment()">Save Supplier Payment</button></div></div><div class="card">
 
                              </div></section>
 
@@ -1314,6 +1314,28 @@ function editSale(no){if(!requireInvoicePassword())return;let x=db.sales.find(a=
 function editPurchase(index){if(!requireInvoicePassword())return;let x=db.purchases[index];if(!x)return;if(!confirm('Edit this purchase invoice?'))return;let oldBatches=(db.batches||[]).filter(b=>b.purchaseNo===x.no);if(oldBatches.some(b=>(+b.remaining||0)<(+b.qty||0))){alert('Is purchase ke kuch products sell ho chuke hain. Is liye purchase edit nahi ho sakti.');return}if(oldBatches.length){oldBatches.forEach(b=>{let pr=db.products.find(p=>p.id===b.productId);if(pr)pr.stock=Math.max(0,(+pr.stock||0)-(+b.remaining||0))});db.batches=db.batches.filter(b=>b.purchaseNo!==x.no)}else{x.items.forEach(it=>{let pr=db.products.find(p=>p.name.toLowerCase()===it.name.toLowerCase());if(pr)pr.stock=Math.max(0,pr.stock-it.qty)})}editingPurchaseNo=x.no;document.getElementById('pNo').value=x.no;document.getElementById('pDate').value=x.date;document.getElementById('pSupplier').value=x.supplier;document.getElementById('pDiscount').value=x.billDiscountPercent||0;document.getElementById('pPaid').value=x.paid;document.getElementById('purchaseRows').innerHTML='';x.items.forEach(it=>{addRow('purchaseRows','purchase');let r=document.querySelector('#purchaseRows .itemrow:last-child');r.querySelector('.item-product').value=it.name;rowCalc(r.querySelector('.item-product'),'purchase');let tpSel=r.querySelector('.purchase-tp-select'),savedRate=Number(it.rate)||0;if(tpSel&&savedRate>0&&!Array.from(tpSel.options).some(o=>Math.abs((+o.value||0)-savedRate)<.005)){let opt=document.createElement('option');opt.value=String(savedRate);opt.textContent='Invoice T.P. Rs '+money(savedRate);tpSel.appendChild(opt)}if(tpSel)tpSel.value=String(savedRate);r.querySelector('.item-qty').value=it.qty;r.querySelector('.item-rate').value=savedRate;r.querySelector('.item-rate').dataset.edited='1';r.querySelector('.item-disc').value=it.discount;let gross=(+it.qty||0)*savedRate,net=gross*(1-(+it.discount||0)/100);r.querySelector('.item-total').value=money(gross);r.querySelector('.item-net').value=money(net)});calcInvoice('purchase');gotoTab('purchase')}
 function supplierBalance(name){return db.purchases.filter(x=>x.supplier===name).reduce((a,x)=>a+x.due,0)-db.supplierPayments.filter(x=>x.supplier===name).reduce((a,x)=>a+x.amount,0)}
 function recordSupplierPayment(){let name=document.getElementById('spName').value.trim(),amount=+document.getElementById('spAmount').value;if(!name||amount<=0){alert('Enter supplier and payment amount');return}if(!db.suppliers.some(x=>x.name.toLowerCase()===name.toLowerCase()))db.suppliers.push({name});db.supplierPayments.push({supplier:name,date:document.getElementById('spDate').value,amount,note:document.getElementById('spNote').value});document.getElementById('spAmount').value='';document.getElementById('spNote').value='';save()}
+function getAllSupplierLedgerData(){
+ const from=document.getElementById('supplierLedgerFrom').value||'',to=document.getElementById('supplierLedgerTo').value||'';
+ const names=[...new Set([...(db.suppliers||[]).map(x=>x.name),...(db.purchases||[]).map(x=>x.supplier),...(db.supplierPayments||[]).map(x=>x.supplier)].filter(Boolean))];
+ return names.map(name=>{
+  const purchases=(db.purchases||[]).filter(x=>x.supplier===name&&(!from||x.date>=from)&&(!to||x.date<=to)).reduce((s,x)=>s+(+x.total||0),0);
+  const paid=(db.supplierPayments||[]).filter(x=>x.supplier===name&&(!from||x.date>=from)&&(!to||x.date<=to)).reduce((s,x)=>s+(+x.amount||0),0);
+  return {name,purchases,paid,balance:purchases-paid};
+ }).sort((a,b)=>a.name.localeCompare(b.name));
+}
+function renderAllSupplierLedger(){
+ const data=getAllSupplierLedgerData();let tp=0,td=0,tb=0;
+ const rows=data.map(x=>{tp+=x.purchases;td+=x.paid;tb+=x.balance;return '<tr><td>'+esc(x.name)+'</td><td>'+money(x.purchases)+'</td><td>'+money(x.paid)+'</td><td>'+money(x.balance)+'</td></tr>'}).join('');
+ const card=document.getElementById('allSupplierLedgerCard');card.style.display='block';
+ card.innerHTML='<h3>All Suppliers Total Ledger</h3><div class="tablewrap"><table><thead><tr><th>Supplier</th><th>Total Purchase</th><th>Total Paid</th><th>Remaining Balance</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><th>Grand Total</th><th>'+money(tp)+'</th><th>'+money(td)+'</th><th>'+money(tb)+'</th></tr></tfoot></table></div>';
+}
+function printAllSupplierLedger(){
+ const data=getAllSupplierLedgerData();let tp=0,td=0,tb=0;
+ const rows=data.map(x=>{tp+=x.purchases;td+=x.paid;tb+=x.balance;return '<tr><td>'+esc(x.name)+'</td><td>'+money(x.purchases)+'</td><td>'+money(x.paid)+'</td><td>'+money(x.balance)+'</td></tr>'}).join('');
+ const from=document.getElementById('supplierLedgerFrom').value||'All',to=document.getElementById('supplierLedgerTo').value||'All';
+ const w=window.open('','_blank');if(!w){alert('Browser popup allow karein');return}
+ w.document.write('<html><head><title>All Suppliers Ledger</title><style>body{font-family:Arial;padding:24px}h2{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #555;padding:9px}th{background:#e8f1fb}</style></head><body><h2>A.Hamza Traders - All Suppliers Ledger</h2><p>Date From: '+esc(from)+' &nbsp; Date To: '+esc(to)+'</p><table><thead><tr><th>Supplier</th><th>Total Purchase</th><th>Total Paid</th><th>Remaining Balance</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><th>Grand Total</th><th>'+money(tp)+'</th><th>'+money(td)+'</th><th>'+money(tb)+'</th></tr></tfoot></table></body></html>');w.document.close();setTimeout(()=>{w.focus();w.print()},500);
+}
 function getSupplierLedgerTransactions(name){
  const from=document.getElementById('supplierLedgerFrom')?.value||'',to=document.getElementById('supplierLedgerTo')?.value||'';
  return [
@@ -2214,7 +2236,7 @@ function renderAll(){renderCustomerList();renderSampleHistory();if(document.getE
 </script>
 <script>
 (function(){
-  let exitDialogOpen=false,arming=false;
+  let exitDialogOpen=false,arming=false,exitConfirmed=false;
   function arm(){
     if(arming)return;arming=true;
     try{history.pushState({ahtBackGuard:true,stamp:Date.now()},'',location.href)}catch(e){}
@@ -2236,6 +2258,7 @@ function renderAll(){renderCustomerList();renderSampleHistory();if(document.getE
       box.style.display='none';exitDialogOpen=false;
       // A standalone PWA cannot always be closed by window.close(); return to the
       // launcher's previous history entry as the best supported exit behavior.
+      exitConfirmed=true;
       try{history.go(-2)}catch(e){}
       setTimeout(()=>{try{window.close()}catch(e){}},250);
     };
@@ -2255,7 +2278,7 @@ function renderAll(){renderCustomerList();renderSampleHistory();if(document.getE
     showExitDialog();setTimeout(arm,120);
   }
   arm();
-  window.addEventListener('popstate',function(){handleBack()});
+  window.addEventListener('popstate',function(){if(exitConfirmed)return;handleBack()});
   window.addEventListener('pageshow',function(){setTimeout(arm,150)});
   document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(arm,150)});
   window.ahtHandleBack=handleBack;
