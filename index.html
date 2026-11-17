@@ -1343,28 +1343,25 @@ if(!save())return;['prName','prUnit','prPrice'].forEach(id=>document.getElementB
 }
 function balance(c){return db.sales.filter(x=>String(x.customerId)===String(c.id)).reduce((a,x)=>a+x.due,0)-db.payments.filter(x=>String(x.customerId)===String(c.id)).reduce((a,x)=>a+x.amount,0)}
 function recordPayment(){
- let id=+document.getElementById('payCustomer').value;
- let amount=+document.getElementById('payAmount').value;
- let date=document.getElementById('payDate').value;
- let note=document.getElementById('payNote').value;
-
- if(!id||amount<=0||!date){
-  alert('Customer, Date aur Amount enter karein');
-  return;
- }
-
+ const paySelect=document.getElementById('payCustomer');
+ const ledgerSelect=document.getElementById('ledgerCustomer');
+ let id=Number((paySelect&&paySelect.value)||(ledgerSelect&&ledgerSelect.value));
+ let amount=Number(document.getElementById('payAmount').value);
+ let date=document.getElementById('payDate').value||today();
+ let note=document.getElementById('payNote').value.trim();
+ if(!id||!Number.isFinite(amount)||amount<=0){alert('Customer select karein aur payment amount enter karein.');return;}
+ const customer=db.customers.find(x=>String(x.id)===String(id));
+ if(!customer){alert('Selected customer nahi mila. Customer dobara select karein.');return;}
  db.payments ||= [];
-  db.payments.push({customerId:id,date:date,amount:amount,note:note});
-
+ db.payments.push({customerId:customer.id,date:date,amount:amount,note:note});
  if(!save())return;
-
+ if(paySelect)paySelect.value=String(customer.id);
+ if(ledgerSelect)ledgerSelect.value=String(customer.id);
  document.getElementById('payAmount').value='';
  document.getElementById('payNote').value='';
- renderLedger();
- renderCustomerList();
- alert('Payment saved successfully');
+ renderLedger();renderCustomerList();renderAllCustomerLedger();
+ alert('Payment saved. Ledger mein Credit column mein show hogi.');
 }
-
 function editCustomerPayment(i){
  let p=db.payments[i];
  if(!p)return;
