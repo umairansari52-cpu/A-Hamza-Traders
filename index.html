@@ -1366,11 +1366,17 @@ function editCustomerPayment(i){
  if(save()){renderLedger();renderCustomerList();}
 }
 function getCustomerLedgerRows(id){
+ const isSampleSale=x=>String(x.kind||'').toLowerCase()==='samplesale'||!!x.sampleType||!!x.isSample||String(x.type||'').toLowerCase()==='sample';
+ const customerSales=(db.sales||[]).filter(x=>String(x.customerId)===String(id));
+ const normalSales=customerSales.filter(x=>!isSampleSale(x));
+ const sampleSales=customerSales.filter(isSampleSale);
+ const invoiceRows=list=>list.flatMap(x=>[
+  {date:x.date,detail:(isSampleSale(x)?'Sample Invoice ':'Invoice ')+(x.no||''),debit:+x.total||0,credit:0,no:x.no||'-',invoiceAmount:+x.total||0},
+  ...(x.paid>0?[{date:x.date,detail:'Paid with invoice '+x.no,debit:0,credit:+x.paid,no:x.no||'-',invoiceAmount:0}]:[])
+ ]);
  return [
-  ...db.sales.filter(x=>String(x.customerId)===String(id)).flatMap(x=>[
-   {date:x.date,detail:'Invoice '+x.no,debit:+x.total||0,credit:0,no:x.no||'-',invoiceAmount:+x.total||0},
-   ...(x.paid>0?[{date:x.date,detail:'Paid with invoice '+x.no,debit:0,credit:+x.paid,no:x.no||'-',invoiceAmount:0}]:[])
-  ]),
+  ...invoiceRows(normalSales),
+  ...invoiceRows(sampleSales),
   ...db.payments.map((p,i)=>({p,i})).filter(x=>String(x.p.customerId)===String(id)).map(x=>({date:x.p.date,detail:(x.p.invoiceNo?'Payment against Invoice '+x.p.invoiceNo+' — ':'')+(x.p.note||'Payment received'),debit:0,credit:+x.p.amount||0,editIndex:x.i,no:x.p.invoiceNo||'-',invoiceAmount:0})),
  ...(db.customerLedgerRemarks||[]).filter(x=>String(x.customerId)===String(id)).map(x=>({date:x.date,detail:'REMARK: '+x.remark,debit:0,credit:0,no:'-',invoiceAmount:0,isRemark:true}))
  ].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
