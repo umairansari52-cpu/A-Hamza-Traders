@@ -1163,19 +1163,25 @@ function load(){try{let d=JSON.parse(localStorage.getItem(KEY))||blank();d.suppl
 function renderProductsLedger(){
 let from=document.getElementById('plFrom').value||'0000-01-01';
 let to=document.getElementById('plTo').value||'9999-12-31';
-let totals={opening:0,purchase:0,sale:0,closing:0};
+let totals={openingQty:0,purchaseQty:0,saleQty:0,closingQty:0,openingValue:0,purchaseValue:0,saleValue:0,closingValue:0};
 let rows=db.products.map(p=>{
-let n=p.name.toLowerCase();
-let moves=(arr,start,end)=>arr.filter(x=>x.date>=start&&x.date<=end).reduce((a,x)=>a+(x.items||[]).filter(i=>(i.name||'').toLowerCase()===n).reduce((q,i)=>q+(+i.qty||0),0),0);
+let n=(p.name||'').toLowerCase();
+let tp=+(p.price||0);
+if(!tp&&Array.isArray(p.tpRates)&&p.tpRates.length)tp=+p.tpRates[p.tpRates.length-1]||0;
+let moves=(arr,start,end)=>arr.filter(x=>(x.date||'')>=start&&(x.date||'')<=end).reduce((a,x)=>a+(x.items||[]).filter(i=>(i.name||'').toLowerCase()===n).reduce((q,i)=>q+(+i.qty||0),0),0);
 let purchase=moves(db.purchases,from,to);
 let sale=moves(db.sales,from,to);
 let opening=(+p.stock||0)-moves(db.purchases,from,'9999-12-31')+moves(db.sales,from,'9999-12-31');
 let closing=opening+purchase-sale;
-totals.opening+=opening;totals.purchase+=purchase;totals.sale+=sale;totals.closing+=closing;
-return '<tr><td>'+esc(p.name)+'</td><td>'+money(opening)+'</td><td>'+money(purchase)+'</td><td>'+money(sale)+'</td><td>'+money(closing)+'</td></tr>';
+let openingValue=opening*tp,purchaseValue=purchase*tp,saleValue=sale*tp,closingValue=closing*tp;
+totals.openingQty+=opening;totals.purchaseQty+=purchase;totals.saleQty+=sale;totals.closingQty+=closing;
+totals.openingValue+=openingValue;totals.purchaseValue+=purchaseValue;totals.saleValue+=saleValue;totals.closingValue+=closingValue;
+const cell=(qty,value)=>money(qty)+'<br><small style="font-weight:700;color:#075b9a">T.P Value: Rs '+money(value)+'</small>';
+return '<tr><td>'+esc(p.name)+'</td><td>'+cell(opening,openingValue)+'</td><td>'+cell(purchase,purchaseValue)+'</td><td>'+cell(sale,saleValue)+'</td><td>'+cell(closing,closingValue)+'</td></tr>';
 }).join('')||'<tr><td colspan="5">No products</td></tr>';
 document.getElementById('plRows').innerHTML=rows;
-const foot='<tr><th>Grand Total</th><th>'+money(totals.opening)+'</th><th>'+money(totals.purchase)+'</th><th>'+money(totals.sale)+'</th><th>'+money(totals.closing)+'</th></tr>';
+const cell=(qty,value)=>money(qty)+'<br><small style="font-weight:700">T.P Value: Rs '+money(value)+'</small>';
+const foot='<tr><th>Grand Total</th><th>'+cell(totals.openingQty,totals.openingValue)+'</th><th>'+cell(totals.purchaseQty,totals.purchaseValue)+'</th><th>'+cell(totals.saleQty,totals.saleValue)+'</th><th>'+cell(totals.closingQty,totals.closingValue)+'</th></tr>';
 const table=document.querySelector('#productsLedger table');
 let tfoot=table.querySelector('tfoot');
 if(!tfoot){tfoot=document.createElement('tfoot');table.appendChild(tfoot)}
@@ -1183,10 +1189,10 @@ tfoot.innerHTML=foot;
 }
 function printProductsLedger(){
 renderProductsLedger();
-let rows=document.getElementById('plRows').innerHTML;
-let content='<table><tr><th>Product</th><th>Open Stock</th><th>Purchase Stock</th><th>Sale</th><th>Close Stock</th></tr>'+rows+'</table>';
+let table=document.querySelector('#productsLedger table');
+let content='<table>'+table.querySelector('thead').outerHTML+table.querySelector('tbody').outerHTML+(table.querySelector('tfoot')?table.querySelector('tfoot').outerHTML:'')+'</table>';
 openPrintPage('Products Ledger',content);
-  }
+}
   function editOpeningStock(i){
 let p=db.products[i];
 if(!p)return;
