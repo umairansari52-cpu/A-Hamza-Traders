@@ -1120,6 +1120,12 @@ startProductAutocomplete();
 <div class="actions no-print">
 <button class="secondary" onclick="toggleProductWiseLedger()">Product Wise Search</button>
 </div>
+<div class="actions no-print"><button class="secondary" onclick="toggleAvailableStockList()">Available Stock List</button></div>
+<div id="availableStockListPanel" style="display:none;margin-top:12px">
+<h3>Available Stock List</h3>
+<div class="actions no-print"><button class="primary" onclick="renderAvailableStockList()">Refresh List</button><button class="secondary" onclick="printAvailableStockList()">Print Preview / PDF</button></div>
+<div class="tablewrap"><table><thead><tr><th>Products</th><th>Available Stock</th></tr></thead><tbody id="availableStockListRows"></tbody><tfoot id="availableStockListFoot"></tfoot></table></div>
+</div>
 <div id="productWiseLedgerPanel" style="display:none;margin-top:12px">
 <label>Search Product</label>
 <input id="productWiseSearch" type="search" placeholder="Product name search karein" oninput="renderProductWiseLedger()">
@@ -1249,6 +1255,26 @@ renderProductWiseLedger();
 let table=document.querySelector('#productWiseLedgerPanel table');
 let content='<table>'+table.querySelector('thead').outerHTML+table.querySelector('tbody').outerHTML+table.querySelector('tfoot').outerHTML+'</table>';
 openPrintPage('Product Wise Stock Ledger',content);
+}
+function toggleAvailableStockList(){
+let panel=document.getElementById('availableStockListPanel');
+if(!panel)return;
+panel.style.display=panel.style.display==='none'?'block':'none';
+if(panel.style.display==='block')renderAvailableStockList();
+}
+function renderAvailableStockList(){
+let products=(db.products||[]).filter(p=>(+p.stock||0)>0).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+let total=products.reduce((sum,p)=>sum+(+p.stock||0),0);
+let rows=products.map(p=>'<tr><td>'+esc(p.name)+'</td><td>'+money(p.stock)+'</td></tr>').join('')||'<tr><td colspan="2">No available stock</td></tr>';
+document.getElementById('availableStockListRows').innerHTML=rows;
+document.getElementById('availableStockListFoot').innerHTML=products.length?'<tr><th>Total Available Stock</th><th>'+money(total)+'</th></tr>':'';
+}
+function printAvailableStockList(){
+renderAvailableStockList();
+let panel=document.getElementById('availableStockListPanel');
+let table=panel.querySelector('table');
+let content='<table>'+table.querySelector('thead').outerHTML+table.querySelector('tbody').outerHTML+table.querySelector('tfoot').outerHTML+'</table>';
+openPrintPage('Available Stock List',content);
 }
 function editOpeningStock(i){
 let p=db.products[i];
