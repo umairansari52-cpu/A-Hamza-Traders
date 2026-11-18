@@ -1163,6 +1163,7 @@ function load(){try{let d=JSON.parse(localStorage.getItem(KEY))||blank();d.suppl
 function renderProductsLedger(){
 let from=document.getElementById('plFrom').value||'0000-01-01';
 let to=document.getElementById('plTo').value||'9999-12-31';
+let totals={opening:0,purchase:0,sale:0,closing:0};
 let rows=db.products.map(p=>{
 let n=p.name.toLowerCase();
 let moves=(arr,start,end)=>arr.filter(x=>x.date>=start&&x.date<=end).reduce((a,x)=>a+(x.items||[]).filter(i=>(i.name||'').toLowerCase()===n).reduce((q,i)=>q+(+i.qty||0),0),0);
@@ -1170,9 +1171,15 @@ let purchase=moves(db.purchases,from,to);
 let sale=moves(db.sales,from,to);
 let opening=(+p.stock||0)-moves(db.purchases,from,'9999-12-31')+moves(db.sales,from,'9999-12-31');
 let closing=opening+purchase-sale;
+totals.opening+=opening;totals.purchase+=purchase;totals.sale+=sale;totals.closing+=closing;
 return '<tr><td>'+esc(p.name)+'</td><td>'+money(opening)+'</td><td>'+money(purchase)+'</td><td>'+money(sale)+'</td><td>'+money(closing)+'</td></tr>';
 }).join('')||'<tr><td colspan="5">No products</td></tr>';
 document.getElementById('plRows').innerHTML=rows;
+const foot='<tr><th>Grand Total</th><th>'+money(totals.opening)+'</th><th>'+money(totals.purchase)+'</th><th>'+money(totals.sale)+'</th><th>'+money(totals.closing)+'</th></tr>';
+const table=document.querySelector('#productsLedger table');
+let tfoot=table.querySelector('tfoot');
+if(!tfoot){tfoot=document.createElement('tfoot');table.appendChild(tfoot)}
+tfoot.innerHTML=foot;
 }
 function printProductsLedger(){
 renderProductsLedger();
