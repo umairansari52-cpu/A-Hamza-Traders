@@ -1124,7 +1124,7 @@ startProductAutocomplete();
 <div id="availableStockListPanel" style="display:none;margin-top:12px">
 <h3>Available Stock List</h3>
 <div class="actions no-print"><button class="primary" onclick="renderAvailableStockList()">Refresh List</button><button class="secondary" onclick="printAvailableStockList()">Print Preview / PDF</button></div>
-<div class="tablewrap"><table><thead><tr><th>Products</th><th>Available Stock</th><th>Available Stock Value (T.P)</th></tr></thead><tbody id="availableStockListRows"></tbody><tfoot id="availableStockListFoot"></tfoot></table></div>
+<div class="tablewrap"><table><thead><tr><th>Products</th><th>Available Stock</th><th>Unit Value (T.P)</th><th>Total Value (T.P)</th></tr></thead><tbody id="availableStockListRows"></tbody><tfoot id="availableStockListFoot"></tfoot></table></div>
 </div>
 <div id="productWiseLedgerPanel" style="display:none;margin-top:12px">
 <label>Search Product</label>
@@ -1265,27 +1265,22 @@ if(panel.style.display==='block')renderAvailableStockList();
 function renderAvailableStockList(){
 let products=(db.products||[]).filter(p=>(+p.stock||0)>0).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
 let total=products.reduce((sum,p)=>sum+(+p.stock||0),0);
-let totalValue=products.reduce((sum,p)=>{
-let n=(p.name||'').toLowerCase();
+const getTP=p=>{
 let rates=Array.isArray(p.tpRates)?p.tpRates:[];
-let latestBatchTP=(db.batches||[]).filter(b=>(String(b.productId)===String(p.id)||((b.productName||'').toLowerCase()===n))&&b.tp!=null&&+b.tp>0).slice(-1)[0];
-let tp=+(p.price||0);
-if(!tp&&rates.length)tp=+(rates[rates.length-1]||0);
-if(!tp&&latestBatchTP)tp=+(latestBatchTP.tp||0);
-return sum+(+p.stock||0)*tp;
-},0);
+let savedRate=rates.slice().reverse().find(x=>Number(x)>0);
+if(savedRate!=null)return Number(savedRate);
+let n=(p.name||'').toLowerCase();
+let batches=(db.batches||[]).filter(b=>(String(b.productId)===String(p.id)||((b.productName||'').toLowerCase()===n))&&b.tp!=null&&Number(b.tp)>0);
+if(batches.length)return Number(batches[batches.length-1].tp);
+return Number(p.price||0);
+};
+let totalValue=products.reduce((sum,p)=>sum+(+p.stock||0)*getTP(p),0);
 let rows=products.map(p=>{
-let n=(p.name||'').toLowerCase();
-let rates=Array.isArray(p.tpRates)?p.tpRates:[];
-let latestBatchTP=(db.batches||[]).filter(b=>(String(b.productId)===String(p.id)||((b.productName||'').toLowerCase()===n))&&b.tp!=null&&+b.tp>0).slice(-1)[0];
-let tp=+(p.price||0);
-if(!tp&&rates.length)tp=+(rates[rates.length-1]||0);
-if(!tp&&latestBatchTP)tp=+(latestBatchTP.tp||0);
-let value=(+p.stock||0)*tp;
-return '<tr><td>'+esc(p.name)+'</td><td>'+money(p.stock)+'</td><td>'+money(value)+'</td></tr>';
-}).join('')||'<tr><td colspan="3">No available stock</td></tr>';
+let tp=getTP(p),value=(+p.stock||0)*tp;
+return '<tr><td>'+esc(p.name)+'</td><td>'+money(p.stock)+'</td><td>'+money(tp)+'</td><td>'+money(value)+'</td></tr>';
+}).join('')||'<tr><td colspan="4">No available stock</td></tr>';
 document.getElementById('availableStockListRows').innerHTML=rows;
-document.getElementById('availableStockListFoot').innerHTML=products.length?'<tr><th>Total</th><th>'+money(total)+'</th><th>'+money(totalValue)+'</th></tr>':'';
+document.getElementById('availableStockListFoot').innerHTML=products.length?'<tr><th>Total</th><th>'+money(total)+'</th><th>—</th><th>'+money(totalValue)+'</th></tr>':'';
 }
 function printAvailableStockList(){
 renderAvailableStockList();
