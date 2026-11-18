@@ -1117,6 +1117,23 @@ startProductAutocomplete();
 <button class="primary" onclick="renderProductsLedger()">Show Ledger</button>
 <button class="secondary" onclick="printProductsLedger()">Print Preview / PDF</button>
 </div>
+<div class="actions no-print">
+<button class="secondary" onclick="toggleProductWiseLedger()">Product Wise Search</button>
+</div>
+<div id="productWiseLedgerPanel" style="display:none;margin-top:12px">
+<label>Search Product</label>
+<input id="productWiseSearch" type="search" placeholder="Product name search karein" oninput="renderProductWiseLedger()">
+<div class="actions no-print">
+<button class="primary" onclick="renderProductWiseLedger()">Show Products</button>
+<button class="secondary" onclick="printProductWiseLedger()">Print Preview / PDF</button>
+</div>
+<div class="tablewrap"><table>
+<thead><tr><th>Products</th><th>Opening</th><th>Purchase</th><th>Sales</th><th>Available Stock</th></tr></thead>
+<tbody id="productWiseLedgerRows"></tbody>
+<tfoot id="productWiseLedgerFoot"></tfoot>
+</table></div>
+</div>
+</div>
 </div>
 <div class="card">
 <div class="tablewrap">
@@ -1206,6 +1223,32 @@ renderProductsLedger();
 let table=document.querySelector('#productsLedger table');
 let content='<table>'+table.querySelector('thead').outerHTML+table.querySelector('tbody').outerHTML+(table.querySelector('tfoot')?table.querySelector('tfoot').outerHTML:'')+'</table>';
 openPrintPage('Products Ledger',content);
+}
+function toggleProductWiseLedger(){
+let panel=document.getElementById('productWiseLedgerPanel');
+if(!panel)return;
+panel.style.display=panel.style.display==='none'?'block':'none';
+if(panel.style.display==='block')renderProductWiseLedger();
+}
+function renderProductWiseLedger(){
+let query=(document.getElementById('productWiseSearch')?.value||'').trim().toLowerCase();
+let totals={opening:0,purchase:0,sales:0,available:0};
+let products=db.products.filter(p=>!query||(p.name||'').toLowerCase().includes(query));
+let rows=products.map(p=>{
+let name=(p.name||'').toLowerCase();
+let qtyFor=arr=>(arr||[]).reduce((sum,doc)=>sum+(doc.items||[]).filter(it=>(it.name||'').toLowerCase()===name).reduce((v,it)=>v+(+it.qty||0),0),0);
+let purchase=qtyFor(db.purchases),sales=qtyFor(db.sales),available=+p.stock||0,opening=available-purchase+sales;
+totals.opening+=opening;totals.purchase+=purchase;totals.sales+=sales;totals.available+=available;
+return '<tr><td>'+esc(p.name)+'</td><td>'+money(opening)+'</td><td>'+money(purchase)+'</td><td>'+money(sales)+'</td><td>'+money(available)+'</td></tr>';
+}).join('')||'<tr><td colspan="5">No products found</td></tr>';
+document.getElementById('productWiseLedgerRows').innerHTML=rows;
+document.getElementById('productWiseLedgerFoot').innerHTML=products.length?'<tr><th>Total</th><th>'+money(totals.opening)+'</th><th>'+money(totals.purchase)+'</th><th>'+money(totals.sales)+'</th><th>'+money(totals.available)+'</th></tr>':'';
+}
+function printProductWiseLedger(){
+renderProductWiseLedger();
+let table=document.querySelector('#productWiseLedgerPanel table');
+let content='<table>'+table.querySelector('thead').outerHTML+table.querySelector('tbody').outerHTML+table.querySelector('tfoot').outerHTML+'</table>';
+openPrintPage('Product Wise Stock Ledger',content);
 }
 function editOpeningStock(i){
 let p=db.products[i];
