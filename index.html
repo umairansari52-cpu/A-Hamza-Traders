@@ -2064,7 +2064,10 @@ function renderReports(){
  let sampleTotals=sampleRows.reduce((a,v)=>({sales:a.sales+v.sales,cost:a.cost+v.cost,profit:a.profit+v.profit}),{sales:0,cost:0,profit:0});
  let sampleBody=document.getElementById('sampleProfitRows');if(sampleBody)sampleBody.innerHTML=sampleRows.map(v=>`<tr><td>${esc(v.x.date||'')}</td><td>${esc(v.x.no||'')}</td><td>${esc(v.x.customer||'Cash Customer')}</td><td>${money(v.sales)}</td><td>${money(v.cost)}</td><td>${money(v.profit)}</td></tr>`).join('')||'<tr><td colspan="6">No sample profit history</td></tr>';
  [['sprSalesTotal',sampleTotals.sales],['sprCostTotal',sampleTotals.cost],['sprProfitTotal',sampleTotals.profit]].forEach(([id,v])=>{let el=document.getElementById(id);if(el)el.textContent=money(v)});
- let t={sales:normalSalesTotal,discount:normalSales.reduce((a,x)=>a+(+x.discount||0),0),cost:normalCost,gross:normalProfit};
+ // Footer total must equal the sum of the invoice-wise profit values shown above,
+ // including expenses linked to each invoice.
+ let invoiceWiseNet=normalSales.reduce((a,x)=>a+((+x.total||0)-getSalePurchaseNet(x)-e.filter(y=>y.saleNo===x.no).reduce((v,y)=>v+(+y.amount||0),0)),0);
+ let t={sales:normalSalesTotal,discount:normalSales.reduce((a,x)=>a+(+x.discount||0),0),cost:normalCost,gross:invoiceWiseNet};
  document.getElementById('prSalesTotal').textContent=money(t.sales);
  document.getElementById('prDiscountTotal').textContent=money(t.discount);
  document.getElementById('prCostTotal').textContent=money(t.cost);
