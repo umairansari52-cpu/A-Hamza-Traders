@@ -1166,9 +1166,11 @@ let to=document.getElementById('plTo').value||'9999-12-31';
 let totals={openingValue:0,purchaseValue:0,saleValue:0,closingValue:0};
 let rows=db.products.map(p=>{
 let n=(p.name||'').toLowerCase();
-let tp=+(p.cost||0);
-if(!tp&&Array.isArray(p.tpRates)&&p.tpRates.length)tp=+p.tpRates[p.tpRates.length-1]||0;
-if(!tp)tp=+(p.price||0);
+let rates=Array.isArray(p.tpRates)?p.tpRates:[];
+let latestBatchTP=(db.batches||[]).filter(b=>(String(b.productId)===String(p.id)||((b.productName||'').toLowerCase()===n))&&b.tp!=null&&+b.tp>0).slice(-1)[0];
+let tp=+(p.price||0);
+if(!tp&&rates.length)tp=+(rates[rates.length-1]||0);
+if(!tp&&latestBatchTP)tp=+(latestBatchTP.tp||0);
 const matchingItems=(arr,start,end)=>arr.filter(x=>(x.date||'')>=start&&(x.date||'')<=end).flatMap(x=>(x.items||[]).filter(i=>(i.name||'').toLowerCase()===n).map(i=>({invoice:x,item:i})));
 const qty=(arr,start,end)=>matchingItems(arr,start,end).reduce((sum,x)=>sum+(+x.item.qty||0),0);
 const tpAmount=(arr,start,end,isSale)=>matchingItems(arr,start,end).reduce((sum,x)=>{
@@ -1205,7 +1207,7 @@ let table=document.querySelector('#productsLedger table');
 let content='<table>'+table.querySelector('thead').outerHTML+table.querySelector('tbody').outerHTML+(table.querySelector('tfoot')?table.querySelector('tfoot').outerHTML:'')+'</table>';
 openPrintPage('Products Ledger',content);
 }
-  function editOpeningStock(i){
+function editOpeningStock(i){
 let p=db.products[i];
 if(!p)return;
 let name=p.name.toLowerCase();
