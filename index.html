@@ -1971,7 +1971,15 @@ function dailySummaryData(date){
  let sales=db.sales.filter(x=>x.date===date),purchases=db.purchases.filter(x=>x.date===date),expenses=db.expenses.filter(x=>x.date===date);
  let totalSales=sales.reduce((a,x)=>a+(+x.total||0),0),totalPurchase=purchases.reduce((a,x)=>a+(+x.total||0),0),totalExpenses=expenses.reduce((a,x)=>a+(+x.amount||0),0);
  let recovery=sales.reduce((a,x)=>a+(+x.paid||0),0)+db.payments.filter(x=>x.date===date).reduce((a,x)=>a+(+x.amount||0),0);
- let profit=sales.reduce((a,x)=>a+(+(x.profit??x.netProfit)||0),0);
+ // Calculate profit only from invoices dated on the selected day, using sold items' T.P. cost.
+ let soldTPCost=sales.reduce((sum,sale)=>sum+(sale.items||[]).reduce((itemSum,it)=>{
+  let qty=+it.qty||0,b=(db.batches||[]).find(v=>String(v.id)===String(it.batchId));
+  let p=db.products.find(v=>String(v.id)===String(b?.productId)||String(v.name||'').toLowerCase()===String(it.name||'').toLowerCase());
+  let tp=b&&b.kind!=='existing'?(+b.tp||+b.netTp||0):(+p?.price||+it.costRate||0);
+  if(!tp)tp=+it.costRate||0;
+  return itemSum+qty*tp;
+ },0),0);
+ let profit=totalSales-soldTPCost;
  return {date,totalSales,totalPurchase,totalExpenses,recovery,profit,netProfit:profit-totalExpenses};
 }
 function renderBusinessReports(){
