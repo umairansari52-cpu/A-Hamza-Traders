@@ -706,6 +706,7 @@ startProductAutocomplete();
 <button data-tab="backup"><span class="nav-icon">📂</span><br>Backup</button>
 <details><summary><span class="nav-icon">📊</span><br>Reports</summary><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:100%">
 <button data-tab="customers" style="height:34px;min-height:34px;padding:3px 4px;font-size:11px;line-height:1.1;white-space:normal" >Customers</button>
+<button data-tab="salesPurchaseReports" style="height:34px;min-height:34px;padding:3px 4px;font-size:11px;line-height:1.1;white-space:normal">📑 Sales & Purchase Reports</button>
 <button data-tab="reports" style="height:34px;min-height:34px;padding:3px 4px;font-size:11px;line-height:1.1;white-space:normal" >Profit Reports</button>
 <button data-tab="businessReports" style="height:34px;min-height:34px;padding:3px 4px;font-size:11px;line-height:1.1;white-space:normal" >Daily Summary & Outstanding</button>
 <button data-tab="supplierLedger" style="height:34px;min-height:34px;padding:3px 4px;font-size:11px;line-height:1.1;white-space:normal" >🚚 Supplier Ledger</button>
@@ -1076,6 +1077,34 @@ startProductAutocomplete();
 <div class="card"><h3>Item-wise Purchase Report</h3><div class="tablewrap"><table><thead><tr><th>Item</th><th>Quantity</th><th>Purchase Amount</th></tr></thead><tbody id="drPurchaseItems"></tbody></table></div></div>
 <div class="card"><h3>Customer-wise Sales Report</h3><div class="tablewrap"><table><thead><tr><th>Customer</th><th>Invoices</th><th>Sales Amount</th></tr></thead><tbody id="drCustomers"></tbody></table></div></div>
 <div class="card"><h3>Supplier-wise Purchase Report</h3><div class="tablewrap"><table><thead><tr><th>Supplier</th><th>Purchases</th><th>Purchase Amount</th></tr></thead><tbody id="drSuppliers"></tbody></table></div></div>
+</section>
+<section id="salesPurchaseReports" class="tab">
+<div class="card">
+<h2>Sales & Purchase Reports</h2>
+<p class="muted">Date aur product select karke invoice-wise details dekhein.</p>
+<div class="actions">
+<button type="button" class="primary" onclick="showSalesPurchaseReport('sales')">Sales Reports</button>
+<button type="button" class="secondary" onclick="showSalesPurchaseReport('purchase')">Purchase Report</button>
+</div>
+</div>
+<div id="spReportPanel" class="card">
+<h3 id="spReportTitle">Sales Reports</h3>
+<div class="grid">
+<div><label>Date From</label><input type="date" id="spReportFrom" onchange="renderSalesPurchaseReport()"></div>
+<div><label>Date To</label><input type="date" id="spReportTo" onchange="renderSalesPurchaseReport()"></div>
+<div><label>Search Product</label><input id="spReportProduct" placeholder="Product name search karein" oninput="renderSalesPurchaseReport()"></div>
+</div>
+<div class="actions no-print">
+<button class="secondary" onclick="clearSalesPurchaseReportFilters()">All Dates / Clear Search</button>
+<button class="primary" onclick="renderSalesPurchaseReport()">Show Report</button>
+<button class="secondary" onclick="printSalesPurchaseReport()">Print Preview / PDF</button>
+</div>
+<div class="tablewrap"><table>
+<thead><tr><th>Date</th><th>Invoice No.</th><th>Customer / Supplier</th><th>Product</th><th>Qty</th><th>Rate (Rs)</th><th>Amount (Rs)</th></tr></thead>
+<tbody id="spReportRows"></tbody>
+<tfoot><tr><th colspan="4">Total</th><th id="spReportQty">0</th><th>—</th><th id="spReportAmount">0.00</th></tr></tfoot>
+</table></div>
+</div>
 </section>
   <section id="productsLedger" class="tab">
 <div class="card">
@@ -1782,6 +1811,52 @@ function printDetailReports(){
  openPrintPage('Date-wise Reports',content);
 }
 
+let salesPurchaseReportType='sales';
+function showSalesPurchaseReport(type){
+ salesPurchaseReportType=type==='purchase'?'purchase':'sales';
+ const title=document.getElementById('spReportTitle');
+ title.textContent=salesPurchaseReportType==='sales'?'Sales Reports':'Purchase Report';
+ renderSalesPurchaseReport();
+}
+function clearSalesPurchaseReportFilters(){
+ ['spReportFrom','spReportTo','spReportProduct'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
+ renderSalesPurchaseReport();
+}
+function renderSalesPurchaseReport(){
+ const isSale=salesPurchaseReportType==='sales';
+ const from=document.getElementById('spReportFrom')?.value||'';
+ const to=document.getElementById('spReportTo')?.value||'';
+ const q=(document.getElementById('spReportProduct')?.value||'').trim().toLowerCase();
+ const source=isSale?(db.sales||[]):(db.purchases||[]);
+ const rows=[];
+ source.forEach(inv=>{
+  const kind=String(inv.kind||'').toLowerCase();
+  if(isSale?(kind==='samplesale'||inv.sampleType):(kind==='samplepurchase'||kind==='sample'))return;
+  if(from&&String(inv.date||'')<from)return;
+  if(to&&String(inv.date||'')>to)return;
+  (inv.items||[]).forEach(it=>{
+   const name=String(it.name||'Unknown');
+   if(q&&!name.toLowerCase().includes(q))return;
+   const qty=Number(it.qty)||0;
+   const rate=Number(it.tp??it.rate??it.price??it.costRate??it.purchaseRate)||0;
+   const amount=Number(isSale?(it.net??it.amount??(qty*rate)):(it.netCost??it.net??it.amount??(qty*rate)))||0;
+   rows.push({date:inv.date||'',no:inv.no||'',party:isSale?(inv.customer||''):(inv.supplier||''),name,qty,rate,amount});
+  });
+ });
+ rows.sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.no).localeCompare(String(a.no)));
+ document.getElementById('spReportRows').innerHTML=rows.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.no)+'</td><td>'+esc(x.party)+'</td><td>'+esc(x.name)+'</td><td>'+money(x.qty)+'</td><td>'+money(x.rate)+'</td><td>'+money(x.amount)+'</td></tr>').join('')||'<tr><td colspan="7">No records found</td></tr>';
+ document.getElementById('spReportQty').textContent=money(rows.reduce((a,x)=>a+x.qty,0));
+ document.getElementById('spReportAmount').textContent=money(rows.reduce((a,x)=>a+x.amount,0));
+}
+function printSalesPurchaseReport(){
+ renderSalesPurchaseReport();
+ const title=salesPurchaseReportType==='sales'?'Sales Reports':'Purchase Report';
+ const from=document.getElementById('spReportFrom').value||'All Dates';
+ const to=document.getElementById('spReportTo').value||'All Dates';
+ const search=document.getElementById('spReportProduct').value||'All Products';
+ const table=document.getElementById('spReportRows').closest('table').outerHTML;
+ openPrintPage(title,'<p>Date From: '+esc(from)+' &nbsp; Date To: '+esc(to)+'<br>Product: '+esc(search)+'</p>'+table);
+}
 function reportDate(){return document.getElementById('dailyReportDate')?.value||today()}
 function dailySummaryData(date){
  let sales=db.sales.filter(x=>x.date===date),purchases=db.purchases.filter(x=>x.date===date),expenses=db.expenses.filter(x=>x.date===date);
