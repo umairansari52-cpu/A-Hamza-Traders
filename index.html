@@ -1165,14 +1165,18 @@ let from=document.getElementById('plFrom').value||'0000-01-01';
 let to=document.getElementById('plTo').value||'9999-12-31';
 let totals={openingQty:0,purchaseQty:0,saleQty:0,closingQty:0,openingValue:0,purchaseValue:0,saleValue:0,closingValue:0};
 let rows=db.products.map(p=>{
-let n=(p.name||'').toLowerCase();
-let tp=+(p.price||0);
+let n=(p.name||'').toLowerCase(),tp=+(p.price||0);
 if(!tp&&Array.isArray(p.tpRates)&&p.tpRates.length)tp=+p.tpRates[p.tpRates.length-1]||0;
-let moves=(arr,start,end)=>arr.filter(x=>(x.date||'')>=start&&(x.date||'')<=end).reduce((a,x)=>a+(x.items||[]).filter(i=>(i.name||'').toLowerCase()===n).reduce((q,i)=>q+(+i.qty||0),0),0);
-let purchase=moves(db.purchases,from,to),sale=moves(db.sales,from,to);
-let opening=(+p.stock||0)-moves(db.purchases,from,'9999-12-31')+moves(db.sales,from,'9999-12-31');
+const qtyMoves=(arr,start,end)=>arr.filter(x=>(x.date||'')>=start&&(x.date||'')<=end).reduce((a,x)=>a+(x.items||[]).filter(i=>(i.name||'').toLowerCase()===n).reduce((q,i)=>q+(+i.qty||0),0),0);
+const valueMoves=(arr,start,end,isSale)=>arr.filter(x=>(x.date||'')>=start&&(x.date||'')<=end).reduce((a,x)=>a+(x.items||[]).filter(i=>(i.name||'').toLowerCase()===n).reduce((q,i)=>{
+let rate=isSale?(i.costRate??i.tp??i.tpRate??tp):(i.rate??i.tp??i.tpRate??tp);
+if(isSale&&(!rate||+rate<=0)){let batch=(db.batches||[]).find(b=>String(b.id)===String(i.batchId));rate=batch?(batch.tp??batch.netTp??tp):tp}
+return q+(+i.qty||0)*(+rate||0);
+},0),0);
+let purchase=qtyMoves(db.purchases,from,to),sale=qtyMoves(db.sales,from,to);
+let opening=(+p.stock||0)-qtyMoves(db.purchases,from,'9999-12-31')+qtyMoves(db.sales,from,'9999-12-31');
 let closing=opening+purchase-sale;
-let ov=opening*tp,pv=purchase*tp,sv=sale*tp,cv=closing*tp;
+let ov=opening*tp,pv=valueMoves(db.purchases,from,to,false),sv=valueMoves(db.sales,from,to,true),cv=closing*tp;
 totals.openingQty+=opening;totals.purchaseQty+=purchase;totals.saleQty+=sale;totals.closingQty+=closing;
 totals.openingValue+=ov;totals.purchaseValue+=pv;totals.saleValue+=sv;totals.closingValue+=cv;
 return '<tr><td>'+esc(p.name)+'</td><td>'+money(opening)+'</td><td>'+money(purchase)+'</td><td>'+money(sale)+'</td><td>'+money(closing)+'</td></tr>';
