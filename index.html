@@ -1795,7 +1795,8 @@ function saveSampleSale(){
 }
 function sampleSaleInvoiceContent(x,title){
  const items=Array.isArray(x.items)?x.items:[],total=Number(x.total)||items.reduce((a,it)=>a+(+it.qty||0)*(+it.rate||0),0);
- const body=items.map((it,i)=>{let b=(db.batches||[]).find(v=>String(v.id)===String(it.batchId));return `<tr><td style="text-align:center">${i+1}</td><td>${esc(it.name||'')}</td><td style="text-align:right">${money(it.qty||0)}</td><td style="text-align:right">${money(it.rate||0)}</td><td style="text-align:right;font-weight:bold">${money((+it.qty||0)*(+it.rate||0))}</td></tr>`;}).join('');
+ const tpTotal=items.reduce((a,it)=>a+(+it.qty||0)*(+it.rate||0),0);
+ const body=items.map((it,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(it.name||'')}</td><td style="text-align:right">${money(it.qty||0)}</td><td style="text-align:right">${money(it.rate||0)}</td><td style="text-align:right;font-weight:bold">${money((+it.qty||0)*(+it.rate||0))}</td></tr>`).join('')+`<tr style="background:#e8f7ef;font-weight:bold"><td colspan="4" style="text-align:right;padding:11px">TOTAL AMOUNT</td><td style="text-align:right;padding:11px">${money(tpTotal)}</td></tr>`;
  return `<div style="font-family:Arial,sans-serif;color:#172b4d;max-width:900px;margin:auto;padding:18px;border:1px solid #d5deea">
  <div style="text-align:center;border-bottom:3px solid #168451;padding:8px 0 14px"><h1 style="margin:0;color:#087344;font-size:27px">A.Hamza Traders</h1><b style="font-size:13px;color:#526579">Wholesaler &amp; Retailers</b><div style="font-size:11px;color:#64748b">Mirpurkhas</div></div>
  <h2 style="text-align:center;margin:20px 0;color:#087344"><span style="background:#e8f7ef;border:1px solid #b9e3cc;border-radius:20px;padding:8px 22px">${title}</span></h2>
@@ -1815,7 +1816,8 @@ function printSampleSalePreview(){
 
 function samplePurchaseInvoiceContent(x,title){
  const items=Array.isArray(x.items)?x.items:[],total=Number(x.total)||items.reduce((a,it)=>a+(+it.qty||0)*(+it.rate||0),0);
- const body=items.map((it,i)=>{let q=+it.qty||0,r=+it.rate||0;return `<tr><td style="text-align:center">${i+1}</td><td>${esc(it.name||'')}</td><td style="text-align:right">${money(q)}</td><td style="text-align:right">${money(r)}</td><td style="text-align:right;font-weight:bold">${money(q*r)}</td></tr>`}).join('');
+ const tpTotal=items.reduce((a,it)=>a+(+it.qty||0)*(+it.rate||0),0);
+ const body=items.map((it,i)=>{let q=+it.qty||0,r=+it.rate||0;return `<tr><td style="text-align:center">${i+1}</td><td>${esc(it.name||'')}</td><td style="text-align:right">${money(q)}</td><td style="text-align:right">${money(r)}</td><td style="text-align:right;font-weight:bold">${money(q*r)}</td></tr>`}).join('')+`<tr style="background:#eaf3fb;font-weight:bold"><td colspan="4" style="text-align:right;padding:11px">TOTAL AMOUNT</td><td style="text-align:right;padding:11px">${money(tpTotal)}</td></tr>`;
  return `<div style="font-family:Arial,sans-serif;color:#172b4d;max-width:900px;margin:auto;padding:18px;border:1px solid #d5deea">
  <div style="text-align:center;border-bottom:3px solid #1769aa;padding:8px 0 14px"><h1 style="margin:0;color:#07549a;font-size:27px">A.Hamza Traders</h1><b style="font-size:13px;color:#526579">Wholesaler &amp; Retailers</b><div style="font-size:11px;color:#64748b">Mirpurkhas</div></div>
  <h2 style="text-align:center;margin:20px 0;color:#07549a"><span style="background:#eaf3fb;border:1px solid #b9d5ed;border-radius:20px;padding:8px 22px">${title}</span></h2>
@@ -2376,16 +2378,19 @@ function reprint(no){let x=db.sales.find(s=>s.no===no);if(x)doPrint({...x,kind:'
 function reprintPurchase(no){let x=db.purchases.find(s=>s.no===no);if(x)doPrint({...x,kind:'Purchase Invoice',customer:x.supplier,discount:x.discount||0})}
 function doPrint(x){
  const isPurchase=x.kind==='Purchase Invoice';
- const rows=(x.items||[]).map(i=>`<tr><td>${esc(i.name)}</td><td>${money(i.qty)}</td><td>${money(i.rate)}</td><td>${money(i.qty*i.rate)}</td><td>${money(i.discount||0)}%</td><td>${money(i.net??(i.qty*i.rate))}</td></tr>`).join('');
- const content=`<div class="aht-invoice-meta"><div><b>${isPurchase?'Supplier':'Customer'}:</b> <strong>${esc(x.customer||'')}</strong><br><b>Date:</b> ${esc(x.date||'')}</div><div><b>${isPurchase?'Purchase':'Invoice'} No.:</b> ${esc(x.no||'')}</div></div><table><thead><tr><th>Product</th><th>Qty</th><th>${isPurchase?'Purchase T.P. Rate (Rs)':'Sales T.P. Rate (Rs)'}</th><th>Total Amount (Rs)</th><th>Discount %</th><th>Net Amount (Rs)</th></tr></thead><tbody>${rows}</tbody></table><div class="aht-invoice-totals"><b>Net Amount: Rs ${money(x.total)}</b><br>Amount in words: ${amountWords(x.total)}<br>Paid: Rs ${money(x.paid)}<br>Balance: Rs ${money(x.due)}</div><p style="margin-top:50px">Prepared by: ____________________ <span style="float:right">Received by: ____________________</span></p><p style="text-align:center;margin-top:30px">Thank you</p>`;
+ const items=x.items||[],tpTotal=items.reduce((a,i)=>a+(+i.qty||0)*(+i.rate||0),0),netTotal=Number(x.total)||items.reduce((a,i)=>a+(+i.net||0),0);
+ const rows=items.map(i=>`<tr><td>${esc(i.name)}</td><td>${money(i.qty)}</td><td>${money(i.rate)}</td><td>${money(i.qty*i.rate)}</td><td>${money(i.discount||0)}%</td><td>${money(i.net??(i.qty*i.rate))}</td></tr>`).join('');
+ const content=`<div class="aht-invoice-meta"><div><b>${isPurchase?'Supplier':'Customer'}:</b> <strong>${esc(x.customer||'')}</strong><br><b>Date:</b> ${esc(x.date||'')}</div><div><b>${isPurchase?'Purchase':'Invoice'} No.:</b> ${esc(x.no||'')}</div></div><table><thead><tr><th>Product</th><th>Qty</th><th>${isPurchase?'Purchase T.P. Rate (Rs)':'Sales T.P. Rate (Rs)'}</th><th>T.P. Amount (Rs)</th><th>Discount %</th><th>Net Amount (Rs)</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><th colspan="3" style="text-align:right">Total</th><th>${money(tpTotal)}</th><th></th><th>${money(netTotal)}</th></tr></tfoot></table><div class="aht-invoice-totals"><b>Net Amount: Rs ${money(netTotal)}</b><br>Amount in words: ${amountWords(netTotal)}<br>Paid: Rs ${money(x.paid)}<br>Balance: Rs ${money(x.due)}</div><p style="margin-top:50px">Prepared by: ____________________ <span style="float:right">Received by: ____________________</span></p><p style="text-align:center;margin-top:30px">Thank you</p>`;
  showPrintPreview(x.kind,content,x);
 }
 
 function downloadInvoicePDF(x){
  const clean=t=>String(t??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x20-\x7E]/g,' ').replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
  const lines=['A.HAMZA TRADERS','MEDICINE WHOLESALE',x.kind,'Invoice: '+x.no,'Date: '+x.date,(x.kind==='Purchase Invoice'?'Supplier: ':'Customer: ')+x.customer,'','Product | Qty | '+(x.kind==='Purchase Invoice'?'Purchase TP Rate':'Sales TP Rate')+' | TP Total | Disc % | Net'];
- (x.items||[]).forEach(i=>lines.push(i.name+' | '+i.qty+' | '+Number(i.rate||0).toFixed(2)+' | '+(Number(i.qty||0)*Number(i.rate||0)).toFixed(2)+' | '+i.discount+'% | '+Number(i.net||0).toFixed(2)));
- lines.push('','Net Amount: Rs '+Number(x.total||0).toFixed(2),'Amount in words: '+amountWords(x.total),'Paid: Rs '+Number(x.paid||0).toFixed(2),'Balance: Rs '+Number(x.due||0).toFixed(2));
+ let tpTotal=0,netTotal=0;
+ (x.items||[]).forEach(i=>{let tp=(Number(i.qty)||0)*(Number(i.rate)||0),net=Number(i.net??tp)||0;tpTotal+=tp;netTotal+=net;lines.push(i.name+' | '+i.qty+' | '+Number(i.rate||0).toFixed(2)+' | '+tp.toFixed(2)+' | '+i.discount+'% | '+net.toFixed(2));});
+ lines.push('TOTAL | | | '+tpTotal.toFixed(2)+' | | '+(Number(x.total)||netTotal).toFixed(2));
+ lines.push('','Net Amount: Rs '+(Number(x.total)||netTotal).toFixed(2),'Amount in words: '+amountWords(Number(x.total)||netTotal),'Paid: Rs '+Number(x.paid||0).toFixed(2),'Balance: Rs '+Number(x.due||0).toFixed(2));
  let stream='BT /F1 10 Tf 50 790 Td 13 TL ';lines.forEach((line,i)=>{if(i)stream+='T* ';stream+='('+clean(line)+') Tj ';});stream+='ET';
  const objs=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>','<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>','<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream'];
  let pdf='%PDF-1.4\n',offsets=[0];objs.forEach((o,i)=>{offsets.push(pdf.length);pdf+=(i+1)+' 0 obj\n'+o+'\nendobj\n';});
