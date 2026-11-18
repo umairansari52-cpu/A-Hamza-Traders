@@ -1169,23 +1169,18 @@ let n=(p.name||'').toLowerCase();
 let tp=+(p.price||0);
 if(!tp&&Array.isArray(p.tpRates)&&p.tpRates.length)tp=+p.tpRates[p.tpRates.length-1]||0;
 let moves=(arr,start,end)=>arr.filter(x=>(x.date||'')>=start&&(x.date||'')<=end).reduce((a,x)=>a+(x.items||[]).filter(i=>(i.name||'').toLowerCase()===n).reduce((q,i)=>q+(+i.qty||0),0),0);
-let purchase=moves(db.purchases,from,to);
-let sale=moves(db.sales,from,to);
+let purchase=moves(db.purchases,from,to),sale=moves(db.sales,from,to);
 let opening=(+p.stock||0)-moves(db.purchases,from,'9999-12-31')+moves(db.sales,from,'9999-12-31');
 let closing=opening+purchase-sale;
-let openingValue=opening*tp,purchaseValue=purchase*tp,saleValue=sale*tp,closingValue=closing*tp;
+let ov=opening*tp,pv=purchase*tp,sv=sale*tp,cv=closing*tp;
 totals.openingQty+=opening;totals.purchaseQty+=purchase;totals.saleQty+=sale;totals.closingQty+=closing;
-totals.openingValue+=openingValue;totals.purchaseValue+=purchaseValue;totals.saleValue+=saleValue;totals.closingValue+=closingValue;
-const cell=(qty,value)=>money(qty)+'<br><small style="font-weight:700;color:#075b9a">T.P Value: Rs '+money(value)+'</small>';
-return '<tr><td>'+esc(p.name)+'</td><td>'+cell(opening,openingValue)+'</td><td>'+cell(purchase,purchaseValue)+'</td><td>'+cell(sale,saleValue)+'</td><td>'+cell(closing,closingValue)+'</td></tr>';
+totals.openingValue+=ov;totals.purchaseValue+=pv;totals.saleValue+=sv;totals.closingValue+=cv;
+return '<tr><td>'+esc(p.name)+'</td><td>'+money(opening)+'</td><td>'+money(purchase)+'</td><td>'+money(sale)+'</td><td>'+money(closing)+'</td></tr>';
 }).join('')||'<tr><td colspan="5">No products</td></tr>';
 document.getElementById('plRows').innerHTML=rows;
-const cell=(qty,value)=>money(qty)+'<br><small style="font-weight:700">T.P Value: Rs '+money(value)+'</small>';
-const foot='<tr><th>Grand Total</th><th>'+cell(totals.openingQty,totals.openingValue)+'</th><th>'+cell(totals.purchaseQty,totals.purchaseValue)+'</th><th>'+cell(totals.saleQty,totals.saleValue)+'</th><th>'+cell(totals.closingQty,totals.closingValue)+'</th></tr>';
 const table=document.querySelector('#productsLedger table');
-let tfoot=table.querySelector('tfoot');
-if(!tfoot){tfoot=document.createElement('tfoot');table.appendChild(tfoot)}
-tfoot.innerHTML=foot;
+let tfoot=table.querySelector('tfoot');if(!tfoot){tfoot=document.createElement('tfoot');table.appendChild(tfoot)}
+tfoot.innerHTML='<tr><th>T.P Value</th><th>'+money(totals.openingValue)+'</th><th>'+money(totals.purchaseValue)+'</th><th>'+money(totals.saleValue)+'</th><th>'+money(totals.closingValue)+'</th></tr>';
 }
 function printProductsLedger(){
 renderProductsLedger();
