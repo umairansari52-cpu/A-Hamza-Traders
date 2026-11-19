@@ -1480,7 +1480,28 @@ function printAllSupplierLedger(){
  const rows=data.map(x=>{tp+=x.purchases;td+=x.paid;tb+=x.balance;return '<tr><td>'+esc(x.name)+'</td><td>'+money(x.purchases)+'</td><td>'+money(x.paid)+'</td><td>'+money(x.balance)+'</td></tr>'}).join('');
  const from=document.getElementById('supplierLedgerFrom').value||'All',to=document.getElementById('supplierLedgerTo').value||'All';
  const w=window.open('','_blank');if(!w){alert('Browser popup allow karein');return}
- w.document.write('<html><head><title>All Suppliers Ledger</title><style>body{font-family:Arial;padding:24px}h2{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #555;padding:9px}th{background:#e8f1fb}</style></head><body><h2>A.Hamza Traders - All Suppliers Ledger</h2><p>Date From: '+esc(from)+' &nbsp; Date To: '+esc(to)+'</p><table><thead><tr><th>Supplier</th><th>Total Purchase</th><th>Total Paid</th><th>Remaining Balance</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><th>Grand Total</th><th>'+money(tp)+'</th><th>'+money(td)+'</th><th>'+money(tb)+'</th></tr></tfoot></table></body></html>');w.document.close();setTimeout(()=>{w.focus();w.print()},500);
+ w.document.write('<html><head><title>All Suppliers Ledger</title><style>body{font-family:Arial;padding:24px}h2{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #555;padding:9px}th{background:#e8f1fb}</style></head><body><h2>A.Hamza Traders - All Suppliers Ledger</h2><p>Date From: '+esc(from)+' &nbsp; Date To: '+esc(to)+'</p><table><thead><tr><th>Supplier</th><th>Total Purchase</th><th>Total Paid</th><th>Remaining Balance</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><th>Grand Total</th><th>'+money(tp)+'</th><th>'+money(td)+'</th><th>'+money(tb)+'</th></tr></tfoot></table><style>
+/* Laptop layout only: preserve the existing mobile dashboard exactly. */
+@media (min-width: 900px) {
+ main { width:100% !important; max-width:1700px !important; padding:22px 28px !important; }
+ #nav { width:100% !important; max-width:1700px !important; margin:0 auto !important; padding:14px 28px !important; display:block !important; overflow:visible !important; }
+ #nav > div:first-child { display:grid !important; grid-template-columns:repeat(5,minmax(0,1fr)) !important; gap:12px !important; margin-bottom:12px !important; }
+ #nav > div:first-child > button, #nav > div:first-child > details > summary { width:100% !important; min-width:0 !important; height:78px !important; min-height:78px !important; padding:10px !important; font-size:15px !important; border-radius:13px !important; }
+ #nav > div:first-child > details { grid-column:auto !important; width:100% !important; min-width:0 !important; }
+ #nav > div:first-child > details > div { display:grid !important; grid-template-columns:repeat(4,minmax(0,1fr)) !important; gap:8px !important; }
+ #nav > div:first-child > details button { width:100% !important; min-height:48px !important; height:auto !important; font-size:13px !important; }
+ #nav > div:nth-child(2) { display:grid !important; grid-template-columns:repeat(4,minmax(0,1fr)) !important; gap:12px !important; }
+ #nav > div:nth-child(2) > button { width:100% !important; height:64px !important; min-height:64px !important; max-height:none !important; font-size:14px !important; border-radius:12px !important; }
+ #dashboard { width:100% !important; }
+ #dashboard > .card:first-child { height:190px !important; min-height:190px !important; max-height:190px !important; border-radius:18px !important; }
+ #dashboard > .grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:16px !important; }
+ #dashboard > .grid > .card { height:125px !important; min-height:125px !important; max-height:125px !important; padding:18px !important; }
+ #dashboard > .grid > .card .muted { font-size:16px !important; }
+ #dashboard > .grid > .card .metric { font-size:25px !important; }
+ #dashboard > .card:last-child { padding:22px !important; }
+}
+</style>
+</body></html>');w.document.close();setTimeout(()=>{w.focus();w.print()},500);
 }
 function getSupplierLedgerTransactions(name){
  const from=document.getElementById('supplierLedgerFrom')?.value||'',to=document.getElementById('supplierLedgerTo')?.value||'',key=supplierKey(name);
