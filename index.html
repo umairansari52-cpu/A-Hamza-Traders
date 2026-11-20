@@ -1570,7 +1570,12 @@ function deleteBookingName(type,index){
 function renderBookingNameMasters(){
  const bookers=[...new Set([...(db.bookers||[]),...(db.sales||[]).map(x=>x.orderBooker||'')].map(x=>String(x||'').trim()).filter(Boolean))];
  const suppliers=[...new Set([...(db.orderSuppliers||[]),...(db.sales||[]).map(x=>x.orderSupplier||'')].map(x=>String(x||'').trim()).filter(Boolean))];
- function draw(id,arr,type){const el=document.getElementById(id);if(!el)return;el.innerHTML=arr.map(n=>{const ix=(db[type==='booker'?'bookers':'orderSuppliers']||[]).indexOf(n);return '<div style="display:flex;justify-content:space-between;gap:8px;padding:7px;border-bottom:1px solid #e5edf4"><span>'+esc(n)+'</span>'+(ix>=0?'<button class="secondary" onclick="deleteBookingName(\''+type+'\','+ix+')" style="padding:4px 8px">Delete</button>':'')+'</div>'}).join('')||'<span class="muted">No names added</span>';}
+ function draw(id,arr,type){
+  const el=document.getElementById(id);if(!el)return;
+  const key=type==='booker'?'bookers':'orderSuppliers';
+  el.innerHTML=arr.map(n=>{const ix=(db[key]||[]).indexOf(n);const del=ix>=0?'<button class="secondary" data-booking-type="'+type+'" data-booking-index="'+ix+'">Delete</button>':'';return '<div><span>'+esc(n)+'</span>'+del+'</div>';}).join('')||'<span>No names added</span>';
+  el.querySelectorAll('button[data-booking-index]').forEach(btn=>btn.onclick=()=>deleteBookingName(btn.dataset.bookingType,+btn.dataset.bookingIndex));
+ }
  draw('bookerMasterList',bookers,'booker');draw('orderSupplierMasterList',suppliers,'supplier');
  function setSel(id,names,label){const el=document.getElementById(id);if(!el)return;const old=el.value;el.innerHTML='<option value="">Select '+label+'</option>'+names.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');if(names.includes(old))el.value=old;}
  setSel('sOrderBooker',bookers,'Booker');setSel('smsOrderBooker',bookers,'Booker');
