@@ -781,8 +781,8 @@ startProductAutocomplete();
 <section id="orderBookingReports" class="tab"><datalist id="orderBookerList"></datalist><datalist id="orderSupplierList"></datalist>
 <div class="card"><h2>Booking Supplier Detail</h2><div class="grid"><div><label>Date From</label><input id="obFrom" type="date" onchange="renderOrderBookingReports()"></div><div><label>Date To</label><input id="obTo" type="date" onchange="renderOrderBookingReports()"></div><div><label>Order Supplier</label><select id="obSupplierFilter" onchange="renderOrderBookingReports()"><option value="">All Suppliers</option></select></div><div><label>Order Booker</label><select id="obBookerFilter" onchange="renderOrderBookingReports()"><option value="">All Bookers</option></select></div></div></div>
 <div class="card"><h3>Customer Return</h3><div class="grid"><div><label>Sales Invoice No.</label><select id="crInvoice" onchange="loadCustomerReturnItems()"><option value="">Select Invoice</option></select></div><div><label>Product</label><select id="crProduct" onchange="calcCustomerReturnAmount()"><option value="">Select Product</option></select></div><div><label>Invoice Quantity</label><input id="crInvoiceQty" readonly></div><div><label>Already Returned</label><input id="crAlready" readonly></div><div><label>Return Quantity</label><input id="crQty" type="number" min="0" step="1" value="1" oninput="calcCustomerReturnAmount()"></div><div><label>Net Return Amount (Rs)</label><input id="crAmount" readonly></div></div><div class="actions no-print"><button class="primary" onclick="saveCustomerReturn()">Save Customer Return</button></div><div id="crHistory" class="muted"></div></div>
-<div class="card"><h3>Supplier Invoice</h3><p class="muted">Supplier invoices tick karke combined ya alag alag print karein.</p><div id="obInvoiceChecks" class="tablewrap"></div><div class="actions no-print"><button class="primary" onclick="printSelectedSupplierInvoices(true)">Selected Invoices Combined Print</button><button class="secondary" onclick="printSelectedSupplierInvoices(false)">Selected Invoices Separate Print</button></div></div>
-<div class="card"><h3>Supplier Summary</h3><div class="tablewrap"><table><thead><tr><th>Supplier</th><th>Total Products</th><th>Total Quantity</th><th>Total T.P. Value (Rs)</th></tr></thead><tbody id="obSupplierSummary"></tbody><tfoot><tr><th>Grand Total</th><th id="obSummaryProducts">0</th><th id="obSummaryQty">0</th><th id="obSummaryValue">0.00</th></tr></tfoot></table></div><div class="actions no-print"><button class="secondary" onclick="printOrderBookingTable('Supplier Summary','obSupplierSummary')">Print Supplier Summary</button></div></div>
+<div class="card"><h3>Supplier Invoice</h3><p class="muted">Supplier invoices tick karke combined ya alag alag print karein.</p><div id="obInvoiceChecks" class="tablewrap"></div><div class="actions no-print"><button class="primary" onclick="printSelectedSupplierInvoices()">Print Selected Invoices</button></div></div>
+<div class="card"><h3>Supplier Summary</h3><div class="tablewrap"><table><thead><tr><th>Supplier</th><th>Total Products</th><th>Total Quantity</th><th>Total T.P. Value (Rs)</th></tr></thead><tbody id="obSupplierSummary"></tbody><tfoot><tr><th>Grand Total</th><th id="obSummaryProducts">0</th><th id="obSummaryQty">0</th><th id="obSummaryValue">0.00</th></tr></tfoot></table></div><div class="actions no-print"><button class="secondary" onclick="printSupplierSummary()">Print Supplier Summary</button></div></div>
 <div class="card"><h3>Supplier Detail</h3><div class="tablewrap"><table><thead><tr><th>S.No</th><th>Products Name</th><th>Products T.P</th><th>Quantity</th><th>Return Product</th><th>Total Sold Products</th></tr></thead><tbody id="obSupplierDetail"></tbody><tfoot><tr><th colspan="3">Total</th><th id="obDetailQty">0</th><th id="obDetailReturn">0</th><th id="obDetailSold">0</th></tr></tfoot></table></div><div class="actions no-print"><button class="secondary" onclick="printOrderBookingTable('Supplier Detail','obSupplierDetail')">Print Supplier Detail</button></div></div></section><section id="debitCredit" class="tab">
 <div class="card">
 <h2>Debit & Credit Sheet</h2>
@@ -1569,7 +1569,7 @@ function deleteBookingName(type,index){
 }
 function renderBookingNameMasters(){
  const bookers=[...new Set([...(db.bookers||[]),...(db.sales||[]).map(x=>x.orderBooker||'')].map(x=>String(x||'').trim()).filter(Boolean))];
- const suppliers=[...new Set([...(db.orderSuppliers||[]),...(db.suppliers||[]).map(x=>x.name||x),...(db.sales||[]).map(x=>x.orderSupplier||''),...(db.purchases||[]).map(x=>x.supplier||'')].map(x=>String(x||'').trim()).filter(Boolean))];
+ const suppliers=[...new Set([...(db.orderSuppliers||[]),...(db.sales||[]).map(x=>x.orderSupplier||'')].map(x=>String(x||'').trim()).filter(Boolean))];
  function draw(id,arr,type){const el=document.getElementById(id);if(!el)return;el.innerHTML=arr.map(n=>{const ix=(db[type==='booker'?'bookers':'orderSuppliers']||[]).indexOf(n);return '<div style="display:flex;justify-content:space-between;gap:8px;padding:7px;border-bottom:1px solid #e5edf4"><span>'+esc(n)+'</span>'+(ix>=0?'<button class="secondary" onclick="deleteBookingName(\''+type+'\','+ix+')" style="padding:4px 8px">Delete</button>':'')+'</div>'}).join('')||'<span class="muted">No names added</span>';}
  draw('bookerMasterList',bookers,'booker');draw('orderSupplierMasterList',suppliers,'supplier');
  function setSel(id,names,label){const el=document.getElementById(id);if(!el)return;const old=el.value;el.innerHTML='<option value="">Select '+label+'</option>'+names.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');if(names.includes(old))el.value=old;}
@@ -1947,7 +1947,7 @@ function renderOrderBookingReports(){
  const body=document.getElementById('obSupplierSummary');if(!body)return;
  const all=orderBookingSales();
  const names=(arr)=>[...new Set(arr.map(x=>String(x||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
- const suppliers=names([...(db.orderSuppliers||[]),...(db.suppliers||[]).map(x=>x.name||x),...all.map(x=>x.orderSupplier)]);
+ const suppliers=names([...(db.orderSuppliers||[]),...all.map(x=>x.orderSupplier)]);
  const bookers=names([...(db.bookers||[]),...all.map(x=>x.orderBooker)]);
  const setOptions=(id,vals,label)=>{const el=document.getElementById(id);if(!el)return;const old=el.value;el.innerHTML='<option value="">All '+label+'</option>'+vals.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('');if(vals.includes(old))el.value=old;};
  setOptions('obSupplierFilter',suppliers,'Suppliers');setOptions('obBookerFilter',bookers,'Bookers');
@@ -1988,25 +1988,31 @@ function saveCustomerReturn(){
  db.customerReturns ||= [];db.customerReturns.push({id:Date.now(),invoiceNo:inv.no,date:today(),customer:inv.customer,orderBooker:inv.orderBooker||'',orderSupplier:inv.orderSupplier||'',items:[{name:it.name,qty,rate:+it.rate||0,amount,batchId:it.batchId||null}],amount});
  if(!save())return;alert('Customer return saved. Stock updated.');loadCustomerReturnItems();
 }
-function printSelectedSupplierInvoices(combined){
+function printSelectedSupplierInvoices(){
  const selected=[...document.querySelectorAll('.ob-invoice-check:checked')].map(e=>e.value);
  const invoices=orderBookingSales().filter(x=>selected.includes(String(x.no)));
  if(!invoices.length){alert('Kam az kam aik invoice select karein.');return}
  const render=x=>{
-  const items=x.items||[];
-  const tpTotal=items.reduce((a,i)=>a+(+i.qty||0)*(+i.rate||0),0);
-  const netTotal=Number(x.total)||items.reduce((a,i)=>a+(+i.net||(+i.qty||0)*(+i.rate||0)),0);
-  const discount=Number(x.discount)||Math.max(0,tpTotal-netTotal);
+  const items=x.items||[],tpTotal=items.reduce((a,i)=>a+(+i.qty||0)*(+i.rate||0),0),netTotal=Number(x.total)||items.reduce((a,i)=>a+(+i.net||(+i.qty||0)*(+i.rate||0)),0),discount=Number(x.discount)||Math.max(0,tpTotal-netTotal);
   const rows=items.map(i=>'<tr><td>'+esc(i.name||'')+'</td><td>'+money(i.qty)+'</td><td>'+money(i.rate)+'</td><td>'+money((+i.qty||0)*(+i.rate||0))+'</td><td>'+money(i.discount||0)+'%</td><td>'+money(i.net??((+i.qty||0)*(+i.rate||0)))+'</td></tr>').join('');
   const paid=Math.min(Number(x.paid)||0,netTotal),due=Math.max(0,Number(x.due??(netTotal-paid))||0);
-  return '<div class="ob-full-invoice"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:8px 0 18px"><div><div style="font-size:12px;color:#64748b;font-weight:bold">Inv</div><div style="font-size:15px;font-weight:bold">'+esc(x.no||'')+'</div><div style="font-size:15px;font-weight:bold;margin-top:8px">'+esc(x.orderSupplier||'Supplier not assigned')+'</div></div><div style="text-align:right;font-size:12px"><b>Date:</b> '+esc(x.date||'')+'</div></div>'+
-  '<div class="aht-invoice-meta"><div><b>Customer:</b> <strong>'+esc(x.customer||'')+'</strong><br><b>Booker:</b> '+esc(x.orderBooker||'')+'</div></div>'+
+  return '<div class="ob-full-invoice"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:8px 0 18px"><div><div style="font-size:12px;color:#64748b;font-weight:bold">Inv</div><div style="font-size:15px;font-weight:bold">'+esc(x.no||'')+'</div></div><div style="text-align:right;font-size:12px"><b>Date:</b> '+esc(x.date||'')+'<br><span style="font-size:10px;color:#64748b">Booker: '+esc(x.orderBooker||'-')+'<br>Supplier: '+esc(x.orderSupplier||'-')+'</span></div></div>'+
+  '<div class="aht-invoice-meta"><div><b>Customer:</b> <strong>'+esc(x.customer||'')+'</strong></div></div>'+
   '<table><thead><tr><th>Product</th><th>Qty</th><th>T.P. Rate (Rs)</th><th>T.P. Amount (Rs)</th><th>Discount %</th><th>Net Amount (Rs)</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><th colspan="3" style="text-align:right">Total</th><th>'+money(tpTotal)+'</th><th></th><th>'+money(netTotal)+'</th></tr></tfoot></table>'+
   '<div class="aht-invoice-totals"><b>Subtotal: Rs '+money(tpTotal)+'</b><br>Discount: Rs '+money(discount)+'<br><b>Net Amount: Rs '+money(netTotal)+'</b><br>Amount in words: '+amountWords(netTotal)+'<br>Paid: Rs '+money(paid)+'<br>Balance: Rs '+money(due)+'</div>'+
   '<p style="margin-top:45px">Prepared by: ____________________ <span style="float:right">Received by: ____________________</span></p><p style="text-align:center;margin-top:28px">Thank you</p></div>';
  };
- const pageBreak='<div style="page-break-after:always;break-after:page"></div>';
- openPrintPage(combined?'Supplier Invoices - Combined':'Supplier Invoices - Separate Pages',invoices.map(render).join(combined?'<div style="height:28px;border-top:2px dashed #cbd5e1;margin:24px 0"></div>':pageBreak));
+ openPrintPage('Supplier Invoices',invoices.map(render).join('<div style="height:24px;border-top:2px dashed #cbd5e1;margin:22px 0"></div>'));
+}
+function printSupplierSummary(){
+ const all=orderBookingSales(),from=document.getElementById('obFrom')?.value||'',to=document.getElementById('obTo')?.value||'',supplier=document.getElementById('obSupplierFilter')?.value||'',booker=document.getElementById('obBookerFilter')?.value||'';
+ const rows=all.filter(x=>(!from||String(x.date||'')>=from)&&(!to||String(x.date||'')<=to)&&(!supplier||String(x.orderSupplier||'')===supplier)&&(!booker||String(x.orderBooker||'')===booker));
+ const products={};rows.forEach(inv=>(inv.items||[]).forEach(it=>{const name=String(it.name||'Unknown'),v=products[name]||(products[name]={qty:0,value:0});const qty=+it.qty||0,rate=+it.rate||0;v.qty+=qty;v.value+=qty*rate;}));
+ const names=Object.keys(products).sort((a,b)=>a.localeCompare(b));let totalQty=0,totalValue=0;
+ const body=names.map((name,i)=>{const x=products[name];totalQty+=x.qty;totalValue+=x.value;return '<tr><td>'+(i+1)+'</td><td>'+esc(name)+'</td><td style="text-align:right">'+money(x.value/(x.qty||1))+'</td><td style="text-align:right">'+money(x.qty)+'</td></tr>';}).join('');
+ const heading='<div style="text-align:center;margin-bottom:16px"><h2 style="margin:0">Supplier Summary</h2><h3 style="margin:5px 0">'+esc(supplier||'All Suppliers')+'</h3><div style="font-size:12px">Date: '+esc(from||'Start')+' to '+esc(to||'Today')+(booker?' | Booker: '+esc(booker):'')+'</div></div>';
+ const table='<table style="width:100%;border-collapse:collapse" border="1" cellpadding="7"><thead><tr><th>S.No</th><th>Products Name</th><th>Products T.P</th><th>Quantity</th></tr></thead><tbody>'+body+'</tbody><tfoot><tr><th colspan="3" style="text-align:right">Total Quantity</th><th>'+money(totalQty)+'</th></tr><tr><th colspan="3" style="text-align:right">Total Value (Rs)</th><th>'+money(totalValue)+'</th></tr></tfoot></table>';
+ openPrintPage('Supplier Summary',heading+table);
 }
 function printOrderBookingTable(title,id){const t=document.getElementById(id)?.closest('.card')?.querySelector('table');if(t)openPrintPage(title,'<table>'+t.innerHTML+'</table>');}
 
