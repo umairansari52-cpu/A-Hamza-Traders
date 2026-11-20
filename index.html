@@ -1969,7 +1969,6 @@ function renderOrderBookingReports(){
  document.getElementById('obDetailQty').textContent=money(grandQty);document.getElementById('obDetailReturn').textContent=money(grandReturn);document.getElementById('obDetailSold').textContent=money(grandSold);
  const invoices=rows.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));document.getElementById('obInvoiceChecks').innerHTML='<table><thead><tr><th>Select</th><th>Invoice No.</th><th>Date</th><th>Customer</th><th>Booker</th><th>Supplier</th><th>Total (Rs)</th></tr></thead><tbody>'+invoices.map(x=>'<tr><td><input type="checkbox" class="ob-invoice-check" value="'+esc(x.no)+'" checked></td><td>'+esc(x.no)+'</td><td>'+esc(x.date||'')+'</td><td>'+esc(x.customer||'')+'</td><td>'+esc(x.orderBooker||'')+'</td><td>'+esc(x.orderSupplier||'')+'</td><td>'+money(x.total||0)+'</td></tr>').join('')+'</tbody></table>'+(invoices.length?'':'No invoices found');
 }
-}
 function loadCustomerReturnItems(){
  const inv=(db.sales||[]).find(x=>String(x.no)===String(document.getElementById('crInvoice')?.value));
  const sel=document.getElementById('crProduct');if(!sel)return;sel.innerHTML='<option value="">Select Product</option>';
