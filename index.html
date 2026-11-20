@@ -1942,6 +1942,9 @@ function renderCustomerList(){let body=document.getElementById('customerRows');i
 function renderAll(){renderOrderBookingReports();renderCustomerList();renderSampleHistoryNew();if(document.getElementById('smProduct'))filterSampleProducts();renderExpenseInvoices();renderLists();renderProducts();renderLedgerOptions();renderSupplierOptions();renderReports();renderDetailReports();fillDatalists();renderDashboard();renderAdjustmentHistory();renderDebitCredit();if(document.getElementById("dailyReportDate")&&!document.getElementById("dailyReportDate").value)document.getElementById("dailyReportDate").value=today();renderBusinessReports()}
 
 
+function invoiceReturnStats(inv){const byProduct={};let qty=0,amount=0;(db.customerReturns||[]).filter(r=>String(r.invoiceNo)===String(inv?.no)).forEach(r=>(r.items||[]).forEach(it=>{const k=String(it.name||'').toLowerCase(),q=+it.qty||0,a=+it.amount||0;qty+=q;amount+=a;const v=byProduct[k]||(byProduct[k]={qty:0,amount:0});v.qty+=q;v.amount+=a;}));return {qty,amount,byProduct}}
+function netSaleAmount(inv){return Math.max(0,(+inv?.total||0)-invoiceReturnStats(inv).amount)}
+function netSaleCost(inv){const s=invoiceReturnStats(inv),q=(inv.items||[]).reduce((a,it)=>a+(+it.qty||0),0);return q?getSalePurchaseNet(inv)*Math.max(0,q-s.qty)/q:getSalePurchaseNet(inv)}
 function orderBookingSales(){return (db.sales||[]).filter(x=>x.kind!=='samplePurchase');}
 function renderOrderBookingReports(){
  const body=document.getElementById('obSupplierSummary');if(!body)return;
@@ -2053,8 +2056,10 @@ function renderSalesPurchaseReport(){
    if(q&&!name.toLowerCase().includes(q))return;
    const qty=Number(it.qty)||0;
    const rate=Number(it.tp??it.rate??it.price??it.costRate??it.purchaseRate)||0;
-   const amount=Number(isSale?(it.net??it.amount??(qty*rate)):(it.netCost??it.net??it.amount??(qty*rate)))||0;
-   rows.push({date:inv.date||'',no:inv.no||'',party:isSale?(inv.customer||''):(inv.supplier||''),name,qty,rate,discount:Number(it.discount??it.discountPercent??it.discountPct??0)||0,amount});
+   const grossAmount=Number(isSale?(it.net??it.amount??(qty*rate)):(it.netCost??it.net??it.amount??(qty*rate)))||0;
+   const ret=isSale?(invoiceReturnStats(inv).byProduct[name.toLowerCase()]||{qty:0,amount:0}):{qty:0,amount:0};
+   const amount=Math.max(0,grossAmount-ret.amount),netQty=Math.max(0,qty-ret.qty);
+   rows.push({date:inv.date||'',no:inv.no||'',party:isSale?(inv.customer||''):(inv.supplier||''),name,qty:netQty,rate,discount:Number(it.discount??it.discountPercent??it.discountPct??0)||0,amount});
   });
  });
  rows.sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.no).localeCompare(String(a.no)));
@@ -2074,11 +2079,11 @@ function printSalesPurchaseReport(){
 function reportDate(){return document.getElementById('dailyReportDate')?.value||today()}
 function dailySummaryData(date){
  let sales=db.sales.filter(x=>x.date===date),purchases=db.purchases.filter(x=>x.date===date),expenses=db.expenses.filter(x=>x.date===date);
- let totalSales=sales.reduce((a,x)=>a+(+x.total||0),0),totalPurchase=purchases.reduce((a,x)=>a+(+x.total||0),0),totalExpenses=expenses.reduce((a,x)=>a+(+x.amount||0),0);
+ let totalSales=sales.reduce((a,x)=>a+netSaleAmount(x),0),totalPurchase=purchases.reduce((a,x)=>a+(+x.total||0),0),totalExpenses=expenses.reduce((a,x)=>a+(+x.amount||0),0);
  let recovery=sales.reduce((a,x)=>a+(+x.paid||0),0)+db.payments.filter(x=>x.date===date).reduce((a,x)=>a+(+x.amount||0),0);
  // Use the same purchase-batch T.P. cost calculation as the Products/Business reports.
  // Profit is attributed to the date of each sale, not the purchase date.
- let soldTPCost=sales.reduce((sum,sale)=>sum+getSalePurchaseNet(sale),0);
+ let soldTPCost=sales.reduce((sum,sale)=>sum+netSaleCost(sale),0);
  let profit=totalSales-soldTPCost;
  return {date,totalSales,totalPurchase,totalExpenses,recovery,profit,netProfit:profit-totalExpenses};
 }
@@ -2153,24 +2158,24 @@ function renderReports(){
  let allSales=(db.sales||[]).filter(x=>x.date>=from&&x.date<=to);
  let normalSales=allSales.filter(x=>!isSample(x)),sampleSales=allSales.filter(isSample);
  let e=(db.expenses||[]).filter(x=>x.date>=from&&x.date<=to);
- let normalSalesTotal=normalSales.reduce((a,x)=>a+(+x.total||0),0);
- let normalCost=normalSales.reduce((a,x)=>a+getSalePurchaseNet(x),0);
+ let normalSalesTotal=normalSales.reduce((a,x)=>a+netSaleAmount(x),0);
+ let normalCost=normalSales.reduce((a,x)=>a+netSaleCost(x),0);
  let normalProfit=normalSalesTotal-normalCost;
- let sampleProfit=sampleSales.reduce((a,x)=>a+(+x.total||0)-getSalePurchaseNet(x),0);
+ let sampleProfit=sampleSales.reduce((a,x)=>a+netSaleAmount(x)-netSaleCost(x),0);
  let totalExpenses=e.reduce((a,x)=>a+(+x.amount||0),0);
  let totalNet=normalProfit+sampleProfit-totalExpenses;
  document.getElementById('rProfit').textContent='Rs '+money(normalProfit);
  document.getElementById('rSampleProfit').textContent='Rs '+money(sampleProfit);
  document.getElementById('rTotalProfit').textContent='Rs '+money(totalNet);
  document.getElementById('rExpenses').textContent='Rs '+money(totalExpenses);
- document.getElementById('profitInvoiceRows').innerHTML=normalSales.slice().reverse().map(x=>{let pn=getSalePurchaseNet(x),gp=(+x.total||0)-pn,ex=e.filter(y=>y.saleNo===x.no).reduce((a,y)=>a+(+y.amount||0),0);return `<tr><td>${esc(x.date)}</td><td>${esc(x.no)}</td><td>${esc(x.customer)}</td><td>${money(x.total)}</td><td>${money(x.discount||0)}</td><td>${money(pn)}</td><td>${money(gp-ex)}</td></tr>`}).join('');
- let sampleRows=sampleSales.slice().reverse().map(x=>{let cost=getSalePurchaseNet(x),sales=+x.total||0;return {x,cost,sales,profit:sales-cost}});
+ document.getElementById('profitInvoiceRows').innerHTML=normalSales.slice().reverse().map(x=>{let pn=netSaleCost(x),saleNet=netSaleAmount(x),gp=saleNet-pn,ex=e.filter(y=>y.saleNo===x.no).reduce((a,y)=>a+(+y.amount||0),0);return `<tr><td>${esc(x.date)}</td><td>${esc(x.no)}</td><td>${esc(x.customer)}</td><td>${money(saleNet)}</td><td>${money(x.discount||0)}</td><td>${money(pn)}</td><td>${money(gp-ex)}</td></tr>`}).join('');
+ let sampleRows=sampleSales.slice().reverse().map(x=>{let cost=netSaleCost(x),sales=netSaleAmount(x);return {x,cost,sales,profit:sales-cost}});
  let sampleTotals=sampleRows.reduce((a,v)=>({sales:a.sales+v.sales,cost:a.cost+v.cost,profit:a.profit+v.profit}),{sales:0,cost:0,profit:0});
  let sampleBody=document.getElementById('sampleProfitRows');if(sampleBody)sampleBody.innerHTML=sampleRows.map(v=>`<tr><td>${esc(v.x.date||'')}</td><td>${esc(v.x.no||'')}</td><td>${esc(v.x.customer||'Cash Customer')}</td><td>${money(v.sales)}</td><td>${money(v.cost)}</td><td>${money(v.profit)}</td></tr>`).join('')||'<tr><td colspan="6">No sample profit history</td></tr>';
  [['sprSalesTotal',sampleTotals.sales],['sprCostTotal',sampleTotals.cost],['sprProfitTotal',sampleTotals.profit]].forEach(([id,v])=>{let el=document.getElementById(id);if(el)el.textContent=money(v)});
  // Footer total must equal the sum of the invoice-wise profit values shown above,
  // including expenses linked to each invoice.
- let invoiceWiseNet=normalSales.reduce((a,x)=>a+((+x.total||0)-getSalePurchaseNet(x)-e.filter(y=>y.saleNo===x.no).reduce((v,y)=>v+(+y.amount||0),0)),0);
+ let invoiceWiseNet=normalSales.reduce((a,x)=>a+(netSaleAmount(x)-netSaleCost(x)-e.filter(y=>y.saleNo===x.no).reduce((v,y)=>v+(+y.amount||0),0)),0);
  let t={sales:normalSalesTotal,discount:normalSales.reduce((a,x)=>a+(+x.discount||0),0),cost:normalCost,gross:invoiceWiseNet};
  document.getElementById('prSalesTotal').textContent=money(t.sales);
  document.getElementById('prDiscountTotal').textContent=money(t.discount);
