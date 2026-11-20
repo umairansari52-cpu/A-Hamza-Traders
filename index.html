@@ -749,7 +749,7 @@ startProductAutocomplete();
 <div><label>Invoice No.</label><input id="sNo" readonly></div>
 <div><label>Date</label><input id="sDate" type="date"></div>
 <div><label>Customer (type to add)</label><input id="sCustomer" list="customerList" placeholder="Customer name"><datalist id="customerList"></datalist></div>
-<div><label>Customer phone</label><input id="sPhone" placeholder="Phone (optional)"></div><div><label>Order Booker Name</label><input id="sOrderBooker" list="orderBookerList" placeholder="Select / enter booker"></div><div><label>Order Supplier Name</label><input id="sOrderSupplier" list="orderSupplierList" placeholder="Select / enter supplier"></div>
+<div><label>Customer phone</label><input id="sPhone" placeholder="Phone (optional)"></div><div><label>Order Booker Name</label><select id="sOrderBooker"><option value="">Select Booker</option></select></div><div><label>Order Supplier Name</label><select id="sOrderSupplier"><option value="">Select Supplier</option></select></div>
 </div>
 <h3 style="margin-top:16px">Invoice Items</h3><div id="salesRows"></div>
 <div class="actions no-print"><button class="secondary" onclick="addRow('salesRows','sale')">+ Add Item</button></div>
@@ -879,7 +879,7 @@ startProductAutocomplete();
 <div class="grid">
 <div><label>Sample Sales No.</label><input id="smsNo" readonly></div>
 <div><label>Date</label><input id="smsDate" type="date"></div>
-<div><label>Customer</label><input id="smsCustomer" list="customerList" placeholder="Customer name"></div><div><label>Order Booker Name</label><input id="smsOrderBooker" list="orderBookerList" placeholder="Select / enter booker"></div><div><label>Order Supplier Name</label><input id="smsOrderSupplier" list="orderSupplierList" placeholder="Select / enter supplier"></div>
+<div><label>Customer</label><input id="smsCustomer" list="customerList" placeholder="Customer name"></div><div><label>Order Booker Name</label><select id="smsOrderBooker"><option value="">Select Booker</option></select></div><div><label>Order Supplier Name</label><select id="smsOrderSupplier"><option value="">Select Supplier</option></select></div>
 </div>
 
 <h3>Sales Items</h3>
@@ -953,7 +953,7 @@ startProductAutocomplete();
 <div id="adjustmentHistory"></div>
 </div>
 </section>
-<section id="customers" class="tab"><div class="card"><h2>Add Customer</h2><div class="grid"><div><label>Name</label><input id="cName"></div><div><label>Phone</label><input id="cPhone"></div><div><label>Address</label><input id="cAddress"></div></div><div class="actions"><button class="primary" onclick="addCustomer()">Save Customer</button></div></div><div class="card"><h3>Customer List — Debit / Credit / Balance</h3><label>Search Customer</label><input id="customerSearch" list="customerSearchList" placeholder="Customer ka naam likhein" oninput="renderCustomerList()" autocomplete="off"><datalist id="customerSearchList"></datalist><div class="actions no-print"><button class="primary" onclick="printAllCustomerLedger()">Print Total Customer Ledger / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Total Debit (Sales)</th><th>Total Credit (Payments)</th><th>Balance</th><th></th></tr></thead><tbody id="customerRows"></tbody><tfoot><tr><th colspan="2">Grand Total</th><th id="customerDebitTotal">0.00</th><th id="customerCreditTotal">0.00</th><th id="customerBalanceTotal">0.00</th><th></th></tr></tfoot></table></div></div></section>
+<section id="customers" class="tab"><div class="card"><h2>Add Customer</h2><div class="grid"><div><label>Name</label><input id="cName"></div><div><label>Phone</label><input id="cPhone"></div><div><label>Address</label><input id="cAddress"></div></div><div class="actions"><button class="primary" onclick="addCustomer()">Save Customer</button></div></div><div class="grid"><div class="card"><h2>Add Booker</h2><label>Booker Name</label><input id="newBookerName" placeholder="Enter booker name"><div class="actions"><button class="primary" onclick="addBookingName('booker')">Save Booker</button></div><h3>Booker List</h3><div id="bookerMasterList"></div></div><div class="card"><h2>Add Supplier</h2><label>Supplier Name</label><input id="newOrderSupplierName" placeholder="Enter supplier name"><div class="actions"><button class="primary" onclick="addBookingName('supplier')">Save Supplier</button></div><h3>Supplier List</h3><div id="orderSupplierMasterList"></div></div></div><div class="card"><h3>Customer List — Debit / Credit / Balance</h3><label>Search Customer</label><input id="customerSearch" list="customerSearchList" placeholder="Customer ka naam likhein" oninput="renderCustomerList()" autocomplete="off"><datalist id="customerSearchList"></datalist><div class="actions no-print"><button class="primary" onclick="printAllCustomerLedger()">Print Total Customer Ledger / PDF</button></div><div class="tablewrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Total Debit (Sales)</th><th>Total Credit (Payments)</th><th>Balance</th><th></th></tr></thead><tbody id="customerRows"></tbody><tfoot><tr><th colspan="2">Grand Total</th><th id="customerDebitTotal">0.00</th><th id="customerCreditTotal">0.00</th><th id="customerBalanceTotal">0.00</th><th></th></tr></tfoot></table></div></div></section>
 
 <section id="products" class="tab">
 <div class="card">
@@ -1185,8 +1185,8 @@ startProductAutocomplete();
 <script>
 const KEY='medicine_wholesale_v1';
 let db=load();
-function blank(){return {customers:[],products:[],sales:[],purchases:[],payments:[],suppliers:[],supplierPayments:[],expenses:[],adjustments:[],debitCredit:[],debitCreditOpening:0,productEntries:[],customerReturns:[]}}
-function load(){try{let d=JSON.parse(localStorage.getItem(KEY))||blank();d.suppliers ||= [];d.customerReturns ||= [];d.supplierPayments ||= [];d.payments ||= [];d.expenses ||= [];d.adjustments ||= [];d.debitCredit ||= [];if(typeof d.debitCreditOpening!=='number')d.debitCreditOpening=0;if(!Array.isArray(d.batches))d.batches=[];d.products ||= [];d.productEntries ||= [];d.products.forEach(p=>{p.tpRates=Array.isArray(p.tpRates)?p.tpRates:[];let known=d.batches.filter(b=>String(b.productId)===String(p.id)||((b.productName||'').toLowerCase()===(p.name||'').toLowerCase())).reduce((a,b)=>a+(+b.remaining||0),0);let missing=Math.max(0,(+p.stock||0)-known);if(missing>0)d.batches.push({id:'existing-'+p.id,productId:p.id,productName:p.name,tp:null,qty:missing,remaining:missing,kind:'existing'});});return d}catch(e){return blank()}}
+function blank(){return {customers:[],products:[],sales:[],purchases:[],payments:[],suppliers:[],supplierPayments:[],bookers:[],orderSuppliers:[],expenses:[],adjustments:[],debitCredit:[],debitCreditOpening:0,productEntries:[],customerReturns:[]}}
+function load(){try{let d=JSON.parse(localStorage.getItem(KEY))||blank();d.suppliers ||= [];d.bookers ||= [];d.orderSuppliers ||= [];d.customerReturns ||= [];d.supplierPayments ||= [];d.payments ||= [];d.expenses ||= [];d.adjustments ||= [];d.debitCredit ||= [];if(typeof d.debitCreditOpening!=='number')d.debitCreditOpening=0;if(!Array.isArray(d.batches))d.batches=[];d.products ||= [];d.productEntries ||= [];d.products.forEach(p=>{p.tpRates=Array.isArray(p.tpRates)?p.tpRates:[];let known=d.batches.filter(b=>String(b.productId)===String(p.id)||((b.productName||'').toLowerCase()===(p.name||'').toLowerCase())).reduce((a,b)=>a+(+b.remaining||0),0);let missing=Math.max(0,(+p.stock||0)-known);if(missing>0)d.batches.push({id:'existing-'+p.id,productId:p.id,productName:p.name,tp:null,qty:missing,remaining:missing,kind:'existing'});});return d}catch(e){return blank()}}
 function renderProductsLedger(){
 let from=document.getElementById('plFrom').value||'0000-01-01';
 let to=document.getElementById('plTo').value||'9999-12-31';
@@ -1552,6 +1552,29 @@ function printSupplierLedger(){
  setTimeout(function(){try{w.focus();w.print()}catch(e){}},1200);
 }
 function amountWords(n){n=Math.round((Number(n)||0)*100)/100;let ones=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'],tens=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];function under(x){if(x<20)return ones[x];if(x<100)return tens[Math.floor(x/10)]+(x%10?' '+ones[x%10]:'');if(x<1000)return ones[Math.floor(x/100)]+' Hundred'+(x%100?' '+under(x%100):'');return ''}function chunk(x){let a=[];if(x>=10000000){a.push(under(Math.floor(x/10000000))+' Crore');x%=10000000}if(x>=100000){a.push(under(Math.floor(x/100000))+' Lakh');x%=100000}if(x>=1000){a.push(under(Math.floor(x/1000))+' Thousand');x%=1000}if(x)a.push(under(x));return a.join(' ')}let rupees=Math.floor(n),paisa=Math.round((n-rupees)*100);return (chunk(rupees)||'Zero')+' Rupees'+(paisa?' and '+chunk(paisa)+' Paisa':' Only')}
+function addBookingName(type){
+ const isBooker=type==='booker';
+ const input=document.getElementById(isBooker?'newBookerName':'newOrderSupplierName');
+ const name=(input.value||'').trim();
+ if(!name){alert('Name enter karein');return;}
+ const key=isBooker?'bookers':'orderSuppliers';db[key] ||= [];
+ if(db[key].some(x=>String(x).toLowerCase()===name.toLowerCase())){alert('Ye naam pehle se mojood hai');return;}
+ db[key].push(name);if(save()){input.value='';renderBookingNameMasters();alert(isBooker?'Booker saved':'Supplier saved');}
+}
+function deleteBookingName(type,index){
+ const key=type==='booker'?'bookers':'orderSuppliers',arr=db[key]||[];
+ if(!arr[index])return;if(!confirm('Is naam ko list se delete karna hai?'))return;
+ arr.splice(index,1);if(save())renderBookingNameMasters();
+}
+function renderBookingNameMasters(){
+ const bookers=[...new Set([...(db.bookers||[]),...(db.sales||[]).map(x=>x.orderBooker||'')].map(x=>String(x||'').trim()).filter(Boolean))];
+ const suppliers=[...new Set([...(db.orderSuppliers||[]),...(db.sales||[]).map(x=>x.orderSupplier||''),...(db.purchases||[]).map(x=>x.supplier||'')].map(x=>String(x||'').trim()).filter(Boolean))];
+ function draw(id,arr,type){const el=document.getElementById(id);if(!el)return;el.innerHTML=arr.map(n=>{const ix=(db[type==='booker'?'bookers':'orderSuppliers']||[]).indexOf(n);return '<div style="display:flex;justify-content:space-between;gap:8px;padding:7px;border-bottom:1px solid #e5edf4"><span>'+esc(n)+'</span>'+(ix>=0?'<button class="secondary" onclick="deleteBookingName(\''+type+'\','+ix+')" style="padding:4px 8px">Delete</button>':'')+'</div>'}).join('')||'<span class="muted">No names added</span>';}
+ draw('bookerMasterList',bookers,'booker');draw('orderSupplierMasterList',suppliers,'supplier');
+ function setSel(id,names,label){const el=document.getElementById(id);if(!el)return;const old=el.value;el.innerHTML='<option value="">Select '+label+'</option>'+names.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');if(names.includes(old))el.value=old;}
+ setSel('sOrderBooker',bookers,'Booker');setSel('smsOrderBooker',bookers,'Booker');
+ setSel('sOrderSupplier',suppliers,'Supplier');setSel('smsOrderSupplier',suppliers,'Supplier');
+}
 function addCustomer(){let name=document.getElementById('cName').value.trim();if(!name){alert('Enter customer name');return}ensureCustomer(name,document.getElementById('cPhone').value.trim());let c=db.customers.find(x=>x.name.toLowerCase()===name.toLowerCase());c.address=document.getElementById('cAddress').value;document.getElementById('cName').value='';document.getElementById('cPhone').value='';document.getElementById('cAddress').value='';save()}
 function addProduct(){
 let name=document.getElementById('prName').value.trim();
@@ -2023,6 +2046,7 @@ function renderLedgerOptions(){
  
   }
 function fillDatalists(){
+ renderBookingNameMasters();
  let customers=(db.customers||[]).map(c=>`<option value="${esc(c.name)}">`).join('');
  let products=(db.products||[]).map(p=>`<option value="${esc(p.name)}">`).join('');
  let cl=document.getElementById('customerList'),cs=document.getElementById('customerSearchList'),pl=document.getElementById('productList');
