@@ -28,6 +28,16 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Set up Node for Android 8 WebView compatibility
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Transpile app JavaScript for older Android WebView
+        run: |
+          npm install --no-save @babel/core@7 @babel/cli@7 @babel/preset-env@7
+          python3 android-apk/transpile_inline.py
+
       - name: Install Android SDK packages
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"
@@ -39,10 +49,11 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Package existing software unchanged
+      - name: Package Android 8 compatible app assets
         run: |
           mkdir -p android-apk/app/src/main/assets
-          cp index.html manifest.json launchericon-512x512.png android-apk/app/src/main/assets/
+          cp android-apk/generated-assets/index.html android-apk/app/src/main/assets/index.html
+          cp manifest.json launchericon-512x512.png android-apk/app/src/main/assets/
           if [ -f welcome-banner.webp ]; then cp welcome-banner.webp android-apk/app/src/main/assets/; fi
 
       - name: Build debug APK
