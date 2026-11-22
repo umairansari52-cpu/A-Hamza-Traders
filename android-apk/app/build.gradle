@@ -14,3 +14,25 @@ android {
         versionName '1.0'
     }
 }
+
+// Use the existing A.Hamza Traders launcher icon from the project root.
+def generateLauncherIcon = tasks.register('generateLauncherIcon') {
+    doLast {
+        def sourceIcon = rootProject.projectDir.parentFile.toPath().resolve('launchericon-512x512.png').toFile()
+        if (!sourceIcon.exists()) {
+            throw new GradleException("Launcher icon not found: " + sourceIcon)
+        }
+        ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi'].each { density ->
+            def targetDir = file("src/main/res/mipmap-" + density)
+            targetDir.mkdirs()
+            copy {
+                from sourceIcon
+                into targetDir
+                rename { 'ic_launcher.png' }
+            }
+        }
+    }
+}
+tasks.named('preBuild').configure {
+    dependsOn(generateLauncherIcon)
+}
