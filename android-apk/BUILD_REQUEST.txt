@@ -1,0 +1,3 @@
+Build request for the A.Hamza Traders offline Android APK.
+The existing app is copied from the offline-copy branch into the APK assets by the workflow.
+No business backup data is included.
