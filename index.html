@@ -1317,7 +1317,7 @@ function nextNo(prefix,arr){return prefix+'-'+String(arr.length+1).padStart(5,'0
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(b.dataset.tab).classList.add('active');renderAll()});
 function gotoTab(id){document.querySelector(`nav button[data-tab="${id}"]`).click()}
 
-function loginApp(){let u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value;if(u==='umair'&&p==='hamzaa'){document.body.classList.add('authenticated');document.getElementById('loginScreen').style.display='none';}else{document.getElementById('loginError').textContent='Incorrect username or password.'}}
+function loginApp(){let u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value;if(u==='umair'&&p==='hamzaa'){try{localStorage.setItem('ahtAuthenticated','1')}catch(e){}document.body.classList.add('authenticated');document.getElementById('loginScreen').style.display='none';}else{document.getElementById('loginError').textContent='Incorrect username or password.'}}
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')loginApp()});
 
 
@@ -2686,13 +2686,35 @@ width:100%!important;
  #dashboard > .grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:16px !important; }
  #dashboard > .grid > .card { min-height:125px !important; padding:18px !important; }
 }
+
+/* Mobile layout fixes: keep button labels inside buttons and invoices within the screen. */
+@media(max-width:600px){
+  nav{flex-wrap:wrap!important;overflow:visible!important;align-items:stretch!important}
+  nav>button{white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important;line-height:1.25!important;height:auto!important;min-height:48px!important;flex:1 1 125px!important;padding:10px 8px!important;text-align:center!important}
+  nav>details{flex:1 1 100%!important;min-width:0!important}
+  .actions>button{white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.25!important;height:auto!important;min-height:42px!important;flex:1 1 130px!important}
+  #ahtPrintPreview{padding:5px!important;overflow-x:hidden!important}
+  #ahtPrintPreview .aht-print-paper{width:100%!important;max-width:100%!important;min-width:0!important;padding:10px!important;overflow:hidden!important;box-sizing:border-box!important}
+  #ahtPrintPreview .aht-print-paper table{width:100%!important;max-width:100%!important;table-layout:fixed!important;font-size:9px!important}
+  #ahtPrintPreview .aht-print-paper th,#ahtPrintPreview .aht-print-paper td{padding:4px 2px!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+  #ahtPrintPreview .aht-invoice-meta{gap:6px!important;flex-wrap:wrap!important;font-size:12px!important}
+  #ahtPrintPreview .aht-print-toolbar{flex-wrap:wrap!important;padding:7px!important}
+  #ahtPrintPreview .aht-print-toolbar div{flex-wrap:wrap!important}
+}
 </style>
 <script>
-/* Always require credentials on a fresh page load. */
+/* Keep the successful login across normal refreshes on this device. */
 (function(){
-  document.body.classList.remove('authenticated');
+  var ok=false;
+  try{ok=localStorage.getItem('ahtAuthenticated')==='1'}catch(e){}
   var login=document.getElementById('loginScreen');
-  if(login){login.style.setProperty('display','flex','important');}
+  if(ok){
+    document.body.classList.add('authenticated');
+    if(login){login.style.setProperty('display','none','important');}
+  }else{
+    document.body.classList.remove('authenticated');
+    if(login){login.style.setProperty('display','flex','important');}
+  }
 })();
 </script>
 </body>
