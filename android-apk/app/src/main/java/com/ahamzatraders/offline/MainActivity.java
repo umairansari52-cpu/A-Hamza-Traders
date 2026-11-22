@@ -27,6 +27,10 @@ public class MainActivity extends Activity {
         settings.setDatabaseEnabled(true);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
+        // The app is packaged locally; allow its bundled scripts/assets to work on Android 8 WebView.
+        settings.setAllowFileAccessFromFileURLs(true);
+        settings.setAllowUniversalAccessFromFileURLs(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
         settings.setSupportZoom(false);
 
         webView.setWebViewClient(new WebViewClient());
