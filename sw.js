@@ -1,9 +1,9 @@
 // A.Hamza Traders - offline-first service worker
-const CACHE_NAME = 'aht-offline-shell-v1';
+const CACHE_NAME = 'aht-offline-shell-v2';
 const APP_SHELL = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',\n  './launchericon-512x512.png'
 ];
 
 self.addEventListener('install', event => {
