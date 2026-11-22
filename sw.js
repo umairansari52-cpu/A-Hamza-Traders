@@ -1,5 +1,5 @@
 // A.Hamza Traders - offline-first service worker
-const CACHE_NAME = 'hamza-traders-offline-v1';
+const CACHE_NAME = 'aht-offline-shell-v1';
 const APP_SHELL = [
   './',
   './index.html',
@@ -18,7 +18,7 @@ self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const names = await caches.keys();
     await Promise.all(names
-      .filter(name => name.startsWith('hamza-traders-') && name !== CACHE_NAME)
+      .filter(name => name.startsWith('aht-offline-') && name !== CACHE_NAME)
       .map(name => caches.delete(name)));
     await self.clients.claim();
   })());
