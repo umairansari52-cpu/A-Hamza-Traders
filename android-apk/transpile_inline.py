@@ -5,19 +5,21 @@ import subprocess
 from pathlib import Path
 
 source = Path("index.html").read_text(encoding="utf-8")
-pattern = re.compile(r"(<script\b([^>]*)>)([\s\S]*?)(</script\s*>)", re.IGNORECASE)
+pattern = re.compile(r"(<script\\b([^>]*)>)([\\s\\S]*?)(</script\\s*>)", re.IGNORECASE)
 
 def convert(match):
     opening, attrs, body, closing = match.groups()
-    if re.search(r"\bsrc\s*=", attrs, re.IGNORECASE):
+    if re.search(r"\\bsrc\\s*=", attrs, re.IGNORECASE):
         return match.group(0)
-    script_type = re.search(r"""\btype\s*=\s*["']?([^"'\s>]+)""", attrs, re.IGNORECASE)
+    script_type = re.search(r"""\\btype\\s*=\\s*["']?([^"'\\s>]+)""", attrs, re.IGNORECASE)
     if script_type and script_type.group(1).lower() not in ("text/javascript", "application/javascript", "module"):
         return match.group(0)
     result = subprocess.run(
-        ["npx", "--no-install", "babel", "--no-comments"],
-        input=body, text=True, capture_output=True, check=True
+        ["npx", "--no-install", "babel", "--filename", "inline.js"],
+        input=body, text=True, capture_output=True
     )
+    if result.returncode:
+        raise RuntimeError("Babel failed for inline script: " + result.stderr[-4000:])
     return opening + result.stdout + closing
 
 converted, count = pattern.subn(convert, source)
