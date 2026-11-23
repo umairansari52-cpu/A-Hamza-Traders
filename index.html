@@ -2092,14 +2092,27 @@ function renderSalesPurchaseReport(){
  document.getElementById('spReportAmount').textContent=money(rows.reduce((a,x)=>a+x.amount,0));
 }
 function printSalesPurchaseReport(){
- renderSalesPurchaseReport();
- const title=salesPurchaseReportType==='sales'?'Sales Reports':'Purchase Report';
- const from=document.getElementById('spReportFrom').value||'All Dates';
- const to=document.getElementById('spReportTo').value||'All Dates';
- const search=document.getElementById('spReportProduct').value||'All Products';
- const party=document.getElementById('spReportParty')?.value||'All Parties';
- const table=document.getElementById('spReportRows').closest('table').outerHTML;
- openPrintPage(title,'<p>Date From: '+esc(from)+' &nbsp; Date To: '+esc(to)+'<br>Product: '+esc(search)+'<br>Customer / Supplier: '+esc(party)+'</p>'+table);
+ try{
+  renderSalesPurchaseReport();
+  const title=salesPurchaseReportType==='sales'?'Sales Reports':'Purchase Report';
+  const from=document.getElementById('spReportFrom')?.value||'All Dates';
+  const to=document.getElementById('spReportTo')?.value||'All Dates';
+  const search=document.getElementById('spReportProduct')?.value||'All Products';
+  const party=document.getElementById('spReportParty')?.value||'All Parties';
+  const tbody=document.getElementById('spReportRows');
+  const table=tbody?.closest('table');
+  if(!table)throw new Error('Report table not found');
+  const printable=table.cloneNode(true);
+  printable.querySelectorAll('button').forEach(b=>b.remove());
+  const content='<p>Date From: '+esc(from)+' &nbsp; Date To: '+esc(to)+'<br>Product: '+esc(search)+'<br>Customer / Supplier: '+esc(party)+'</p>'+printable.outerHTML;
+  showPrintPreview(title,content);
+  const preview=document.getElementById('ahtPrintPreview');
+  if(!preview)throw new Error('Preview window could not be created');
+  preview.scrollTop=0;
+ }catch(err){
+  console.error('Sales/Purchase report preview error:',err);
+  alert('Print Preview open nahi ho saka. App refresh karke dobara try karein. Agar phir bhi masla ho to mujhe batayein.');
+ }
 }
 function reportDate(){return document.getElementById('dailyReportDate')?.value||today()}
 function dailySummaryData(date){
