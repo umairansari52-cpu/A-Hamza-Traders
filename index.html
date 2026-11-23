@@ -1097,7 +1097,7 @@ startProductAutocomplete();
 <div class="grid">
 <div><label>Date From</label><input type="date" id="spReportFrom" onchange="renderSalesPurchaseReport()"></div>
 <div><label>Date To</label><input type="date" id="spReportTo" onchange="renderSalesPurchaseReport()"></div>
-<div><label>Search Product</label><input id="spReportProduct" placeholder="Product name search karein" oninput="renderSalesPurchaseReport()"></div>
+<div><label>Search Product</label><input id="spReportProduct" list="spReportProductNames" placeholder="Product name likhein / select karein" oninput="renderSalesPurchaseReport()"><datalist id="spReportProductNames"></datalist></div><div><label>Search Customer / Supplier</label><input id="spReportParty" list="spReportPartyNames" placeholder="Party name likhein / select karein" oninput="renderSalesPurchaseReport()"><datalist id="spReportPartyNames"></datalist></div>
 </div>
 <div class="actions no-print">
 <button class="secondary" onclick="clearSalesPurchaseReportFilters()">All Dates / Clear Search</button>
@@ -1105,9 +1105,9 @@ startProductAutocomplete();
 <button class="secondary" onclick="printSalesPurchaseReport()">Print Preview / PDF</button>
 </div>
 <div class="tablewrap"><table>
-<thead><tr><th>Date</th><th>Invoice No.</th><th>Customer / Supplier</th><th>Product</th><th>Qty</th><th>Rate (Rs)</th><th>Discount %</th><th>Amount (Rs)</th></tr></thead>
+<thead><tr><th>Date</th><th>Invoice No.</th><th>Type</th><th>Customer / Supplier</th><th>Product</th><th>Qty</th><th>Rate (Rs)</th><th>Discount %</th><th>Amount (Rs)</th></tr></thead>
 <tbody id="spReportRows"></tbody>
-<tfoot><tr><th colspan="4">Total</th><th id="spReportQty">0</th><th>—</th><th>—</th><th id="spReportAmount">0.00</th></tr></tfoot>
+<tfoot><tr><th colspan="5">Total</th><th id="spReportQty">0</th><th>—</th><th>—</th><th id="spReportAmount">0.00</th></tr></tfoot>
 </table></div>
 </div>
 </section>
@@ -2042,14 +2042,22 @@ function printDetailReports(){
 }
 
 let salesPurchaseReportType='sales';
+function populateSalesPurchaseReportSearches(){
+ const products=[...new Set((db.products||[]).map(p=>String(p.name||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ const parties=[...new Set([...(db.sales||[]).map(x=>x.customer),...(db.purchases||[]).map(x=>x.supplier)].map(x=>String(x||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ const pd=document.getElementById('spReportProductNames'),sd=document.getElementById('spReportPartyNames');
+ if(pd)pd.innerHTML=products.map(x=>'<option value="'+esc(x)+'"></option>').join('');
+ if(sd)sd.innerHTML=parties.map(x=>'<option value="'+esc(x)+'"></option>').join('');
+}
 function showSalesPurchaseReport(type){
  salesPurchaseReportType=type==='purchase'?'purchase':'sales';
  const title=document.getElementById('spReportTitle');
  title.textContent=salesPurchaseReportType==='sales'?'Sales Reports':'Purchase Report';
+ populateSalesPurchaseReportSearches();
  renderSalesPurchaseReport();
 }
 function clearSalesPurchaseReportFilters(){
- ['spReportFrom','spReportTo','spReportProduct'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
+ ['spReportFrom','spReportTo','spReportProduct','spReportParty'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
  renderSalesPurchaseReport();
 }
 function renderSalesPurchaseReport(){
@@ -2057,26 +2065,29 @@ function renderSalesPurchaseReport(){
  const from=document.getElementById('spReportFrom')?.value||'';
  const to=document.getElementById('spReportTo')?.value||'';
  const q=(document.getElementById('spReportProduct')?.value||'').trim().toLowerCase();
+ const partyQ=(document.getElementById('spReportParty')?.value||'').trim().toLowerCase();
  const source=isSale?(db.sales||[]):(db.purchases||[]);
  const rows=[];
  source.forEach(inv=>{
   const kind=String(inv.kind||'').toLowerCase();
-  if(isSale?(kind==='samplesale'||inv.sampleType):(kind==='samplepurchase'||kind==='sample'))return;
+  const isSample=isSale?(kind==='samplesale'||!!inv.sampleType||!!inv.isSample):(kind==='samplepurchase'||kind==='sample');
   if(from&&String(inv.date||'')<from)return;
   if(to&&String(inv.date||'')>to)return;
+  const party=isSale?(inv.customer||''):(inv.supplier||'');
+  if(partyQ&&!String(party).toLowerCase().includes(partyQ))return;
   (inv.items||[]).forEach(it=>{
    const name=String(it.name||'Unknown');
    if(q&&!name.toLowerCase().includes(q))return;
    const qty=Number(it.qty)||0;
    const rate=Number(it.tp??it.rate??it.price??it.costRate??it.purchaseRate)||0;
    const grossAmount=Number(isSale?(it.net??it.amount??(qty*rate)):(it.netCost??it.net??it.amount??(qty*rate)))||0;
-   const ret=isSale?(invoiceReturnStats(inv).byProduct[name.toLowerCase()]||{qty:0,amount:0}):{qty:0,amount:0};
+   const ret=isSale&&!isSample?(invoiceReturnStats(inv).byProduct[name.toLowerCase()]||{qty:0,amount:0}):{qty:0,amount:0};
    const amount=Math.max(0,grossAmount-ret.amount),netQty=Math.max(0,qty-ret.qty);
-   rows.push({date:inv.date||'',no:inv.no||'',party:isSale?(inv.customer||''):(inv.supplier||''),name,qty:netQty,rate,discount:Number(it.discount??it.discountPercent??it.discountPct??0)||0,amount});
+   rows.push({date:inv.date||'',no:inv.no||'',party,name,qty:netQty,rate,discount:Number(it.discount??it.discountPercent??it.discountPct??0)||0,amount,type:isSample?'Sample':'Regular'});
   });
  });
  rows.sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.no).localeCompare(String(a.no)));
- document.getElementById('spReportRows').innerHTML=rows.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.no)+'</td><td>'+esc(x.party)+'</td><td>'+esc(x.name)+'</td><td>'+money(x.qty)+'</td><td>'+money(x.rate)+'</td><td>'+money(x.discount)+'%</td><td>'+money(x.amount)+'</td></tr>').join('')||'<tr><td colspan="7">No records found</td></tr>';
+ document.getElementById('spReportRows').innerHTML=rows.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.no)+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.party)+'</td><td>'+esc(x.name)+'</td><td>'+money(x.qty)+'</td><td>'+money(x.rate)+'</td><td>'+money(x.discount)+'%</td><td>'+money(x.amount)+'</td></tr>').join('')||'<tr><td colspan="9">No records found</td></tr>';
  document.getElementById('spReportQty').textContent=money(rows.reduce((a,x)=>a+x.qty,0));
  document.getElementById('spReportAmount').textContent=money(rows.reduce((a,x)=>a+x.amount,0));
 }
@@ -2086,8 +2097,9 @@ function printSalesPurchaseReport(){
  const from=document.getElementById('spReportFrom').value||'All Dates';
  const to=document.getElementById('spReportTo').value||'All Dates';
  const search=document.getElementById('spReportProduct').value||'All Products';
+ const party=document.getElementById('spReportParty')?.value||'All Parties';
  const table=document.getElementById('spReportRows').closest('table').outerHTML;
- openPrintPage(title,'<p>Date From: '+esc(from)+' &nbsp; Date To: '+esc(to)+'<br>Product: '+esc(search)+'</p>'+table);
+ openPrintPage(title,'<p>Date From: '+esc(from)+' &nbsp; Date To: '+esc(to)+'<br>Product: '+esc(search)+'<br>Customer / Supplier: '+esc(party)+'</p>'+table);
 }
 function reportDate(){return document.getElementById('dailyReportDate')?.value||today()}
 function dailySummaryData(date){
