@@ -946,7 +946,7 @@ startProductAutocomplete();
 </div>
 <div class="card">
 <h3>Adjustment History — Separate Account</h3>
-<label>Customer-wise Invoice / Ledger Search</label><input id="adjHistoryCustomer" list="customerList" placeholder="Customer ka naam search karein" autocomplete="off" oninput="renderAdjustmentHistory()"><div class="grid"><div><label>Date From</label><input type="date" id="adjFrom" onchange="renderAdjustmentHistory()"></div><div><label>Date To</label><input type="date" id="adjTo" onchange="renderAdjustmentHistory()"></div></div>
+<label>Customer-wise Invoice / Ledger Search (sirf Adjustment mein saved customers)</label><input id="adjHistoryCustomer" list="adjHistoryCustomerList" placeholder="Adjustment customer search karein" autocomplete="off" oninput="renderAdjustmentHistory()"><datalist id="adjHistoryCustomerList"></datalist><div class="grid"><div><label>Date From</label><input type="date" id="adjFrom" onchange="renderAdjustmentHistory()"></div><div><label>Date To</label><input type="date" id="adjTo" onchange="renderAdjustmentHistory()"></div></div>
 <div class="actions no-print">
 <button class="primary" onclick="printAdjustmentCustomerHistory()">Print Selected Customer / Date-wise PDF</button>
 <button class="secondary" onclick="printAllAdjustmentHistory()">All Customers History / PDF</button>
@@ -2315,27 +2315,45 @@ if(!amount&&qty>0&&rate>0)amount=qty*rate;
 return {qty,rate,amount,discountPercent:+(i.discountPercent??i.discountPct??0)||0,discount:+(i.discount??i.discountAmount??0)||0};
 }
 function renderAdjustmentHistory(){
+let all=(db.adjustments||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+let names=[...new Set(all.map(x=>String(x.customer||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+let dl=document.getElementById('adjHistoryCustomerList');
+if(dl)dl.innerHTML=names.map(n=>'<option value="'+esc(n)+'">').join('');
 let filter=(document.getElementById('adjHistoryCustomer')?.value||'').trim().toLowerCase();
-let all=(db.adjustments||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
 let from=document.getElementById('adjFrom')?.value||'',to=document.getElementById('adjTo')?.value||'';
 let rows=all.filter(x=>(!filter||(x.customer||'').toLowerCase().includes(filter))&&(!from||x.date>=from)&&(!to||x.date<=to));
 let customerGroups={};rows.forEach(x=>(customerGroups[x.customer]||(customerGroups[x.customer]=[])).push(x));
 document.getElementById('adjustmentHistory').innerHTML=Object.keys(customerGroups).map(customer=>{
 let invoices=customerGroups[customer];
-let oldRemaining=invoices.reduce((s,x)=>s+(+x.discount||0)-((x.payments||[]).length?(x.payments||[]).reduce((a,p)=>a+(+p.amount||0),0):(+x.received||0)),0);
+let totalRemaining=invoices.reduce((sum,x)=>sum+(+x.discount||0)-((x.payments||[]).length?(x.payments||[]).reduce((a,p)=>a+(+p.amount||0),0):(+x.received||0)),0);
+let key=encodeURIComponent(customer);
 let invoiceHtml=invoices.map(x=>{
 let payments=x.payments||[],received=payments.length?payments.reduce((a,p)=>a+(+p.amount||0),0):(+x.received||0),remaining=(+x.discount||0)-received;
 let items=(x.items||[]).map(i=>{let v=adjustmentItemValues(i);return '<tr><td>'+esc(i.name)+'</td><td>'+Number(v.qty.toFixed(3))+'</td><td>'+money(v.rate)+'</td><td>'+money(v.amount)+'</td><td>'+money(v.discountPercent)+'%</td><td>'+money(v.discount)+'</td></tr>'}).join('');
-let invNo='ADJ-'+String(x.id||'');
-let paymentRows=payments.length?payments.map(p=>'<tr><td>'+esc(p.date||'')+'</td><td>'+esc(p.description||'Payment Received')+'</td><td>'+money(p.amount)+'</td></tr>').join(''):(received?'<tr><td>'+esc(x.date||'')+'</td><td>Opening / Previous Received</td><td>'+money(received)+'</td></tr>':'<tr><td colspan="3">No payment received</td></tr>');
-return '<div class="card"><h4>Adjustment Invoice No: '+esc(invNo)+' | '+esc(x.date||'')+'</h4><div class="tablewrap"><table><thead><tr><th>Product</th><th>Quantity</th><th>T.P. Rate</th><th>Amount</th><th>Discount %</th><th>Discount Amount</th></tr></thead><tbody>'+items+'</tbody></table></div><p><b>Total Discount:</b> Rs '+money(x.discount)+'</p><p><b>Received:</b> Rs '+money(received)+' &nbsp; <b>Remaining:</b> Rs '+money(remaining)+'</p><button class="secondary no-print" onclick="printAdjustmentRecord(\''+String(x.id)+'\')">Print Preview</button> <button class="secondary no-print" onclick="editAdjustment(\''+String(x.id)+'\')">Edit</button> <button class="danger no-print" onclick="deleteAdjustment(\''+String(x.id)+'\')">Delete</button><h4>Payment Receiving History</h4><div class="tablewrap"><table><thead><tr><th>Date</th><th>Description</th><th>Amount</th></tr></thead><tbody>'+paymentRows+'</tbody></table></div><button class="primary no-print" type="button" onclick="toggleAdjustmentPaymentForm(\''+String(x.id)+'\')">Received Payment</button><div id="adjPaymentForm'+x.id+'" class="card hide no-print"><label>Payment Date</label><input type="date" id="adjPayDate'+x.id+'" value="'+today()+'"><label>Description</label><input type="text" id="adjPayDescription'+x.id+'" placeholder="Payment description"><label>Received Amount (Rs)</label><input type="number" id="adjPayAmount'+x.id+'" min="0" step=".01"><button class="primary" type="button" onclick="receiveAdjustmentPayment(\''+String(x.id)+'\')">Save Received Payment</button></div></div>';
+let paymentRows=payments.length?payments.map(p=>'<tr><td>'+esc(p.date||'')+'</td><td>'+esc(p.description||'Payment Received')+'</td><td>'+money(p.amount)+'</td></tr>').join(''):(received?'<tr><td>'+esc(x.date||'')+'</td><td>Previous Received</td><td>'+money(received)+'</td></tr>':'<tr><td colspan="3">No payment received</td></tr>');
+return '<div class="card"><h4>Adjustment No: ADJ-'+esc(String(x.id||''))+' | Date: '+esc(x.date||'')+'</h4><div class="tablewrap"><table><thead><tr><th>Product</th><th>Quantity</th><th>T.P. Rate</th><th>Amount</th><th>Discount %</th><th>Discount Amount</th></tr></thead><tbody>'+items+'</tbody></table></div><p><b>Adjustment Amount:</b> Rs '+money(x.discount)+' &nbsp; <b>Received:</b> Rs '+money(received)+' &nbsp; <b>Remaining:</b> Rs '+money(remaining)+'</p><h4>Received Payment History</h4><div class="tablewrap"><table><thead><tr><th>Date</th><th>Description</th><th>Amount</th></tr></thead><tbody>'+paymentRows+'</tbody></table></div><button class="secondary no-print" onclick="printAdjustmentRecord(\''+String(x.id)+'\')">Print Preview</button> <button class="secondary no-print" onclick="editAdjustment(\''+String(x.id)+'\')">Edit</button> <button class="danger no-print" onclick="deleteAdjustment(\''+String(x.id)+'\')">Delete</button></div>';
 }).join('');
-return '<div class="card"><h3>Customer: '+esc(customer)+'</h3><p><b>Total Remaining Amount:</b> Rs '+money(oldRemaining)+'</p>'+invoiceHtml+'</div>';
+return '<div class="card"><h3>Customer: '+esc(customer)+'</h3><p><b>Total Adjustment:</b> Rs '+money(invoices.reduce((a,x)=>a+(+x.discount||0),0))+' &nbsp; <b>Total Remaining:</b> Rs '+money(totalRemaining)+'</p><button class="primary no-print" type="button" onclick="toggleAdjustmentCustomerPayment(\''+key+'\')">Received Payment</button><div id="adjCustomerPayForm'+key+'" class="card hide no-print"><label>Payment Date</label><input type="date" id="adjCustomerPayDate'+key+'" value="'+today()+'"><label>Description / Note</label><input id="adjCustomerPayNote'+key+'" placeholder="Cash received"><label>Amount Received (Rs) — partial payment</label><input type="number" id="adjCustomerPayAmount'+key+'" min=".01" step=".01"><button class="primary" type="button" onclick="receiveAdjustmentCustomerPayment(\''+key+'\')">Save Payment</button></div>'+invoiceHtml+'</div>';
 }).join('')||'<p>No Adjustment Records for this customer.</p>';
 }
-function toggleAdjustmentPaymentForm(id){
-let form=document.getElementById('adjPaymentForm'+id);
-if(form)form.classList.toggle('hide');
+function toggleAdjustmentCustomerPayment(key){
+let form=document.getElementById('adjCustomerPayForm'+key);if(form)form.classList.toggle('hide');
+}
+function receiveAdjustmentCustomerPayment(key){
+let customer=decodeURIComponent(key),date=document.getElementById('adjCustomerPayDate'+key)?.value||today(),note=(document.getElementById('adjCustomerPayNote'+key)?.value||'').trim(),amount=+(document.getElementById('adjCustomerPayAmount'+key)?.value||0);
+let invoices=(db.adjustments||[]).filter(x=>String(x.customer||'').trim()===customer).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+let totalRemaining=invoices.reduce((sum,x)=>sum+(+x.discount||0)-((x.payments||[]).length?(x.payments||[]).reduce((a,p)=>a+(+p.amount||0),0):(+x.received||0)),0);
+if(!(amount>0)){alert('Received amount enter karein');return}
+if(amount>totalRemaining){alert('Amount remaining balance se zyada nahi ho sakti');return}
+let left=amount;
+for(let x of invoices){
+if(left<=0)break;
+x.payments=x.payments||[];
+if(!x.payments.length&&(+x.received||0)>0)x.payments.push({date:x.date||today(),description:'Previous Received',amount:+x.received});
+let got=x.payments.reduce((a,p)=>a+(+p.amount||0),0),due=Math.max(0,(+x.discount||0)-got),part=Math.min(left,due);
+if(part>0){x.payments.push({date,description:note||'Payment Received',amount:part});x.received=got+part;x.remaining=(+x.discount||0)-x.received;left-=part;}
+}
+if(save()){renderAdjustmentHistory();alert('Partial payment successfully saved in Adjustment account.');}
 }
 function deleteAdjustment(id){
 let index=(db.adjustments||[]).findIndex(x=>String(x.id)===String(id));
