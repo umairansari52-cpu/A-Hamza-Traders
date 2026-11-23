@@ -925,7 +925,7 @@ startProductAutocomplete();
 <h2>Adjustment Entry</h2>
 <div class="grid">
 <div><label>Date</label><input type="date" id="adjDate"></div>
-<div><label>Customer Name</label><input id="adjCustomer" list="customerList" placeholder="Search / Select Customer" autocomplete="off"></div>
+<div><label>Customer Name</label><input id="adjCustomer" list="adjEntryCustomerList" placeholder="Search saved Adjustment customer" autocomplete="off"><datalist id="adjEntryCustomerList"></datalist></div>
 </div>
 <h3>Products</h3>
 <div id="adjustmentRows"></div>
@@ -2317,8 +2317,10 @@ return {qty,rate,amount,discountPercent:+(i.discountPercent??i.discountPct??0)||
 function renderAdjustmentHistory(){
 let all=(db.adjustments||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
 let names=[...new Set(all.map(x=>String(x.customer||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-let dl=document.getElementById('adjHistoryCustomerList');
-if(dl)dl.innerHTML=names.map(n=>'<option value="'+esc(n)+'">').join('');
+let options=names.map(n=>'<option value="'+esc(n)+'">').join('');
+let entryList=document.getElementById('adjEntryCustomerList'),historyList=document.getElementById('adjHistoryCustomerList');
+if(entryList)entryList.innerHTML=options;
+if(historyList)historyList.innerHTML=options;
 let filter=(document.getElementById('adjHistoryCustomer')?.value||'').trim().toLowerCase();
 let from=document.getElementById('adjFrom')?.value||'',to=document.getElementById('adjTo')?.value||'';
 let rows=all.filter(x=>(!filter||(x.customer||'').toLowerCase().includes(filter))&&(!from||x.date>=from)&&(!to||x.date<=to));
