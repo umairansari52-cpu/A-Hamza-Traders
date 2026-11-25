@@ -2193,17 +2193,22 @@ function getSalePurchaseNet(x){
  return (x.items||[]).reduce((sum,it)=>{
   let qty=+it.qty||0;
   let b=(db.batches||[]).find(v=>String(v.id)===String(it.batchId));
-  let pur=b?(db.purchases||[]).find(v=>v.no===b.purchaseNo):null;
-  let pi=pur?(pur.items||[]).find(v=>v.name===it.name):null;
   let unit=0;
-  if(pi){
-   let factor=(+pur.subtotal||0)>0?(+pur.total||0)/(+pur.subtotal||0):1;
-   unit=pi.netCost!=null?+pi.netCost:(+pi.rate||0)*(1-(+pi.discount||0)/100)*factor;
-  }else if(it.costRate!=null) unit=+it.costRate||0;
-  else if(b) unit=+b.netTp||+b.tp||0;
+  // Use the batch T.P. cost snapshot saved on the sale invoice.
+  // This matches the cost basis used when the invoice was saved.
+  if(it.costRate!=null&&Number.isFinite(+it.costRate)) unit=Math.max(0,+it.costRate||0);
+  else if(b&&(b.tp!=null||b.netTp!=null)) unit=Math.max(0,+(b.tp!=null?b.tp:b.netTp)||0);
+  else{
+   let pur=b?(db.purchases||[]).find(v=>String(v.no)===String(b.purchaseNo)):null;
+   let pi=pur?(pur.items||[]).find(v=>String(v.name||'').toLowerCase()===String(it.name||'').toLowerCase()):null;
+   if(pi){
+    let factor=(+pur.subtotal||0)>0?(+pur.total||0)/(+pur.subtotal||0):1;
+    unit=pi.netCost!=null?+pi.netCost:(+pi.rate||0)*(1-(+pi.discount||0)/100)*factor;
+   }
+  }
   return sum+qty*unit;
  },0);
-  }
+}
 function renderReports(){
  let from=document.getElementById('rFrom').value||'0000',to=document.getElementById('rTo').value||'9999';
  let isSample=x=>/sample/i.test(String(x.kind||''))||!!x.sampleType||!!x.isSample||x.type==='sample';
