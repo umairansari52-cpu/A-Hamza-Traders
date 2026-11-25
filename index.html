@@ -2028,10 +2028,18 @@ function printSupplierSummary(){
 function printOrderBookingTable(title,id){const t=document.getElementById(id)?.closest('.card')?.querySelector('table');if(t)openPrintPage(title,'<table>'+t.innerHTML+'</table>');}
 
 function renderDetailReports(){
- let from=document.getElementById('drFrom').value||'0000-01-01',to=document.getElementById('drTo').value||'9999-12-31',sales=db.sales.filter(x=>x.date>=from&&x.date<=to),purchases=db.purchases.filter(x=>x.date>=from&&x.date<=to);
- let aggregate=(rows,amount,isSale)=>{let m={};rows.forEach(x=>(x.items||[]).forEach(it=>{let n=it.name||'Unknown',v=m[n]||(m[n]={qty:0,total:0}),ret=isSale?(invoiceReturnStats(x).byProduct[String(n).toLowerCase()]||{qty:0,amount:0}):{qty:0,amount:0};v.qty+=Math.max(0,(+it.qty||0)-ret.qty);v.total+=Math.max(0,(+amount(it)||0)-ret.amount)}));return Object.keys(m).sort().map(n=>`<tr><td>${esc(n)}</td><td>${money(m[n].qty)}</td><td>${money(m[n].total)}</td></tr>`).join('')||'<tr><td colspan="3">No records</td></tr>'};
- let groups=(rows,key,isSale)=>{let m={};rows.forEach(x=>{let n=x[key]||'Unknown',v=m[n]||(m[n]={count:0,total:0});v.count++;v.total+=isSale?netSaleAmount(x):(+x.total||0)});return Object.keys(m).sort().map(n=>`<tr><td>${esc(n)}</td><td>${m[n].count}</td><td>${money(m[n].total)}</td></tr>`).join('')||'<tr><td colspan="3">No records</td></tr>'};
- document.getElementById('drSalesItems').innerHTML=aggregate(sales,it=>it.net,true);document.getElementById('drPurchaseItems').innerHTML=aggregate(purchases,it=>it.netCost??it.net,false);document.getElementById('drCustomers').innerHTML=groups(sales,'customer',true);document.getElementById('drSuppliers').innerHTML=groups(purchases,'supplier',false)
+ let from=document.getElementById('drFrom').value||'0000-01-01',to=document.getElementById('drTo').value||'9999-12-31',sales=(db.sales||[]).filter(x=>x.date>=from&&x.date<=to),purchases=(db.purchases||[]).filter(x=>x.date>=from&&x.date<=to);
+ // Invoice line amounts are stored before the invoice-level discount.
+ // Purchase netCost is a per-unit cost (not a line total), so multiply by quantity.
+ const invoiceFactor=inv=>{let sub=Number(inv.subtotal);if(!(sub>0))sub=(inv.items||[]).reduce((a,it)=>a+(Number(it.net)||0),0);let total=Number(inv.total);return sub>0&&Number.isFinite(total)?total/sub:1};
+ const purchaseLineAmount=(inv,it)=>{let q=Number(it.qty)||0;if(it.netCost!=null&&Number.isFinite(+it.netCost))return Math.max(0,+it.netCost||0)*q;return Math.max(0,(Number(it.net)||0)*invoiceFactor(inv))};
+ const salesLineAmount=(inv,it)=>Math.max(0,(Number(it.net)||0)*invoiceFactor(inv));
+ let aggregate=(rows,isSale)=>{let m={};rows.forEach(inv=>(inv.items||[]).forEach(it=>{let n=it.name||'Unknown',v=m[n]||(m[n]={qty:0,total:0}),ret=isSale?(invoiceReturnStats(inv).byProduct[String(n).toLowerCase()]||{qty:0,amount:0}):{qty:0,amount:0},q=Number(it.qty)||0,line=isSale?salesLineAmount(inv,it):purchaseLineAmount(inv,it);v.qty+=Math.max(0,q-(+ret.qty||0));v.total+=Math.max(0,line-(+ret.amount||0));}));return Object.keys(m).sort().map(n=>'<tr><td>'+esc(n)+'</td><td>'+money(m[n].qty)+'</td><td>'+money(m[n].total)+'</td></tr>').join('')||'<tr><td colspan="3">No records</td></tr>'};
+ let groups=(rows,key,isSale)=>{let m={};rows.forEach(inv=>{let n=inv[key]||'Unknown',v=m[n]||(m[n]={count:0,total:0});v.count++;let amount=(inv.items||[]).reduce((a,it)=>a+(isSale?salesLineAmount(inv,it):purchaseLineAmount(inv,it)),0);if(isSale)amount=Math.max(0,amount-invoiceReturnStats(inv).amount);v.total+=amount});return Object.keys(m).sort().map(n=>'<tr><td>'+esc(n)+'</td><td>'+m[n].count+'</td><td>'+money(m[n].total)+'</td></tr>').join('')||'<tr><td colspan="3">No records</td></tr>'};
+ document.getElementById('drSalesItems').innerHTML=aggregate(sales,true);
+ document.getElementById('drPurchaseItems').innerHTML=aggregate(purchases,false);
+ document.getElementById('drCustomers').innerHTML=groups(sales,'customer',true);
+ document.getElementById('drSuppliers').innerHTML=groups(purchases,'supplier',false);
 }
 function printDetailReports(){
  renderDetailReports();
