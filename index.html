@@ -2075,12 +2075,26 @@ function renderSalesPurchaseReport(){
   if(to&&String(inv.date||'')>to)return;
   const party=isSale?(inv.customer||''):(inv.supplier||'');
   if(partyQ&&!String(party).toLowerCase().includes(partyQ))return;
-  (inv.items||[]).forEach(it=>{
+  const items=inv.items||[];
+  const itemSubtotal=items.reduce((sum,it)=>{
+   const line=Number(it.net);
+   if(Number.isFinite(line))return sum+line;
+   const qty=Number(it.qty)||0;
+   const unit=Number(it.netCost??it.rate??it.costRate??it.purchaseRate)||0;
+   return sum+qty*unit;
+  },0);
+  const invoiceSubtotal=Number(inv.subtotal)||itemSubtotal;
+  const invoiceTotal=Number(inv.total);
+  const billFactor=invoiceSubtotal>0&&Number.isFinite(invoiceTotal)?invoiceTotal/invoiceSubtotal:1;
+  items.forEach(it=>{
    const name=String(it.name||'Unknown');
    if(q&&!name.toLowerCase().includes(q))return;
    const qty=Number(it.qty)||0;
    const rate=Number(it.tp??it.rate??it.price??it.costRate??it.purchaseRate)||0;
-   const grossAmount=Number(isSale?(it.net??it.amount??(qty*rate)):(it.netCost??it.net??it.amount??(qty*rate)))||0;
+   let lineAmount;
+   if(Number.isFinite(Number(it.net))) lineAmount=Number(it.net);
+   else lineAmount=qty*(Number(it.netCost??it.rate??it.costRate??it.purchaseRate)||0);
+   const grossAmount=isSale?lineAmount:lineAmount*billFactor;
    const ret=isSale&&!isSample?(invoiceReturnStats(inv).byProduct[name.toLowerCase()]||{qty:0,amount:0}):{qty:0,amount:0};
    const amount=Math.max(0,grossAmount-ret.amount),netQty=Math.max(0,qty-ret.qty);
    rows.push({date:inv.date||'',no:inv.no||'',party,name,qty:netQty,rate,discount:Number(it.discount??it.discountPercent??it.discountPct??0)||0,amount,type:isSample?'Sample':'Regular'});
