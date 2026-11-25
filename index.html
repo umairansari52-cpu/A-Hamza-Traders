@@ -1949,7 +1949,7 @@ function renderAll(){renderOrderBookingReports();renderCustomerList();renderSamp
 
 function invoiceReturnStats(inv){const byProduct={};let qty=0,amount=0;(db.customerReturns||[]).filter(r=>String(r.invoiceNo)===String(inv?.no)).forEach(r=>(r.items||[]).forEach(it=>{const k=String(it.name||'').toLowerCase(),q=+it.qty||0,a=+it.amount||0;qty+=q;amount+=a;const v=byProduct[k]||(byProduct[k]={qty:0,amount:0});v.qty+=q;v.amount+=a;}));return {qty,amount,byProduct}}
 function netSaleAmount(inv){return Math.max(0,(+inv?.total||0)-invoiceReturnStats(inv).amount)}
-function netSaleCost(inv){const s=invoiceReturnStats(inv),q=(inv.items||[]).reduce((a,it)=>a+(+it.qty||0),0);return q?getSalePurchaseNet(inv)*Math.max(0,q-s.qty)/q:getSalePurchaseNet(inv)}
+function netSaleCost(inv){const s=invoiceReturnStats(inv),q=(inv.items||[]).reduce((a,it)=>a+(+it.qty||0),0);const savedCost=inv?.cost!=null&&Number.isFinite(+inv.cost)?Math.max(0,+inv.cost):getSalePurchaseNet(inv);return q?savedCost*Math.max(0,q-s.qty)/q:savedCost}
 function orderBookingSales(){return (db.sales||[]).filter(x=>x.kind!=='samplePurchase');}
 function renderOrderBookingReports(){
  const body=document.getElementById('obSupplierSummary');if(!body)return;
